@@ -119,6 +119,7 @@ export interface Settings {
   smoothScroll: boolean
   restoreTabs: boolean
   confirmClose: boolean
+  zenMode: boolean
 }
 
 declare global {
@@ -132,6 +133,9 @@ declare global {
       openDir: () => Promise<string | null>
       openExternal: (u: string) => Promise<void>
       getWebviewPreload: () => string
+      setDefaultBrowser: () => Promise<{ success: boolean; error?: string }>
+      openDefaultApps: () => Promise<void>
+      getBrowserPath: () => Promise<string>
     }
   }
 }

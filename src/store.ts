@@ -6,13 +6,13 @@ import { setLang } from './lang'
 let _id = Date.now()
 const uid = () => `${++_id}-${Math.random().toString(36).slice(2, 6)}`
 
-function normalize(input: string): string {
+function normalize(input: string, searchUrl?: string): string {
   const s = input.trim()
   if (/^https?:\/\//i.test(s)) return s
   if (/^localhost/.test(s)) return `http://${s}`
   if (/^[\w-]+(\.[\w-]+)+/.test(s)) return `https://${s}`
-  const searchUrl = useStore.getState().settings.searchUrl || 'https://www.google.com/search?q=%s'
-  return searchUrl.replace('%s', encodeURIComponent(s))
+  const url = searchUrl || 'https://www.google.com/search?q=%s'
+  return url.replace('%s', encodeURIComponent(s))
 }
 
 function makeTab(over?: Partial<Tab>): Tab {
@@ -188,6 +188,7 @@ const defaultSettings: Settings = {
   smoothScroll: true,
   restoreTabs: false,
   confirmClose: false,
+  zenMode: false,
 }
 
 function persist(store: Store) {
@@ -274,7 +275,7 @@ export const useStore = create<Store>((set, get) => {
   addTab: (url, ws) => {
     const s = get()
     const workspace = ws ?? s.activeWorkspace
-    const t = makeTab(url ? { url: normalize(url), title: url, workspace } : { workspace })
+    const t = makeTab(url ? { url: normalize(url, s.settings.searchUrl), title: url, workspace } : { workspace })
     set(st => ({ tabs: [...st.tabs, t], activeId: t.id }))
     persistNow()
     return t.id
@@ -416,7 +417,8 @@ export const useStore = create<Store>((set, get) => {
   }),
 
   navigateTo: (id, url) => {
-    const n = normalize(url)
+    const s = get()
+    const n = normalize(url, s.settings.searchUrl)
     get().updateTab(id, { url: n, loading: true })
   },
 }})

@@ -5,6 +5,7 @@ import TabBar from './components/TabBar'
 import StatusBar from './components/StatusBar'
 import WebContent from './components/WebContent'
 import Sidebar from './components/Sidebar'
+import ZenSidebar from './components/ZenSidebar'
 import CommandPalette from './components/CommandPalette'
 import HintOverlay from './components/HintOverlay'
 import NewTabPage from './components/NewTabPage'
@@ -110,6 +111,11 @@ export default function App() {
         const s = useStore.getState()
         s.setSettings({ darkReader: !s.settings.darkReader })
       }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+        e.preventDefault()
+        const s = useStore.getState()
+        s.setSettings({ zenMode: !s.settings.zenMode })
+      }
       if (e.altKey && /^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
         e.preventDefault()
         const wsId = parseInt(e.key)
@@ -144,23 +150,42 @@ export default function App() {
   const isNew = active?.url === 'about:blank'
 
   const wsPos = settings.workspacePosition || 'top'
+  const zen = settings.zenMode
 
   return (
-    <div className="browser">
+    <div className={`browser${zen ? ' zen-layout' : ''}`}>
       <div className="titlebar" style={{ height: settings.titlebarHeight }} />
-      {wsPos === 'top' && settings.workspaceShow && <WorkspaceBar />}
-      <div className="content">
-        <Sidebar />
-        <div className="main">
-          {wsTabs.map(t => (
-            <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
-          ))}
-          {isNew && <NewTabPage />}
-          <HintOverlay />
-        </div>
-      </div>
-      {settings.showTabBar && <TabBar />}
-      {wsPos === 'bottom' && settings.workspaceShow && <WorkspaceBar />}
+      {zen ? (
+        <>
+          <div className="content">
+            <ZenSidebar />
+            <Sidebar />
+            <div className="main">
+              {wsTabs.map(t => (
+                <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
+              ))}
+              {isNew && <NewTabPage />}
+              <HintOverlay />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {wsPos === 'top' && settings.workspaceShow && <WorkspaceBar />}
+          <div className="content">
+            <Sidebar />
+            <div className="main">
+              {wsTabs.map(t => (
+                <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
+              ))}
+              {isNew && <NewTabPage />}
+              <HintOverlay />
+            </div>
+          </div>
+          {settings.showTabBar && <TabBar />}
+          {wsPos === 'bottom' && settings.workspaceShow && <WorkspaceBar />}
+        </>
+      )}
       {settings.showStatusBar && <StatusBar />}
       <CommandPalette />
     </div>

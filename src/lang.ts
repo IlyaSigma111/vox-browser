@@ -86,6 +86,11 @@ const strings: Record<Lang, Record<string, string>> = {
     'behavior.darkReader': 'Dark Reader',
     'behavior.searchEngine': 'Search engine',
     'behavior.smoothScroll': 'Smooth scroll',
+    'behavior.zenMode': 'Zen mode',
+    'behavior.setDefault': 'Set as default browser',
+    'behavior.openDefaultApps': 'Open default apps settings',
+    'behavior.defaultSet': 'Default browser set!',
+    'behavior.defaultOpen': 'Opening Windows settings...',
 
     // Tab shapes
     'shape.square': 'Square',
@@ -174,6 +179,11 @@ const strings: Record<Lang, Record<string, string>> = {
     'behavior.darkReader': 'Dark Reader',
     'behavior.searchEngine': 'Поисковая система',
     'behavior.smoothScroll': 'Плавная прокрутка',
+    'behavior.zenMode': 'Режим Zen',
+    'behavior.setDefault': 'Сделать браузером по умолчанию',
+    'behavior.openDefaultApps': 'Открыть настройки приложений по умолчанию',
+    'behavior.defaultSet': 'Браузер установлен по умолчанию!',
+    'behavior.defaultOpen': 'Открытие настроек Windows...',
 
     'shape.square': 'Квадрат',
     'shape.rounded': 'Скруглённые',

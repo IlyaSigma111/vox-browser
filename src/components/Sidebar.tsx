@@ -273,9 +273,21 @@ function SettingsPanel() {
     </CollapseSection>
 
     <CollapseSection title={t('behavior')} defaultOpen={false}>
+      <Toggle label={t('behavior.zenMode')} value={settings.zenMode} onChange={v => setSettings({ zenMode: v })} />
       <Toggle label={t('behavior.vim')} value={settings.vimEnabled} onChange={v => setSettings({ vimEnabled: v })} />
       <Toggle label={t('behavior.darkReader')} value={settings.darkReader} onChange={v => setSettings({ darkReader: v })} />
       <Toggle label={t('behavior.smoothScroll')} value={settings.smoothScroll} onChange={v => setSettings({ smoothScroll: v })} />
+      <div className="st-sep" />
+      <div className="st-row">
+        <button className="st-action-btn" onClick={() => window.onyx?.setDefaultBrowser?.()}>
+          {t('behavior.setDefault')}
+        </button>
+      </div>
+      <div className="st-row">
+        <button className="st-action-btn secondary" onClick={() => window.onyx?.openDefaultApps?.()}>
+          {t('behavior.openDefaultApps')}
+        </button>
+      </div>
     </CollapseSection>
   </div>
 }

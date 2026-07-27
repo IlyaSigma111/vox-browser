@@ -12,4 +12,7 @@ contextBridge.exposeInMainWorld('onyx', {
   openDir: () => ipcRenderer.invoke('dialog:dir'),
   openExternal: (u) => ipcRenderer.invoke('shell:external', u),
   getWebviewPreload: () => webviewPreload,
+  setDefaultBrowser: () => ipcRenderer.invoke('browser:setDefault'),
+  openDefaultApps: () => ipcRenderer.invoke('browser:openDefaultApps'),
+  getBrowserPath: () => ipcRenderer.invoke('browser:getPath'),
 })

@@ -1,10 +1,12 @@
 const { app, BrowserWindow, ipcMain, shell, session, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const { exec } = require('child_process')
 
 let mainWindow = null
 const DATA_DIR = path.join(app.getPath('userData'), 'vox-data')
 const EXT_DIR = path.join(app.getPath('userData'), 'extensions')
+const EXE_PATH = process.execPath
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -158,4 +160,30 @@ ipcMain.handle('ext:list', () => {
       return m.manifest_version === 2 || m.manifest_version === 3
     } catch { return false }
   })
+})
+
+// ─── Default browser ──────────────────────────────
+ipcMain.handle('browser:setDefault', async () => {
+  try {
+    // Register http/https protocols to point to Vox
+    app.setAsDefaultProtocolClient('http', EXE_PATH, ['%1'])
+    app.setAsDefaultProtocolClient('https', EXE_PATH, ['%1'])
+    app.setAsDefaultProtocolClient('vox', EXE_PATH, ['%1'])
+
+    // Also try to set via Windows registry (requires admin, best-effort)
+    const cmd = `reg add "HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice" /v ProgId /t REG_SZ /d "VoxHTTP" /f`
+    exec(cmd, () => {})
+
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
+ipcMain.handle('browser:openDefaultApps', async () => {
+  shell.openExternal('ms-settings:defaultapps')
+})
+
+ipcMain.handle('browser:getPath', () => {
+  return EXE_PATH
 })

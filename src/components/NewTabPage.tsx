@@ -104,7 +104,9 @@ export default function NewTabPage() {
         </div>
       )}
       <div className="ntp-footer">
-        f: hints · :: command · i: insert · j/k: scroll · Alt+1-9: workspace
+        f: hints · :: command · i: insert · j/k: scroll · Alt+1-9: workspace · Ctrl+Shift+E: zen
+        <br />
+        <a href="https://ilyasigma111.github.io/vox-browser/" onClick={e => { e.preventDefault(); window.onyx?.openExternal?.('https://ilyasigma111.github.io/vox-browser/') }} style={{ color: 'var(--accent)', textDecoration: 'none', opacity: 0.6 }}>Vox Browser</a>
       </div>
     </div>
   )
