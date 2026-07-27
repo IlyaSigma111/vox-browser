@@ -338,6 +338,55 @@ html, body, #root {
 
 .statusbar > * { -webkit-app-region: no-drag; }
 
+.sb-workspaces {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 4px;
+  padding-right: 6px;
+  border-right: 1px solid var(--border);
+}
+
+.sb-ws-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 8px;
+  cursor: pointer;
+  height: calc(var(--status-h) - 10px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: all var(--speed);
+}
+
+.sb-ws-btn:hover { background: var(--bg-light); color: var(--fg); }
+
+.sb-ws-btn.active {
+  color: #fff;
+  font-weight: bold;
+  border-color: transparent;
+}
+
+.sb-ws-btn.add {
+  border-style: dashed;
+  color: var(--fg-dim);
+}
+
+.sb-ws-btn.add:hover { color: var(--green); border-color: var(--green); }
+
+.sb-ws-count {
+  font-size: 9px;
+  opacity: 0.6;
+  background: rgba(255,255,255,0.12);
+  padding: 0 3px;
+  border-radius: 6px;
+}
+
 .sb-btn {
   background: transparent;
   border: none;

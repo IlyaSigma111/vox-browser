@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useStore } from '../store'
 import { t } from '../lang'
 
-export default function StatusBar() {
+interface Props {
+  showWorkspaces?: boolean
+}
+
+export default function StatusBar({ showWorkspaces }: Props) {
   const tabs = useStore(s => s.tabs)
   const activeId = useStore(s => s.activeId)
   const activeWorkspace = useStore(s => s.activeWorkspace)
@@ -44,6 +48,22 @@ export default function StatusBar() {
         >
           WS:{ws.name}
         </button>
+      )}
+      {showWorkspaces && (
+        <div className="sb-workspaces">
+          {workspaces.map(w => (
+            <button
+              key={w.id}
+              className={`sb-ws-btn${w.id === activeWorkspace ? ' active' : ''}`}
+              style={w.id === activeWorkspace ? { background: w.color, color: '#fff' } : undefined}
+              onClick={() => useStore.getState().switchWorkspace(w.id)}
+            >
+              {w.name}
+              <span className="sb-ws-count">{tabs.filter(t => t.workspace === w.id).length}</span>
+            </button>
+          ))}
+          <button className="sb-ws-btn add" onClick={() => useStore.getState().addWorkspace()}>+</button>
+        </div>
       )}
       {showMode && (
         <button

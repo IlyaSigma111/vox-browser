@@ -121,6 +121,15 @@ export default function App() {
         const s = useStore.getState()
         s.setSettings({ darkReader: !s.settings.darkReader })
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault()
+        const s = useStore.getState()
+        s.setSettings({ workspaceShow: !s.settings.workspaceShow })
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault()
+        useStore.getState().addWorkspace()
+      }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
         e.preventDefault()
         const s = useStore.getState()
@@ -181,7 +190,9 @@ export default function App() {
 
   return (
     <div className={`browser${zen ? ' zen-layout' : ''}`}>
-      {statusPos === 'top' && settings.showStatusBar && <StatusBar />}
+      {statusPos === 'top' && settings.showStatusBar && (
+        <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
+      )}
       <div className="titlebar" style={{ height: settings.titlebarHeight }} />
       {zen ? (
         <>
@@ -204,10 +215,12 @@ export default function App() {
           {tabPos === 'top' && settings.showTabBar && <TabBar />}
           {content}
           {tabPos === 'bottom' && settings.showTabBar && <TabBar />}
-          {wsPos === 'bottom' && settings.workspaceShow && <WorkspaceBar />}
+          {wsPos === 'bottom' && settings.workspaceShow && !settings.showStatusBar && <WorkspaceBar />}
         </>
       )}
-      {statusPos === 'bottom' && settings.showStatusBar && <StatusBar />}
+      {statusPos === 'bottom' && settings.showStatusBar && (
+        <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
+      )}
       {(!settings.showStatusBar || statusPos === 'bottom') && (
         <div className="floating-win-controls">
           <button className="fwc-btn" onClick={() => window.onyx!.minimize()} title="Minimize">─</button>
