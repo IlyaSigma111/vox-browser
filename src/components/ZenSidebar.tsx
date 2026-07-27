@@ -1,5 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore } from '../store'
+import { t } from '../lang'
+
+interface CtxMenu {
+  x: number; y: number; type: 'workspace'; wsId: number; wsName: string
+}
 
 export default function ZenSidebar() {
   const tabs = useStore(s => s.tabs)
@@ -12,14 +17,64 @@ export default function ZenSidebar() {
   const closeTab = useStore(s => s.closeTab)
   const switchWorkspace = useStore(s => s.switchWorkspace)
   const toggleGroupCollapse = useStore(s => s.toggleGroupCollapse)
-  const assignGroup = useStore(s => s.assignGroup)
-  const addGroup = useStore(s => s.addGroup)
+  const removeWorkspace = useStore(s => s.removeWorkspace)
+  const renameWorkspace = useStore(s => s.renameWorkspace)
+  const removeGroup = useStore(s => s.removeGroup)
+  const renameGroup = useStore(s => s.renameGroup)
+  const setGroupColor = useStore(s => s.setGroupColor)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
   const wsGroups = groups.filter(g => g.workspace === activeWorkspace)
   const ungrouped = wsTabs.filter(t => !t.groupId || !wsGroups.find(g => g.id === t.groupId))
 
   const [collapsed, setCollapsed] = useState(false)
+  const [ctx, setCtx] = useState<CtxMenu | null>(null)
+  const [renaming, setRenaming] = useState<{ type: 'workspace' | 'group'; id: string | number } | null>(null)
+  const renameRef = useRef<HTMLInputElement>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (renaming && renameRef.current) {
+      renameRef.current.focus()
+      renameRef.current.select()
+    }
+  }, [renaming])
+
+  useEffect(() => {
+    if (!ctx) return
+    const close = () => setCtx(null)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [ctx])
+
+  const openCtx = (e: React.MouseEvent, wsId: number, wsName: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCtx({ x: e.clientX, y: e.clientY, type: 'workspace', wsId, wsName })
+  }
+
+  const startRename = (type: 'workspace' | 'group', id: string | number) => {
+    setRenaming({ type, id })
+    setCtx(null)
+  }
+
+  const commitRename = () => {
+    if (!renaming || !renameRef.current) return
+    const val = renameRef.current.value.trim()
+    if (val) {
+      if (renaming.type === 'workspace') renameWorkspace(renaming.id as number, val)
+      else renameGroup(renaming.id as string, val)
+    }
+    setRenaming(null)
+  }
+
+  const getRenameValue = () => {
+    if (!renaming) return ''
+    if (renaming.type === 'workspace') {
+      return workspaces.find(w => w.id === renaming.id)?.name || ''
+    }
+    return groups.find(g => g.id === renaming.id)?.name || ''
+  }
 
   const renderTab = (t: typeof wsTabs[0]) => {
     const grp = t.groupId ? wsGroups.find(g => g.id === t.groupId) : null
@@ -34,7 +89,7 @@ export default function ZenSidebar() {
         {t.favicon ? (
           <img className="zen-tab-favicon" src={t.favicon} alt="" />
         ) : (
-          <div className="zen-tab-favicon zen-tab-favicon-placeholder" />
+          <div className="zen-tab-favicon-placeholder" />
         )}
         <span className="zen-tab-title">{t.title || 'New Tab'}</span>
         <button
@@ -49,8 +104,10 @@ export default function ZenSidebar() {
 
   if (collapsed) {
     return (
-      <div className="zen-sidebar zen-collapsed">
-        <button className="zen-expand-btn" onClick={() => setCollapsed(false)} title="Expand sidebar">›</button>
+      <div className="zen-sidebar zen-collapsed" ref={sidebarRef}>
+        <button className="zen-expand-btn" onClick={() => setCollapsed(false)} title="Expand sidebar">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 3l5 5-5 5"/></svg>
+        </button>
         <div className="zen-collapsed-workspaces">
           {workspaces.map(ws => (
             <button
@@ -58,9 +115,10 @@ export default function ZenSidebar() {
               className={`zen-collapsed-ws${ws.id === activeWorkspace ? ' active' : ''}`}
               style={ws.id === activeWorkspace ? { background: ws.color, color: '#fff' } : undefined}
               onClick={() => switchWorkspace(ws.id)}
-              title={`Workspace ${ws.name}`}
+              onContextMenu={(e) => openCtx(e, ws.id, ws.name)}
+              title={ws.name}
             >
-              {ws.name}
+              {ws.name.charAt(0)}
             </button>
           ))}
         </div>
@@ -83,12 +141,21 @@ export default function ZenSidebar() {
         <div className="zen-collapsed-bottom">
           <button className="zen-collapsed-add" onClick={() => addTab()} title="New tab">+</button>
         </div>
+        {ctx && <ContextMenu {...ctx} onRename={startRename} onRemove={(id) => { removeWorkspace(id); setCtx(null) }} />}
+        {renaming && (
+          <div className="zen-rename-overlay" onClick={() => setRenaming(null)}>
+            <div className="zen-rename-box" onClick={e => e.stopPropagation()}>
+              <input ref={renameRef} className="zen-rename-input" defaultValue={getRenameValue()} onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(null) }} />
+              <button className="zen-rename-ok" onClick={commitRename}>✓</button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
 
   return (
-    <div className="zen-sidebar">
+    <div className="zen-sidebar" ref={sidebarRef}>
       <div className="zen-ws-bar">
         {workspaces.map(ws => (
           <button
@@ -96,11 +163,7 @@ export default function ZenSidebar() {
             className={`zen-ws-btn${ws.id === activeWorkspace ? ' active' : ''}`}
             style={ws.id === activeWorkspace ? { background: ws.color, color: '#fff' } : undefined}
             onClick={() => switchWorkspace(ws.id)}
-            onContextMenu={(e) => {
-              e.preventDefault()
-              const name = prompt('Rename workspace:', ws.name)
-              if (name !== null) useStore.getState().renameWorkspace(ws.id, name)
-            }}
+            onContextMenu={(e) => openCtx(e, ws.id, ws.name)}
           >
             {ws.name}
             <span className="zen-ws-count">{tabs.filter(t => t.workspace === ws.id).length}</span>
@@ -112,7 +175,9 @@ export default function ZenSidebar() {
       <div className="zen-tabs">
         {wsGroups.map(grp => {
           const grpTabs = wsTabs.filter(t => t.groupId === grp.id)
-          if (grpTabs.length === 0) return null
+          if (grpTabs.length === 0 && !grp.collapsed) {
+            if (grp.collapsed) return null
+          }
           return (
             <div key={grp.id} className="zen-group">
               <div
@@ -121,8 +186,7 @@ export default function ZenSidebar() {
                 onClick={() => toggleGroupCollapse(grp.id)}
                 onContextMenu={(e) => {
                   e.preventDefault()
-                  const name = prompt('Group name:', grp.name)
-                  if (name !== null) useStore.getState().renameGroup(grp.id, name)
+                  startRename('group', grp.id)
                 }}
               >
                 <span className="zen-group-arrow">{grp.collapsed ? '›' : '⌄'}</span>
@@ -138,7 +202,38 @@ export default function ZenSidebar() {
 
       <div className="zen-bottom">
         <button className="zen-add-tab" onClick={() => addTab()} title="New tab (Ctrl+T)">+</button>
-        <button className="zen-collapse-btn" onClick={() => setCollapsed(true)} title="Collapse sidebar">‹</button>
+        <button className="zen-collapse-btn" onClick={() => setCollapsed(true)} title="Collapse sidebar">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 3l-5 5 5 5"/></svg>
+        </button>
+      </div>
+
+      {ctx && <ContextMenu {...ctx} onRename={startRename} onRemove={(id) => { removeWorkspace(id); setCtx(null) }} />}
+
+      {renaming && (
+        <div className="zen-rename-overlay" onClick={() => setRenaming(null)}>
+          <div className="zen-rename-box" onClick={e => e.stopPropagation()}>
+            <input ref={renameRef} className="zen-rename-input" defaultValue={getRenameValue()} onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(null) }} />
+            <button className="zen-rename-ok" onClick={commitRename}>✓</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ContextMenu({ x, y, wsId, wsName, onRename, onRemove }: { x: number; y: number; type: string; wsId: number; wsName: string; onRename: (type: 'workspace', id: number) => void; onRemove: (id: number) => void }) {
+  return (
+    <div className="ctx-overlay">
+      <div className="ctx-menu" style={{ left: x, top: y }} onClick={e => e.stopPropagation()}>
+        <div className="ctx-item" onClick={() => onRename('workspace', wsId)}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z"/></svg>
+          {t('workspace.rename') || 'Rename'}
+        </div>
+        <div className="ctx-sep" />
+        <div className="ctx-item danger" onClick={() => onRemove(wsId)}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h12M5 4V2h6v2M3 4v10h10V4"/><path d="M6 7v4M10 7v4"/></svg>
+          {t('workspace.remove') || 'Delete workspace'}
+        </div>
       </div>
     </div>
   )

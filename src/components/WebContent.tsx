@@ -150,6 +150,14 @@ const VIM_ENGINE = `(function(){
   }
 
   window.addEventListener('keydown',handleKey,true);
+
+  function autoHints(){
+    if(window._voxAutoHintsDone)return;
+    window._voxAutoHintsDone=true;
+    setTimeout(function(){activateHints();},300);
+  }
+  if(document.readyState==='complete'){autoHints();}
+  else{window.addEventListener('load',autoHints);}
 })();`
 
 export default function WebContent({ id, url, active }: { id: string; url: string; active: boolean }) {
@@ -171,6 +179,13 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
     registerWv(id, wv)
     return () => unregisterWv(id)
   }, [id, registerWv, unregisterWv])
+
+  // Focus webview when it becomes active
+  useEffect(() => {
+    const wv = ref.current
+    if (!wv || !active) return
+    wv.focus()
+  }, [active])
 
   // Navigate
   useEffect(() => {
@@ -208,7 +223,7 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
       }, 100)
     }
 
-    const onReady = () => { injectVim(); injectDark() }
+    const onReady = () => { wv.focus(); injectVim(); injectDark() }
 
     wv.addEventListener('dom-ready', onReady)
     wv.addEventListener('did-navigate', onReady)

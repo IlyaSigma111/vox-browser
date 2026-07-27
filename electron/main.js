@@ -51,6 +51,8 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
 
+
+
   mainWindow.webContents.on('did-fail-load', (_, code, desc) => {
     console.error('[Vox] load failed:', code, desc)
   })

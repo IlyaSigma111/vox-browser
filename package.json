@@ -7,8 +7,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "start": "vite build && electron .",
+    "build": "vite build && copy electron\\webview-preload.js dist-electron\\",
+    "start": "vite build && copy electron\\webview-preload.js dist-electron\\ && electron .",
     "dist": "vite build && electron-builder --win --x64",
     "pack": "vite build && electron-builder --dir"
   },

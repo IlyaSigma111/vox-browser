@@ -92,6 +92,16 @@ const strings: Record<Lang, Record<string, string>> = {
     'behavior.defaultSet': 'Default browser set!',
     'behavior.defaultOpen': 'Opening Windows settings...',
 
+    // Settings tabs
+    'settings.general': 'General',
+    'settings.appearance': 'Appearance',
+    'settings.behavior': 'Behavior',
+    'settings.system': 'System',
+
+    // Workspace
+    'workspace.rename': 'Rename workspace',
+    'workspace.remove': 'Delete workspace',
+
     // Tab shapes
     'shape.square': 'Square',
     'shape.rounded': 'Rounded',
@@ -184,6 +194,14 @@ const strings: Record<Lang, Record<string, string>> = {
     'behavior.openDefaultApps': 'Открыть настройки приложений по умолчанию',
     'behavior.defaultSet': 'Браузер установлен по умолчанию!',
     'behavior.defaultOpen': 'Открытие настроек Windows...',
+
+    'settings.general': 'Общие',
+    'settings.appearance': 'Внешний вид',
+    'settings.behavior': 'Поведение',
+    'settings.system': 'Система',
+
+    'workspace.rename': 'Переименовать',
+    'workspace.remove': 'Удалить воркспейс',
 
     'shape.square': 'Квадрат',
     'shape.rounded': 'Скруглённые',

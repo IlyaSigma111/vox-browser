@@ -133,6 +133,15 @@
     }
 
     window.addEventListener('keydown',handleKey,true);
+
+    // Auto-activate hints when page loads
+    function autoHints(){
+      if(window._voxAutoHintsDone)return;
+      window._voxAutoHintsDone=true;
+      setTimeout(function(){activateHints();},300);
+    }
+    if(document.readyState==='complete'){autoHints();}
+    else{window.addEventListener('load',autoHints);}
   })()`;
 
   function inject() {
@@ -158,6 +167,7 @@
   history.pushState = function() {
     origPush.apply(this, arguments);
     window._voxEngine = false;
+    window._voxAutoHintsDone = false;
     setTimeout(inject, 50);
   };
   history.replaceState = function() {
