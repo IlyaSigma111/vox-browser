@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { Tab, TabGroup, Workspace, Bookmark, HistoryEntry, Settings, VimMode, ThemePreset, ThemeColors } from './types'
+import type { Tab, TabGroup, Workspace, Bookmark, HistoryEntry, Download, Settings, VimMode, ThemePreset, ThemeColors } from './types'
+import type { UIPreset } from './presets'
 import { GROUP_COLORS, WORKSPACE_COLORS } from './types'
 import { setLang } from './lang'
 
@@ -131,12 +132,14 @@ interface Store {
   activeWorkspace: number
   bookmarks: Bookmark[]
   history: HistoryEntry[]
+  downloads: Download[]
   settings: Settings
   vimMode: VimMode
   showPalette: boolean
   paletteInput: string
-  sidebarTab: 'bookmarks' | 'history' | 'settings' | null
+  sidebarTab: 'bookmarks' | 'history' | 'downloads' | 'settings' | null
   webviews: Map<string, any>
+  customPresets: UIPreset[]
 
   addTab: (url?: string, workspace?: number) => string
   closeTab: (id: string) => void
@@ -162,11 +165,17 @@ interface Store {
   addHistory: (h: Omit<HistoryEntry, 'id' | 'visitedAt'>) => void
   clearHistory: () => void
 
+  addDownload: (d: Download) => void
+  updateDownload: (id: string, p: Partial<Download>) => void
+
+  saveCustomPreset: (p: UIPreset) => void
+  removeCustomPreset: (id: string) => void
+
   setSettings: (p: Partial<Settings>) => void
   setVimMode: (m: VimMode) => void
   setPalette: (v: boolean) => void
   setPaletteInput: (s: string) => void
-  setSidebar: (s: 'bookmarks' | 'history' | 'settings' | null) => void
+  setSidebar: (s: 'bookmarks' | 'history' | 'downloads' | 'settings' | null) => void
 
   registerWv: (id: string, ref: any) => void
   unregisterWv: (id: string) => void
@@ -217,6 +226,7 @@ const defaultSettings: Settings = {
   ],
   ntpBgColor: '',
   ntpLayout: 'default',
+  currentPreset: 'vox-classic',
 
   borderRadius: 4,
   transitionSpeed: 150,
@@ -272,12 +282,14 @@ export const useStore = create<Store>((set, get) => {
     activeWorkspace: 1,
     bookmarks: [] as Bookmark[],
     history: [] as HistoryEntry[],
+    downloads: [] as Download[],
     settings: defaultSettings,
     vimMode: 'normal' as VimMode,
     showPalette: false,
     paletteInput: '',
-    sidebarTab: null as 'bookmarks' | 'history' | 'settings' | null,
+    sidebarTab: null as 'bookmarks' | 'history' | 'downloads' | 'settings' | null,
     webviews: new Map<string, any>(),
+    customPresets: [] as UIPreset[],
   }
 
   window.onyx?.readData?.('settings.json', null).then((data: any) => {
@@ -303,6 +315,12 @@ export const useStore = create<Store>((set, get) => {
         restored.activeId = data.activeId || restored.tabs[0].id
       }
       set(restored)
+    }
+  }).catch(() => {})
+
+  window.onyx?.readData?.('custom-presets.json', []).then((data: any) => {
+    if (Array.isArray(data) && data.length > 0) {
+      set({ customPresets: data })
     }
   }).catch(() => {})
 
@@ -431,6 +449,28 @@ export const useStore = create<Store>((set, get) => {
   })),
 
   clearHistory: () => set({ history: [] }),
+
+  addDownload: (d) => set(s => ({ downloads: [d, ...s.downloads].slice(0, 200) })),
+
+  updateDownload: (id, p) => set(s => ({
+    downloads: s.downloads.map(d => d.id === id ? { ...d, ...p } : d),
+  })),
+
+  saveCustomPreset: (p) => set(s => {
+    const next = [...s.customPresets.filter(x => x.id !== p.id), p]
+    setTimeout(() => {
+      if (window.onyx?.writeData) window.onyx.writeData('custom-presets.json', next)
+    }, 0)
+    return { customPresets: next }
+  }),
+
+  removeCustomPreset: (id) => set(s => {
+    const next = s.customPresets.filter(p => p.id !== id)
+    setTimeout(() => {
+      if (window.onyx?.writeData) window.onyx.writeData('custom-presets.json', next)
+    }, 0)
+    return { customPresets: next }
+  }),
 
   setSettings: (p) => set(s => {
     const next = { ...s.settings, ...p }

@@ -78,6 +78,11 @@ export default function StatusBar() {
           <polyline points="8,4 8,8 11,10"/>
         </svg>
       </button>
+      <button className="sb-btn sb-icon" onClick={() => setSidebar('downloads')} title="Downloads">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 2v8M5 7l3 3 3-3M3 12h10"/>
+        </svg>
+      </button>
       <button className="sb-btn sb-icon" onClick={() => setSidebar('settings')} title="Settings">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="8" cy="8" r="2"/>

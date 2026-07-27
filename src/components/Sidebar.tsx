@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useStore, THEMES } from '../store'
 import type { ThemePreset } from '../types'
 import { t, setLang } from '../lang'
+import PresetCatalog from './PresetCatalog'
 
 const ICONS = {
   bookmark: (
@@ -15,6 +16,11 @@ const ICONS = {
       <polyline points="8,4 8,8 11,10"/>
     </svg>
   ),
+  download: (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <path d="M8 2v8M5 7l3 3 3-3M3 12h10"/>
+    </svg>
+  ),
 }
 
 export default function Sidebar() {
@@ -25,12 +31,13 @@ export default function Sidebar() {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : t('sidebar.settings')}</h3>
+        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : t('sidebar.settings')}</h3>
         <button className="sidebar-close" onClick={() => setSidebar(null)}>×</button>
       </div>
       <div className="sidebar-body">
         {sidebarTab === 'bookmarks' && <Bookmarks />}
         {sidebarTab === 'history' && <History />}
+        {sidebarTab === 'downloads' && <Downloads />}
         {sidebarTab === 'settings' && <SettingsPanel />}
       </div>
     </div>
@@ -76,11 +83,43 @@ function History() {
   </>
 }
 
+function Downloads() {
+  const downloads = useStore(s => s.downloads)
+  const openExternal = (url: string) => window.onyx?.openExternal?.(url)
+  const formatBytes = (b: number) => {
+    if (b < 1024) return b + ' B'
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'
+    return (b / 1048576).toFixed(1) + ' MB'
+  }
+  if (!downloads.length) return <div className="sidebar-section">{t('sidebar.noDownloads')}</div>
+  return <>
+    {downloads.map(d => (
+      <div key={d.id} className="sidebar-item" onClick={() => openExternal(d.url)} title={d.url}>
+        <span className="si-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M8 2v8M5 7l3 3 3-3M3 12h10"/>
+          </svg>
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="title">{d.filename}</div>
+          <div className="url">
+            {d.state === 'completed' ? <span style={{ color: 'var(--green)' }}>✓ {formatBytes(d.totalBytes)}</span>
+              : d.state === 'cancelled' || d.state === 'interrupted' ? <span style={{ color: 'var(--red)' }}>✗ {t('download.interrupted')}</span>
+              : <span>{formatBytes(d.receivedBytes)} / {formatBytes(d.totalBytes)}</span>
+            }
+          </div>
+        </div>
+      </div>
+    ))}
+  </>
+}
+
 function SettingsPanel() {
   const settings = useStore(s => s.settings)
   const setSettings = useStore(s => s.setSettings)
   const c = settings.theme === 'custom' ? settings.customColors : THEMES[settings.theme]
   const [tab, setTab] = useState<'general' | 'appearance' | 'behavior'>('general')
+  const [showPresets, setShowPresets] = useState(false)
 
   const setLangAndSettings = (lang: string) => {
     setLang(lang)
@@ -88,6 +127,7 @@ function SettingsPanel() {
   }
 
   return <div className="settings-panel">
+    {showPresets && <PresetCatalog onClose={() => setShowPresets(false)} />}
     <div className="settings-tabs">
       <button className={`settings-tab${tab === 'general' ? ' active' : ''}`} onClick={() => setTab('general')}>{t('settings.general')}</button>
       <button className={`settings-tab${tab === 'appearance' ? ' active' : ''}`} onClick={() => setTab('appearance')}>{t('settings.appearance')}</button>
@@ -161,6 +201,15 @@ function SettingsPanel() {
     </div>}
 
     {tab === 'appearance' && <div className="settings-sections">
+      <Section title={t('settings.presets')}>
+        <div className="st-actions">
+          <button className="st-action-btn" onClick={() => setShowPresets(true)}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+            {t('presets.title')} — {settings.currentPreset || 'Vox Classic'}
+          </button>
+        </div>
+      </Section>
+
       <Section title={t('theme')}>
         <StRow label={t('theme.preset')}>
           <select value={settings.theme} onChange={e => setSettings({ theme: e.target.value as ThemePreset })}>

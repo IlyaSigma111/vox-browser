@@ -15,4 +15,7 @@ contextBridge.exposeInMainWorld('onyx', {
   setDefaultBrowser: () => ipcRenderer.invoke('browser:setDefault'),
   openDefaultApps: () => ipcRenderer.invoke('browser:openDefaultApps'),
   getBrowserPath: () => ipcRenderer.invoke('browser:getPath'),
+  onDownloadStart: (cb) => ipcRenderer.on('download:start', (_, info) => cb(info)),
+  onDownloadProgress: (cb) => ipcRenderer.on('download:progress', (_, data) => cb(data)),
+  onDownloadDone: (cb) => ipcRenderer.on('download:done', (_, data) => cb(data)),
 })

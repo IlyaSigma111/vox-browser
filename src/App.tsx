@@ -62,6 +62,15 @@ export default function App() {
     setLang(settings.language)
   }, [])
 
+  // Download listeners
+  useEffect(() => {
+    const addDownload = useStore.getState().addDownload
+    const updateDownload = useStore.getState().updateDownload
+    window.onyx?.onDownloadStart?.((info: any) => addDownload(info))
+    window.onyx?.onDownloadProgress?.((data: any) => updateDownload(data.id, { receivedBytes: data.receivedBytes }))
+    window.onyx?.onDownloadDone?.((data: any) => updateDownload(data.id, { state: data.state, receivedBytes: data.receivedBytes }))
+  }, [])
+
   // Theme + layout CSS vars
   useEffect(() => {
     const colors = THEMES[settings.theme] || THEMES['tokyo-night']

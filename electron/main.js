@@ -32,7 +32,7 @@ function createWindow() {
     minHeight: 400,
     frame: false,
     titleBarStyle: 'hidden',
-    backgroundColor: '#000000',
+    backgroundColor: '#1a1b26',
     title: 'Vox',
     icon: path.join(__dirname, '../build/icon.png'),
     webPreferences: {
@@ -161,6 +161,32 @@ ipcMain.handle('ext:list', () => {
       const m = JSON.parse(fs.readFileSync(path.join(EXT_DIR, d, 'manifest.json'), 'utf-8'))
       return m.manifest_version === 2 || m.manifest_version === 3
     } catch { return false }
+  })
+})
+
+// ─── Downloads ────────────────────────────────────
+session.defaultSession.on('will-download', (event, item) => {
+  const info = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    filename: item.getFilename(),
+    url: item.getURL(),
+    totalBytes: item.getTotalBytes(),
+    receivedBytes: 0,
+    state: 'progressing',
+    startTime: Date.now(),
+  }
+  if (mainWindow) mainWindow.webContents.send('download:start', info)
+
+  item.on('updated', (event, state) => {
+    if (state === 'progressing' && !item.isPaused()) {
+      info.receivedBytes = item.getReceivedBytes()
+      if (mainWindow) mainWindow.webContents.send('download:progress', { id: info.id, receivedBytes: info.receivedBytes })
+    }
+  })
+  item.once('done', (event, state) => {
+    info.state = state
+    info.receivedBytes = item.getReceivedBytes()
+    if (mainWindow) mainWindow.webContents.send('download:done', { id: info.id, state, receivedBytes: info.receivedBytes })
   })
 })
 

@@ -48,6 +48,16 @@ export interface HistoryEntry {
   visitedAt: number
 }
 
+export interface Download {
+  id: string
+  filename: string
+  url: string
+  totalBytes: number
+  receivedBytes: number
+  state: string
+  startTime: number
+}
+
 export type VimMode = 'normal' | 'insert' | 'command' | 'hint'
 
 export interface VimKeyBinding {
@@ -112,6 +122,7 @@ export interface Settings {
   ntpQuickLinks: Array<{ name: string; url: string }>
   ntpBgColor: string
   ntpLayout: 'default' | 'minimal' | 'centered' | 'zen' | 'gradient'
+  currentPreset: string
 
   borderRadius: number
   transitionSpeed: number
@@ -137,6 +148,9 @@ declare global {
       setDefaultBrowser: () => Promise<{ success: boolean; error?: string }>
       openDefaultApps: () => Promise<void>
       getBrowserPath: () => Promise<string>
+      onDownloadStart: (cb: (info: any) => void) => void
+      onDownloadProgress: (cb: (data: any) => void) => void
+      onDownloadDone: (cb: (data: any) => void) => void
     }
   }
 }

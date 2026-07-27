@@ -7,10 +7,13 @@ const strings: Record<Lang, Record<string, string>> = {
     // Sidebar
     'sidebar.bookmarks': '★ Bookmarks',
     'sidebar.history': '⏱ History',
+    'sidebar.downloads': '⬇ Downloads',
     'sidebar.settings': '⚙ Settings',
     'sidebar.noBookmarks': 'No bookmarks yet',
     'sidebar.noHistory': 'No history yet',
+    'sidebar.noDownloads': 'No downloads yet',
     'sidebar.clearHistory': 'Clear history',
+    'download.interrupted': 'Interrupted',
 
     // Settings — Theme
     'theme': 'Theme',
@@ -106,6 +109,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'settings.appearance': 'Appearance',
     'settings.behavior': 'Behavior',
     'settings.system': 'System',
+    'settings.presets': 'Presets',
 
     // Workspace
     'workspace.rename': 'Rename workspace',
@@ -124,14 +128,25 @@ const strings: Record<Lang, Record<string, string>> = {
     'mode.insert': 'INSERT',
     'mode.hint': 'HINT',
     'mode.command': 'CMD',
+
+    // Presets
+    'presets.title': 'UI Presets',
+    'presets.builtin': 'Built-in',
+    'presets.mine': 'My Presets',
+    'presets.apply': 'Apply',
+    'presets.saveCurrent': 'Save Current Settings as Preset',
+    'presets.namePlaceholder': 'Preset name...',
+    'presets.hint': 'Click a preset to see it. Click Apply to transform the entire browser.',
   },
 
   ru: {
     'sidebar.bookmarks': '★ Закладки',
     'sidebar.history': '⏱ История',
+    'sidebar.downloads': '⬇ Загрузки',
     'sidebar.settings': '⚙ Настройки',
     'sidebar.noBookmarks': 'Нет закладок',
     'sidebar.noHistory': 'Нет истории',
+    'sidebar.noDownloads': 'Нет загрузок',
     'sidebar.clearHistory': 'Очистить историю',
 
     'theme': 'Тема',
@@ -217,6 +232,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'settings.appearance': 'Внешний вид',
     'settings.behavior': 'Поведение',
     'settings.system': 'Система',
+    'settings.presets': 'Пресеты',
 
     'workspace.rename': 'Переименовать',
     'workspace.remove': 'Удалить воркспейс',
@@ -232,6 +248,14 @@ const strings: Record<Lang, Record<string, string>> = {
     'mode.insert': 'ВСТАВКА',
     'mode.hint': 'ПОДСКАЗКА',
     'mode.command': 'КОМАНДА',
+
+    'presets.title': 'UI Пресеты',
+    'presets.builtin': 'Встроенные',
+    'presets.mine': 'Мои пресеты',
+    'presets.apply': 'Применить',
+    'presets.saveCurrent': 'Сохранить текущие настройки как пресет',
+    'presets.namePlaceholder': 'Название пресета...',
+    'presets.hint': 'Нажми на пресет чтобы увидеть. Нажми "Применить" чтобы полностью изменить браузер.',
   },
 }
 
