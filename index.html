@@ -112,6 +112,12 @@
     color: var(--fg-dim);
     margin-top: 20px;
   }
+  .download-count {
+    font-size: 13px;
+    color: var(--green);
+    margin-top: 10px;
+    font-weight: 600;
+  }
 
   .preview {
     max-width: 800px;
@@ -239,6 +245,7 @@
     </a>
   </div>
   <div class="version">v1.0.0 · Electron · Chromium · ru/en</div>
+  <div class="download-count" id="dl-count">⬇ ... downloads</div>
 </div>
 
 <div class="preview">
@@ -362,6 +369,17 @@
 <div class="footer">
   Vox Browser v1.0.0 · Built with Electron + React + Zustand
 </div>
+
+<script>
+fetch('https://api.github.com/repos/IlyaSigma111/vox-browser/releases/latest')
+  .then(r => r.json())
+  .then(data => {
+    var count = 0;
+    if (data.assets) data.assets.forEach(function(a) { count += a.download_count || 0; });
+    document.getElementById('dl-count').textContent = '⬇ ' + count + ' downloads';
+  })
+  .catch(function() {});
+</script>
 
 </body>
 </html>
