@@ -104,11 +104,16 @@ export interface Settings {
   tabBarShowFavicon: boolean
   tabBarShowIndicator: boolean
   tabShape: 'square' | 'rounded' | 'pill' | 'trapezoid' | 'yandex' | 'wave'
+  tabBarPosition: 'top' | 'bottom'
 
   statusBarHeight: number
   statusBarShowMode: boolean
   statusBarShowUrl: boolean
   statusBarShowCount: boolean
+  statusBarPosition: 'top' | 'bottom'
+
+  sidebarPosition: 'left' | 'right'
+  sidebarWidth: number
 
   titlebarHeight: number
 

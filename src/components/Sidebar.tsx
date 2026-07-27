@@ -26,10 +26,11 @@ const ICONS = {
 export default function Sidebar() {
   const sidebarTab = useStore(s => s.sidebarTab)
   const setSidebar = useStore(s => s.setSidebar)
+  const sidePos = useStore(s => s.settings.sidebarPosition)
   if (!sidebarTab) return null
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar${sidePos === 'right' ? ' sidebar-right' : ''}`}>
       <div className="sidebar-header">
         <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : t('sidebar.settings')}</h3>
         <button className="sidebar-close" onClick={() => setSidebar(null)}>×</button>
@@ -293,6 +294,34 @@ function SettingsPanel() {
         <StRow label={t('statusBar.showUrl')}><Toggle value={settings.statusBarShowUrl} onChange={v => setSettings({ statusBarShowUrl: v })} /></StRow>
         <StRow label={t('statusBar.showCount')}><Toggle value={settings.statusBarShowCount} onChange={v => setSettings({ statusBarShowCount: v })} /></StRow>
         <StRow label={t('statusBar.show')}><Toggle value={settings.showStatusBar} onChange={v => setSettings({ showStatusBar: v })} /></StRow>
+      </Section>
+
+      <Section title={t('layout')}>
+        <StRow label={t('layout.tabBarPosition')}>
+          <select value={settings.tabBarPosition} onChange={e => setSettings({ tabBarPosition: e.target.value as any })}>
+            <option value="top">{t('layout.top')}</option>
+            <option value="bottom">{t('layout.bottom')}</option>
+          </select>
+        </StRow>
+        <StRow label={t('layout.statusBarPosition')}>
+          <select value={settings.statusBarPosition} onChange={e => setSettings({ statusBarPosition: e.target.value as any })}>
+            <option value="top">{t('layout.top')}</option>
+            <option value="bottom">{t('layout.bottom')}</option>
+          </select>
+        </StRow>
+        <StRow label={t('layout.sidebarPosition')}>
+          <select value={settings.sidebarPosition} onChange={e => setSettings({ sidebarPosition: e.target.value as any })}>
+            <option value="left">{t('layout.left')}</option>
+            <option value="right">{t('layout.right')}</option>
+          </select>
+        </StRow>
+        <StRow label={t('layout.sidebarWidth')}>
+          <div className="st-slider-row">
+            <input type="range" min="200" max="500" value={settings.sidebarWidth}
+              onChange={e => setSettings({ sidebarWidth: Number(e.target.value) })} />
+            <span className="st-val">{settings.sidebarWidth}px</span>
+          </div>
+        </StRow>
       </Section>
 
       <Section title={t('visual')}>

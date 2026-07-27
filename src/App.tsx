@@ -97,6 +97,7 @@ export default function App() {
     root.style.setProperty('--speed', settings.transitionSpeed + 'ms')
     root.style.setProperty('--tab-opacity', String(settings.tabOpacity))
     root.style.setProperty('--tab-shape', settings.tabShape)
+    root.style.setProperty('--sidebar-w', settings.sidebarWidth + 'px')
     if (settings.ntpBgColor) {
       root.style.setProperty('--ntp-bg', settings.ntpBgColor)
     }
@@ -160,15 +161,33 @@ export default function App() {
 
   const wsPos = settings.workspacePosition || 'top'
   const zen = settings.zenMode
+  const tabPos = settings.tabBarPosition || 'bottom'
+  const statusPos = settings.statusBarPosition || 'bottom'
+  const sidePos = settings.sidebarPosition || 'left'
+
+  const content = (
+    <div className="content">
+      {sidePos === 'left' && <Sidebar />}
+      <div className="main">
+        {wsTabs.map(t => (
+          <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
+        ))}
+        {isNew && <NewTabPage />}
+        <HintOverlay />
+      </div>
+      {sidePos === 'right' && <Sidebar />}
+    </div>
+  )
 
   return (
     <div className={`browser${zen ? ' zen-layout' : ''}`}>
+      {statusPos === 'top' && settings.showStatusBar && <StatusBar />}
       <div className="titlebar" style={{ height: settings.titlebarHeight }} />
       {zen ? (
         <>
           <div className="content">
             <ZenSidebar />
-            <Sidebar />
+            {sidePos === 'left' && <Sidebar />}
             <div className="main">
               {wsTabs.map(t => (
                 <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
@@ -176,26 +195,29 @@ export default function App() {
               {isNew && <NewTabPage />}
               <HintOverlay />
             </div>
+            {sidePos === 'right' && <Sidebar />}
           </div>
         </>
       ) : (
         <>
           {wsPos === 'top' && settings.workspaceShow && <WorkspaceBar />}
-          <div className="content">
-            <Sidebar />
-            <div className="main">
-              {wsTabs.map(t => (
-                <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
-              ))}
-              {isNew && <NewTabPage />}
-              <HintOverlay />
-            </div>
-          </div>
-          {settings.showTabBar && <TabBar />}
+          {tabPos === 'top' && settings.showTabBar && <TabBar />}
+          {content}
+          {tabPos === 'bottom' && settings.showTabBar && <TabBar />}
           {wsPos === 'bottom' && settings.workspaceShow && <WorkspaceBar />}
         </>
       )}
-      {settings.showStatusBar && <StatusBar />}
+      {statusPos === 'bottom' && settings.showStatusBar && <StatusBar />}
+      {(!settings.showStatusBar || statusPos === 'bottom') && (
+        <div className="floating-win-controls">
+          <button className="fwc-btn" onClick={() => window.onyx!.minimize()} title="Minimize">─</button>
+          <button className="fwc-btn" onClick={() => window.onyx!.maximize()} title="Maximize">□</button>
+          <button className="fwc-btn fwc-close" onClick={() => window.onyx!.close()} title="Close">×</button>
+        </div>
+      )}
+      {!settings.showStatusBar && (
+        <button className="floating-settings" onClick={() => useStore.getState().setSidebar('settings')} title="Settings">⚙</button>
+      )}
       <CommandPalette />
     </div>
   )

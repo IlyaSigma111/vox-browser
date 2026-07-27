@@ -202,11 +202,16 @@ const defaultSettings: Settings = {
   tabBarShowFavicon: true,
   tabBarShowIndicator: true,
   tabShape: 'rounded',
+  tabBarPosition: 'bottom',
 
   statusBarHeight: 28,
   statusBarShowMode: true,
   statusBarShowUrl: true,
   statusBarShowCount: true,
+  statusBarPosition: 'bottom',
+
+  sidebarPosition: 'left',
+  sidebarWidth: 340,
 
   titlebarHeight: 6,
 

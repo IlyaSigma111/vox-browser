@@ -1,17 +1,15 @@
 import { useState } from 'react'
-import { useStore, THEMES } from '../store'
+import { useStore } from '../store'
 import type { UIPreset } from '../presets'
 import { BUILT_IN_PRESETS, applyPreset } from '../presets'
 import { t } from '../lang'
 
 export default function PresetCatalog({ onClose }: { onClose: () => void }) {
-  const [selected, setSelected] = useState<string | null>(null)
   const [tab, setTab] = useState<'builtin' | 'custom'>('builtin')
   const settings = useStore(s => s.settings)
   const setSettings = useStore(s => s.setSettings)
   const customPresets = useStore(s => s.customPresets)
   const saveCustomPreset = useStore(s => s.saveCustomPreset)
-  const removeCustomPreset = useStore(s => s.removeCustomPreset)
 
   const [saving, setSaving] = useState(false)
   const [saveName, setSaveName] = useState('')
@@ -19,6 +17,11 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
   const currentPreset = settings.currentPreset || 'vox-classic'
 
   const allPresets = tab === 'builtin' ? BUILT_IN_PRESETS : customPresets
+
+  const handleApply = (p: UIPreset) => {
+    applyPreset(p, setSettings)
+    onClose()
+  }
 
   const handleSave = () => {
     if (!saveName.trim()) return
@@ -41,6 +44,10 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
       transitionSpeed: settings.transitionSpeed,
       tabOpacity: settings.tabOpacity,
       ntpLayout: settings.ntpLayout,
+      tabBarPosition: settings.tabBarPosition,
+      statusBarPosition: settings.statusBarPosition,
+      sidebarPosition: settings.sidebarPosition,
+      sidebarWidth: settings.sidebarWidth,
       workspacePosition: settings.workspacePosition,
       showTabBar: settings.showTabBar,
       showStatusBar: settings.showStatusBar,
@@ -54,7 +61,7 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="preset-overlay" onClick={onClose}>
+    <div className="preset-overlay">
       <div className="preset-modal" onClick={e => e.stopPropagation()}>
         <div className="preset-header">
           <h2>{t('presets.title')}</h2>
@@ -72,8 +79,8 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
           {allPresets.map(p => (
             <div
               key={p.id}
-              className={`preset-card${currentPreset === p.id ? ' active' : ''}${selected === p.id ? ' selected' : ''}`}
-              onClick={() => setSelected(selected === p.id ? null : p.id)}
+              className={`preset-card${currentPreset === p.id ? ' active' : ''}`}
+              onClick={() => handleApply(p)}
             >
               <div className="preset-preview" style={{ background: p.bg }}>
                 <div className="preset-preview-bar" style={{ background: p.bg }}>
@@ -96,17 +103,12 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
                 <div className="preset-meta">
                   <span className="preset-tag" style={{ borderColor: p.accent }}>{p.theme}</span>
                   <span className="preset-tag">{p.tabShape}</span>
+                  <span className="preset-tag">tabs:{p.tabBarPosition}</span>
+                  <span className="preset-tag">side:{p.sidebarPosition}</span>
                   {p.zenMode && <span className="preset-tag accent">zen</span>}
                 </div>
               </div>
-              {currentPreset === p.id && <div className="preset-active-badge">●</div>}
-              {selected === p.id && (
-                <div className="preset-actions">
-                  <button className="preset-apply-btn" onClick={e => { e.stopPropagation(); applyPreset(p, setSettings); onClose() }}>
-                    {t('presets.apply')}
-                  </button>
-                </div>
-              )}
+              {currentPreset === p.id && <div className="preset-active-badge">✓</div>}
             </div>
           ))}
         </div>

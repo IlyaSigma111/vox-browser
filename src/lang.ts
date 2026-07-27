@@ -49,6 +49,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'tabBar.showFavicon': 'Favicon',
     'tabBar.showIndicator': 'Indicator dot',
     'tabBar.show': 'Show tab bar',
+    'tabBar.position': 'Position',
 
     // Settings — Status Bar
     'statusBar': 'Status Bar',
@@ -57,6 +58,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'statusBar.showUrl': 'URL',
     'statusBar.showCount': 'Tab count',
     'statusBar.show': 'Show status bar',
+    'statusBar.position': 'Position',
 
     // Settings — Titlebar
     'titlebar': 'Title Bar',
@@ -85,6 +87,17 @@ const strings: Record<Lang, Record<string, string>> = {
     'theme.dark': 'Dark',
     'theme.light': 'Light',
     'theme.custom': 'Custom',
+
+    // Settings — Sidebar Layout
+    'layout': 'Layout',
+    'layout.sidebarPosition': 'Sidebar position',
+    'layout.sidebarWidth': 'Sidebar width',
+    'layout.tabBarPosition': 'Tab bar position',
+    'layout.statusBarPosition': 'Status bar position',
+    'layout.left': 'Left',
+    'layout.right': 'Right',
+    'layout.top': 'Top',
+    'layout.bottom': 'Bottom',
 
     // Settings — Visual
     'visual': 'Visual',
@@ -134,6 +147,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'presets.builtin': 'Built-in',
     'presets.mine': 'My Presets',
     'presets.apply': 'Apply',
+    'presets.applied': 'Applied',
     'presets.saveCurrent': 'Save Current Settings as Preset',
     'presets.namePlaceholder': 'Preset name...',
     'presets.hint': 'Click a preset to see it. Click Apply to transform the entire browser.',
@@ -179,6 +193,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'tabBar.showFavicon': 'Favicon',
     'tabBar.showIndicator': 'Индикатор',
     'tabBar.show': 'Показать панель',
+    'tabBar.position': 'Позиция',
 
     'statusBar': 'Строка состояния',
     'statusBar.height': 'Высота',
@@ -186,6 +201,7 @@ const strings: Record<Lang, Record<string, string>> = {
     'statusBar.showUrl': 'URL',
     'statusBar.showCount': 'Счётчик вкладок',
     'statusBar.show': 'Показать строку',
+    'statusBar.position': 'Позиция',
 
     'titlebar': 'Заголовок',
     'titlebar.height': 'Высота',
@@ -253,9 +269,20 @@ const strings: Record<Lang, Record<string, string>> = {
     'presets.builtin': 'Встроенные',
     'presets.mine': 'Мои пресеты',
     'presets.apply': 'Применить',
+    'presets.applied': 'Применён',
     'presets.saveCurrent': 'Сохранить текущие настройки как пресет',
     'presets.namePlaceholder': 'Название пресета...',
     'presets.hint': 'Нажми на пресет чтобы увидеть. Нажми "Применить" чтобы полностью изменить браузер.',
+
+    'layout': 'Макет',
+    'layout.sidebarPosition': 'Позиция сайдбара',
+    'layout.sidebarWidth': 'Ширина сайдбара',
+    'layout.tabBarPosition': 'Позиция панели вкладок',
+    'layout.statusBarPosition': 'Позиция строки состояния',
+    'layout.left': 'Слева',
+    'layout.right': 'Справа',
+    'layout.top': 'Сверху',
+    'layout.bottom': 'Снизу',
   },
 }
 

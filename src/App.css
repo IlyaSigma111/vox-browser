@@ -18,6 +18,7 @@
   --radius: 4px;
   --speed: 150ms;
   --tab-opacity: 1;
+  --sidebar-w: 340px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,6 +39,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .titlebar {
@@ -52,12 +54,15 @@ html, body, #root {
   display: flex;
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
 }
 
 .main {
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* ─── Webviews ──────────────────────────────────── */
@@ -401,13 +406,19 @@ html, body, #root {
 /* ─── Sidebar ───────────────────────────────────── */
 
 .sidebar {
-  width: 340px;
+  width: var(--sidebar-w, 340px);
   background: var(--bg-dim);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.sidebar.sidebar-right {
+  border-right: none;
+  border-left: 1px solid var(--border);
+  order: 10;
 }
 
 .sidebar-header {
@@ -1463,6 +1474,63 @@ html, body, #root {
 
 .zen-collapsed-add:hover { color: var(--green); border-color: var(--green); }
 
+/* ─── Floating settings button ────────────────────── */
+
+.floating-settings {
+  position: fixed;
+  bottom: 8px;
+  right: 48px;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-dim);
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-size: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--speed);
+  opacity: 0.5;
+}
+
+.floating-settings:hover {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ─── Floating window controls (top-right) ──────── */
+
+.floating-win-controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  z-index: 900;
+  -webkit-app-region: no-drag;
+}
+
+.fwc-btn {
+  width: 46px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--speed);
+  -webkit-app-region: no-drag;
+}
+
+.fwc-btn:hover { background: rgba(255,255,255,0.1); }
+.fwc-close:hover { background: #e81123; color: #fff; }
+
 /* ─── Preset Catalog ───────────────────────────── */
 
 .preset-overlay {
@@ -1557,15 +1625,17 @@ html, body, #root {
   background: var(--bg);
   border: 2px solid var(--border);
   border-radius: var(--radius);
-  cursor: pointer;
   overflow: hidden;
   position: relative;
   transition: border-color var(--speed), transform var(--speed);
+  display: flex;
+  flex-direction: column;
 }
 
 .preset-card:hover { border-color: var(--fg-dim); transform: translateY(-2px); }
-.preset-card.selected { border-color: var(--accent); }
 .preset-card.active { border-color: var(--green); }
+
+.preset-clickable { cursor: pointer; flex: 1; }
 
 .preset-active-badge {
   position: absolute;
@@ -1667,6 +1737,7 @@ html, body, #root {
 
 .preset-actions {
   padding: 0 10px 8px;
+  flex-shrink: 0;
 }
 
 .preset-apply-btn {

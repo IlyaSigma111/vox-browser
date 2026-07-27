@@ -22,6 +22,7 @@ export default function ZenSidebar() {
   const removeGroup = useStore(s => s.removeGroup)
   const renameGroup = useStore(s => s.renameGroup)
   const setGroupColor = useStore(s => s.setGroupColor)
+  const setSidebar = useStore(s => s.setSidebar)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
   const wsGroups = groups.filter(g => g.workspace === activeWorkspace)
@@ -140,6 +141,9 @@ export default function ZenSidebar() {
         </div>
         <div className="zen-collapsed-bottom">
           <button className="zen-collapsed-add" onClick={() => addTab()} title="New tab">+</button>
+          <button className="zen-collapsed-add" onClick={() => setSidebar('settings')} title="Settings">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M13.1 2.9l-1.4 1.4M4.3 11.7l-1.4 1.4"/></svg>
+          </button>
         </div>
         {ctx && <ContextMenu {...ctx} onRename={startRename} onRemove={(id) => { removeWorkspace(id); setCtx(null) }} />}
         {renaming && (
@@ -202,6 +206,9 @@ export default function ZenSidebar() {
 
       <div className="zen-bottom">
         <button className="zen-add-tab" onClick={() => addTab()} title="New tab (Ctrl+T)">+</button>
+        <button className="zen-collapse-btn" onClick={() => setSidebar('settings')} title="Settings">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M13.1 2.9l-1.4 1.4M4.3 11.7l-1.4 1.4"/></svg>
+        </button>
         <button className="zen-collapse-btn" onClick={() => setCollapsed(true)} title="Collapse sidebar">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 3l-5 5 5 5"/></svg>
         </button>

@@ -8,6 +8,9 @@ const DATA_DIR = path.join(app.getPath('userData'), 'vox-data')
 const EXT_DIR = path.join(app.getPath('userData'), 'extensions')
 const EXE_PATH = process.execPath
 
+// Spoof user agent so Google doesn't block sign-in
+const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 }
@@ -91,6 +94,9 @@ process.on('unhandledRejection', (err) => {
 })
 
 app.whenReady().then(() => {
+  // Spoof user agent globally (Google blocks Electron's default UA)
+  session.defaultSession.setUserAgent(CHROME_UA)
+
   createWindow()
 
   // Permissive CSP for web content
