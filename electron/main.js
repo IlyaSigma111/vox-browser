@@ -122,6 +122,32 @@ app.whenReady().then(() => {
   // Load extensions from userData/extensions/
   loadExtensions()
 
+  // Downloads
+  session.defaultSession.on('will-download', (event, item) => {
+    const info = {
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      filename: item.getFilename(),
+      url: item.getURL(),
+      totalBytes: item.getTotalBytes(),
+      receivedBytes: 0,
+      state: 'progressing',
+      startTime: Date.now(),
+    }
+    if (mainWindow) mainWindow.webContents.send('download:start', info)
+
+    item.on('updated', (event, state) => {
+      if (state === 'progressing' && !item.isPaused()) {
+        info.receivedBytes = item.getReceivedBytes()
+        if (mainWindow) mainWindow.webContents.send('download:progress', { id: info.id, receivedBytes: info.receivedBytes })
+      }
+    })
+    item.once('done', (event, state) => {
+      info.state = state
+      info.receivedBytes = item.getReceivedBytes()
+      if (mainWindow) mainWindow.webContents.send('download:done', { id: info.id, state, receivedBytes: info.receivedBytes })
+    })
+  })
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
@@ -165,30 +191,7 @@ ipcMain.handle('ext:list', () => {
 })
 
 // ─── Downloads ────────────────────────────────────
-session.defaultSession.on('will-download', (event, item) => {
-  const info = {
-    id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    filename: item.getFilename(),
-    url: item.getURL(),
-    totalBytes: item.getTotalBytes(),
-    receivedBytes: 0,
-    state: 'progressing',
-    startTime: Date.now(),
-  }
-  if (mainWindow) mainWindow.webContents.send('download:start', info)
-
-  item.on('updated', (event, state) => {
-    if (state === 'progressing' && !item.isPaused()) {
-      info.receivedBytes = item.getReceivedBytes()
-      if (mainWindow) mainWindow.webContents.send('download:progress', { id: info.id, receivedBytes: info.receivedBytes })
-    }
-  })
-  item.once('done', (event, state) => {
-    info.state = state
-    info.receivedBytes = item.getReceivedBytes()
-    if (mainWindow) mainWindow.webContents.send('download:done', { id: info.id, state, receivedBytes: info.receivedBytes })
-  })
-})
+// (registered inside app.whenReady below)
 
 // ─── Default browser ──────────────────────────────
 ipcMain.handle('browser:setDefault', async () => {
