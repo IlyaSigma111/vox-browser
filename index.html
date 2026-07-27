@@ -17,6 +17,7 @@
     --red: #f7768e;
     --purple: #bb9af7;
     --cyan: #7dcfff;
+    --orange: #ff9e64;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -139,6 +140,8 @@
   .preview-content .gr { color: var(--green); }
   .preview-content .rd { color: var(--red); }
   .preview-content .pr { color: var(--purple); }
+  .preview-content .cy { color: var(--cyan); }
+  .preview-content .or { color: var(--orange); }
 
   .features {
     max-width: 1000px;
@@ -224,14 +227,18 @@
   <div class="logo">Vox</div>
   <div class="tagline">
     Keyboard-first browser with Vim integration.<br>
+    Workspaces. Tab groups. Deep customization.<br>
     No bloat. No distractions. Just speed.
   </div>
   <div class="hero-buttons">
     <a class="btn btn-primary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.0.0/Vox.Setup.1.0.0.exe">
       Download for Windows
     </a>
+    <a class="btn btn-secondary" href="https://github.com/IlyaSigma111/vox-browser">
+      Source on GitHub
+    </a>
   </div>
-  <div class="version">v1.0.0 · Electron · Chromium</div>
+  <div class="version">v1.0.0 · Electron · Chromium · ru/en</div>
 </div>
 
 <div class="preview">
@@ -239,9 +246,12 @@
     <div class="preview-dot" style="background: var(--red)"></div>
     <div class="preview-dot" style="background: var(--orange)"></div>
     <div class="preview-dot" style="background: var(--green)"></div>
+    <div style="flex:1; text-align:center; font-size:11px; color: var(--fg-dim);">Vox Browser</div>
   </div>
   <div class="preview-content">
     <span class="gr">NORMAL</span> ─ <span class="hl">https://github.com</span><br>
+    <br>
+    <span class="cy">WS:1</span> <span class="or">Workspaces</span> — Alt+1-9 to switch<br>
     <br>
     <span class="pr">:tabnew</span> → open new tab<br>
     <span class="pr">:bookmarks</span> → open bookmarks sidebar<br>
@@ -251,7 +261,7 @@
     <span class="pr">Ctrl+D</span> → toggle dark reader<br>
     <span class="pr">:</span> → command palette<br>
     <br>
-    <span class="rd">9 themes</span> · <span class="hl">6 tab shapes</span> · <span class="gr">extensions</span>
+    <span class="gr">14 themes</span> · <span class="hl">6 tab shapes</span> · <span class="gr">tab groups</span> · <span class="cy">workspaces</span> · <span class="or">30+ settings</span>
   </div>
 </div>
 
@@ -261,12 +271,22 @@
     <div class="feature-card">
       <div class="feature-icon">⌨</div>
       <h3>Vim Keybindings</h3>
-      <p>Native hint mode (f), command palette (:), insert mode (i), scroll (j/k). Everything from keyboard.</p>
+      <p>Native hint mode (f), command palette (:), insert mode (i), scroll (j/k). All keys handled inside the page like Vimium.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗂</div>
+      <h3>Workspaces</h3>
+      <p>Hyperland-style workspaces with Alt+1-9 switching. Each workspace has its own tabs, independent and isolated.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📁</div>
+      <h3>Tab Groups</h3>
+      <p>Group tabs by color and name. Collapse/expand, assign via context menu. Organize your browsing.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🎨</div>
-      <h3>9 Themes + Custom</h3>
-      <p>Tokyo Night, Dracula, Monokai, Nord, Solarized, Ayu, One Dark, Gruvbox, and full custom color picker.</p>
+      <h3>14 Themes + Custom</h3>
+      <p>9 dark themes (Tokyo Night, Dracula, Monokai, Nord, Solarized, Ayu, One Dark, Gruvbox, Catppuccin) + 5 light themes (Tokyo Day, Solarized Light, Nord Light, GitHub Light, Catppuccin Latte) + full custom color picker.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">◆</div>
@@ -276,7 +296,12 @@
     <div class="feature-card">
       <div class="feature-icon">🔧</div>
       <h3>Deep Customization</h3>
-      <p>Font family & size, bar heights, border radius, animation speed, opacity. 30+ settings total.</p>
+      <p>Font, bar heights, border radius, animation speed, tab opacity, NTP background color, workspace position. 30+ settings.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌐</div>
+      <h3>Russian + English</h3>
+      <p>Full UI localization. Switch between English and Russian in settings. All labels, sections, and controls translated.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🧩</div>
@@ -302,6 +327,15 @@
     <div class="theme-swatch" title="Ayu Dark"><div class="swatch-bg" style="background: #0f1419"></div><div class="swatch-accent" style="background: #36a3d9"></div><span>Ayu</span></div>
     <div class="theme-swatch" title="One Dark"><div class="swatch-bg" style="background: #282c34"></div><div class="swatch-accent" style="background: #61afef"></div><span>One Dark</span></div>
     <div class="theme-swatch" title="Gruvbox"><div class="swatch-bg" style="background: #282828"></div><div class="swatch-accent" style="background: #458588"></div><span>Gruvbox</span></div>
+    <div class="theme-swatch" title="Catppuccin Mocha"><div class="swatch-bg" style="background: #1e1e2e"></div><div class="swatch-accent" style="background: #89b4fa"></div><span>Catppuccin</span></div>
+  </div>
+  <div class="themes-title" style="margin-top:32px;">Light Themes</div>
+  <div class="theme-grid">
+    <div class="theme-swatch" title="Tokyo Day"><div class="swatch-bg" style="background: #e1e2e7"></div><div class="swatch-accent" style="background: #2e7de9"></div><span style="color:#333;text-shadow:none">Tokyo Day</span></div>
+    <div class="theme-swatch" title="Solarized Light"><div class="swatch-bg" style="background: #fdf6e3"></div><div class="swatch-accent" style="background: #268bd2"></div><span style="color:#333;text-shadow:none">Solarized Lt</span></div>
+    <div class="theme-swatch" title="Nord Light"><div class="swatch-bg" style="background: #eceff4"></div><div class="swatch-accent" style="background: #5e81ac"></div><span style="color:#333;text-shadow:none">Nord Light</span></div>
+    <div class="theme-swatch" title="GitHub Light"><div class="swatch-bg" style="background: #ffffff"></div><div class="swatch-accent" style="background: #0969da"></div><span style="color:#333;text-shadow:none">GitHub Lt</span></div>
+    <div class="theme-swatch" title="Catppuccin Latte"><div class="swatch-bg" style="background: #eff1f5"></div><div class="swatch-accent" style="background: #1e66f5"></div><span style="color:#333;text-shadow:none">Catppuccin Lt</span></div>
   </div>
 </div>
 
@@ -318,12 +352,10 @@
     <div class="shortcut"><span>Dark reader</span><kbd>Ctrl+D</kbd></div>
     <div class="shortcut"><span>Scroll down</span><kbd>j</kbd></div>
     <div class="shortcut"><span>Scroll up</span><kbd>k</kbd></div>
-    <div class="shortcut"><span>Page down</span><kbd>Ctrl+F / Space</kbd></div>
-    <div class="shortcut"><span>Page up</span><kbd>Ctrl+B</kbd></div>
     <div class="shortcut"><span>Reload</span><kbd>r</kbd></div>
     <div class="shortcut"><span>Go to top</span><kbd>gg</kbd></div>
     <div class="shortcut"><span>Go to bottom</span><kbd>G</kbd></div>
-    <div class="shortcut"><span>Tab 1-9</span><kbd>Alt+1-9</kbd></div>
+    <div class="shortcut"><span>Workspace 1-9</span><kbd>Alt+1-9</kbd></div>
   </div>
 </div>
 
