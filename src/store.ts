@@ -154,7 +154,7 @@ const defaultSettings: Settings = {
 
   tabBarHeight: 34,
   tabBarShowClose: true,
-  tabBarShowFavicon: false,
+  tabBarShowFavicon: true,
   tabBarShowIndicator: true,
   tabShape: 'rounded',
 

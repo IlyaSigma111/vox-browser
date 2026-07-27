@@ -16,7 +16,15 @@ const DARK_READER_REMOVE = `
   if (s) s.remove();
 })()`
 
-// Vim engine injected into every webview — captures keys locally (Vimium approach)
+// Fetch title + favicon after page load
+const FETCH_META = `
+(function() {
+  var title = document.title || '';
+  var link = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+  var fav = link ? link.href : '';
+  return JSON.stringify({title: title, favicon: fav});
+})()`
+
 const VIM_ENGINE = `(function(){
   if(window._voxEngine)return;
   window._voxEngine=true;
@@ -116,7 +124,6 @@ const VIM_ENGINE = `(function(){
       return;
     }
 
-    // Normal mode
     if(inp)return;
 
     if(e.key==='Escape'){e.preventDefault();keyBuffer='';return;}
@@ -179,62 +186,87 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
     wv.focus()
   }, [active])
 
-  // Navigate
+  // Navigate — guard against re-navigation to same URL
   useEffect(() => {
     const wv = ref.current as any
     if (!wv || !hasUrl) return
     if (navRef.current === url) return
     navRef.current = url
     try { wv.loadURL(url).catch(() => {}) } catch {}
-  }, [url, hasUrl])
+  }, [url, hasUrl]) // eslint-disable-line
 
   // Inject vim engine + dark reader on page load
   useEffect(() => {
     const wv = ref.current as any
     if (!wv) return
 
-    let retries = 0
+    let destroyed = false
+
     const tryInject = (attempt: number) => {
-      const code = VIM_ENGINE
-      wv.executeJavaScript(code).then(() => {
-        retries = 0
-      }).catch(() => {
-        if (attempt < 5) {
-          setTimeout(() => tryInject(attempt + 1), 200 * (attempt + 1))
+      if (destroyed) return
+      wv.executeJavaScript(VIM_ENGINE).catch(() => {
+        if (attempt < 5 && !destroyed) {
+          setTimeout(() => tryInject(attempt + 1), 300 * (attempt + 1))
         }
       })
     }
 
-    const injectVim = () => { retries = 0; tryInject(0) }
-
     const injectDark = () => {
+      if (destroyed) return
       setTimeout(() => {
+        if (destroyed) return
         try {
           wv.executeJavaScript(darkReader ? DARK_READER_CSS : DARK_READER_REMOVE).catch(() => {})
         } catch {}
       }, 100)
     }
 
-    const onReady = () => { wv.focus(); injectVim(); injectDark() }
+    const fetchMeta = () => {
+      if (destroyed) return
+      setTimeout(() => {
+        if (destroyed) return
+        wv.executeJavaScript(FETCH_META).then((raw: string) => {
+          if (destroyed) return
+          try {
+            const meta = JSON.parse(raw)
+            const patch: any = {}
+            if (meta.title) patch.title = meta.title
+            if (meta.favicon) patch.favicon = meta.favicon
+            if (Object.keys(patch).length) updateTab(id, patch)
+          } catch {}
+        }).catch(() => {})
+      }, 500)
+    }
+
+    const onReady = () => {
+      wv.focus()
+      tryInject(0)
+      injectDark()
+      fetchMeta()
+    }
 
     wv.addEventListener('dom-ready', onReady)
     wv.addEventListener('did-navigate', onReady)
     wv.addEventListener('did-navigate-in-page', onReady)
 
-    // Also try injection periodically for the first 2 seconds
-    const timers = [300, 600, 1000, 1500, 2000].map(ms =>
-      setTimeout(() => { injectVim(); injectDark() }, ms)
-    )
+    // Also fetch meta after page fully loads
+    const onStop = () => {
+      if (destroyed) return
+      fetchMeta()
+      tryInject(0)
+    }
+    wv.addEventListener('did-stop-loading', onStop)
 
     return () => {
+      destroyed = true
       wv.removeEventListener('dom-ready', onReady)
       wv.removeEventListener('did-navigate', onReady)
       wv.removeEventListener('did-navigate-in-page', onReady)
-      timers.forEach(clearTimeout)
+      wv.removeEventListener('did-stop-loading', onStop)
     }
-  }, [darkReader, url])
+  }, [darkReader, id, updateTab])
 
-  // Events
+  // Events: title, favicon, navigation
   useEffect(() => {
     const wv = ref.current as any
     if (!wv) return
@@ -242,17 +274,19 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
     const onNav = (e: any) => {
       if (!e.url || e.url === 'about:blank') return
       navRef.current = e.url
-      const title = wv.getTitle?.() || ''
-      updateTab(id, { url: e.url, loading: false, ...(title ? { title } : {}) })
-      addHistory({ url: e.url, title })
+      updateTab(id, { url: e.url, loading: false })
+      addHistory({ url: e.url, title: '' })
     }
     const onTitle = (e: any) => updateTab(id, { title: e.title })
     const onFavicon = (e: any) => { if (e.favicons?.length) updateTab(id, { favicon: e.favicons[0] }) }
     const onStart = () => updateTab(id, { loading: true })
     const onStop = () => {
       updateTab(id, { loading: false })
-      const title = wv.getTitle?.()
-      if (title) updateTab(id, { title })
+      // Re-fetch title in case page-title-updated didn't fire
+      try {
+        const t = wv.getTitle?.()
+        if (t) updateTab(id, { title: t })
+      } catch {}
     }
     const onFail = (e: any) => { if (e.errorCode !== -3) updateTab(id, { loading: false }) }
     const onInPage = (e: any) => {
