@@ -1021,6 +1021,48 @@ html, body, #root {
   opacity: 0.5;
 }
 
+/* ─── NTP Layouts ────────────────────────────── */
+
+.ntp-minimal {
+  justify-content: center;
+  padding-bottom: 40px;
+}
+
+.ntp-centered {
+  justify-content: center;
+}
+
+.ntp-centered-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: -60px;
+}
+
+.ntp-zen-layout {
+  justify-content: flex-start;
+  padding-top: 30vh;
+  background: transparent;
+}
+
+.ntp-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--bg) 0%,
+    var(--bg-dim) 40%,
+    color-mix(in srgb, var(--accent) 8%, var(--bg)) 100%
+  );
+}
+
+.ntp-gradient-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: -40px;
+}
+
 /* ─── Hint overlay ──────────────────────────────── */
 
 .hint-bar {

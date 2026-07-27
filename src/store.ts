@@ -72,6 +72,42 @@ export const THEMES: Record<ThemePreset, ThemeColors> = {
     accent: '#458588', green: '#b8bb26', red: '#fb4934',
     orange: '#fe8019', cyan: '#83a598', purple: '#d3869b',
   },
+  'catppuccin': {
+    bg: '#1e1e2e', bgDim: '#181825', bgLight: '#313244',
+    fg: '#cdd6f4', fgDim: '#6c7086', border: '#313244',
+    accent: '#89b4fa', green: '#a6e3a1', red: '#f38ba8',
+    orange: '#fab387', cyan: '#94e2d5', purple: '#cba6f7',
+  },
+  'tokyo-day': {
+    bg: '#e1e2e7', bgDim: '#d5d6db', bgLight: '#c4c7cd',
+    fg: '#3760bf', fgDim: '#848cb5', border: '#c4c7cd',
+    accent: '#2e7de9', green: '#587539', red: '#f52a65',
+    orange: '#ff8a4c', cyan: '#0f4b6e', purple: '#985ccc',
+  },
+  'solarized-light': {
+    bg: '#fdf6e3', bgDim: '#eee8d5', bgLight: '#fdf6e3',
+    fg: '#657b83', fgDim: '#93a1a1', border: '#eee8d5',
+    accent: '#268bd2', green: '#859900', red: '#dc322f',
+    orange: '#cb4b16', cyan: '#2aa198', purple: '#6c71c4',
+  },
+  'nord-light': {
+    bg: '#eceff4', bgDim: '#e5e9f0', bgLight: '#d8dee9',
+    fg: '#2e3440', fgDim: '#4c566a', border: '#d8dee9',
+    accent: '#5e81ac', green: '#a3be8c', red: '#bf616a',
+    orange: '#d08770', cyan: '#88c0d0', purple: '#b48ead',
+  },
+  'github-light': {
+    bg: '#ffffff', bgDim: '#f6f8fa', bgLight: '#f6f8fa',
+    fg: '#24292f', fgDim: '#57606a', border: '#d0d7de',
+    accent: '#0969da', green: '#116329', red: '#cf222e',
+    orange: '#953800', cyan: '#1b7c83', purple: '#8250df',
+  },
+  'catppuccin-latte': {
+    bg: '#eff1f5', bgDim: '#e6e9ef', bgLight: '#e6e9ef',
+    fg: '#4c4f69', fgDim: '#7c7f93', border: '#ccd0da',
+    accent: '#1e66f5', green: '#40a02b', red: '#d20f39',
+    orange: '#df8e1d', cyan: '#179299', purple: '#8839ef',
+  },
   'custom': {
     bg: '#1a1b26', bgDim: '#16161e', bgLight: '#24283b',
     fg: '#c0caf5', fgDim: '#565f89', border: '#292e42',
@@ -180,6 +216,7 @@ const defaultSettings: Settings = {
     { name: 'news', url: 'https://news.ycombinator.com' },
   ],
   ntpBgColor: '',
+  ntpLayout: 'default',
 
   borderRadius: 4,
   transitionSpeed: 150,

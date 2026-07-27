@@ -141,6 +141,15 @@ function SettingsPanel() {
       </Section>
 
       <Section title={t('ntp')}>
+        <StRow label={t('ntp.layout')}>
+          <select value={settings.ntpLayout || 'default'} onChange={e => setSettings({ ntpLayout: e.target.value as any })}>
+            <option value="default">{t('ntpLayout.default')}</option>
+            <option value="minimal">{t('ntpLayout.minimal')}</option>
+            <option value="centered">{t('ntpLayout.centered')}</option>
+            <option value="zen">{t('ntpLayout.zen')}</option>
+            <option value="gradient">{t('ntpLayout.gradient')}</option>
+          </select>
+        </StRow>
         <StRow label={t('ntp.clock')}><Toggle value={settings.ntpShowClock} onChange={v => setSettings({ ntpShowClock: v })} /></StRow>
         <StRow label={t('ntp.date')}><Toggle value={settings.ntpShowDate} onChange={v => setSettings({ ntpShowDate: v })} /></StRow>
         <StRow label={t('ntp.search')}><Toggle value={settings.ntpShowSearch} onChange={v => setSettings({ ntpShowSearch: v })} /></StRow>
@@ -155,15 +164,25 @@ function SettingsPanel() {
       <Section title={t('theme')}>
         <StRow label={t('theme.preset')}>
           <select value={settings.theme} onChange={e => setSettings({ theme: e.target.value as ThemePreset })}>
-            <option value="tokyo-night">Tokyo Night</option>
-            <option value="dracula">Dracula</option>
-            <option value="monokai">Monokai</option>
-            <option value="nord">Nord</option>
-            <option value="solarized">Solarized</option>
-            <option value="ayu">Ayu Dark</option>
-            <option value="one-dark">One Dark</option>
-            <option value="gruvbox">Gruvbox</option>
-            <option value="custom">Custom</option>
+            <optgroup label={t('theme.dark')}>
+              <option value="tokyo-night">Tokyo Night</option>
+              <option value="dracula">Dracula</option>
+              <option value="monokai">Monokai</option>
+              <option value="nord">Nord</option>
+              <option value="solarized">Solarized</option>
+              <option value="ayu">Ayu Dark</option>
+              <option value="one-dark">One Dark</option>
+              <option value="gruvbox">Gruvbox</option>
+              <option value="catppuccin">Catppuccin Mocha</option>
+            </optgroup>
+            <optgroup label={t('theme.light')}>
+              <option value="tokyo-day">Tokyo Day</option>
+              <option value="solarized-light">Solarized Light</option>
+              <option value="nord-light">Nord Light</option>
+              <option value="github-light">GitHub Light</option>
+              <option value="catppuccin-latte">Catppuccin Latte</option>
+            </optgroup>
+            <option value="custom">{t('theme.custom')}</option>
           </select>
         </StRow>
         {settings.theme !== 'custom' && (

@@ -57,7 +57,7 @@ export interface VimKeyBinding {
   description: string
 }
 
-export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'custom'
+export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'custom'
 
 export interface ThemeColors {
   bg: string
@@ -111,6 +111,7 @@ export interface Settings {
   ntpShowQuickLinks: boolean
   ntpQuickLinks: Array<{ name: string; url: string }>
   ntpBgColor: string
+  ntpLayout: 'default' | 'minimal' | 'centered' | 'zen' | 'gradient'
 
   borderRadius: number
   transitionSpeed: number
