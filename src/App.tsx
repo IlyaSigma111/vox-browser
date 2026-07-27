@@ -130,6 +130,12 @@ export default function App() {
         e.preventDefault()
         useStore.getState().addWorkspace()
       }
+      if ((e.ctrlKey || e.metaKey) && e.altKey && /^[1-9]$/.test(e.key)) {
+        e.preventDefault()
+        const wsId = parseInt(e.key)
+        const st = useStore.getState()
+        if (st.workspaces.find(w => w.id === wsId)) switchWorkspace(wsId)
+      }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
         e.preventDefault()
         const s = useStore.getState()
@@ -223,9 +229,9 @@ export default function App() {
       )}
       {(!settings.showStatusBar || statusPos === 'bottom') && (
         <div className="floating-win-controls">
-          <button className="fwc-btn" onClick={() => window.onyx!.minimize()} title="Minimize">─</button>
-          <button className="fwc-btn" onClick={() => window.onyx!.maximize()} title="Maximize">□</button>
-          <button className="fwc-btn fwc-close" onClick={() => window.onyx!.close()} title="Close">×</button>
+          <button className="fwc-btn" onClick={() => window.onyx?.minimize()} title="Minimize">─</button>
+          <button className="fwc-btn" onClick={() => window.onyx?.maximize()} title="Maximize">□</button>
+          <button className="fwc-btn fwc-close" onClick={() => window.onyx?.close()} title="Close">×</button>
         </div>
       )}
       {!settings.showStatusBar && (
