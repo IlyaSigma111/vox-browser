@@ -186,7 +186,7 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
     wv.focus()
   }, [active])
 
-  // Navigate — guard against re-navigation to same URL
+  // Navigate
   useEffect(() => {
     const wv = ref.current as any
     if (!wv || !hasUrl) return
@@ -323,7 +323,7 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
         ref={ref}
         className="wv"
         src={url}
-        partition={`persist:vox-${id}`}
+        partition={`persist:vox`}
         allowpopups={'true' as any}
         preload={webviewPreload}
       />
