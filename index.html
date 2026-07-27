@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vox — Keyboard-Driven Browser</title>
+<style>
+  :root {
+    --bg: #1a1b26;
+    --bg-dim: #16161e;
+    --bg-light: #24283b;
+    --fg: #c0caf5;
+    --fg-dim: #565f89;
+    --border: #292e42;
+    --accent: #7aa2f7;
+    --green: #9ece6a;
+    --red: #f7768e;
+    --purple: #bb9af7;
+    --cyan: #7dcfff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Consolas', 'SF Mono', monospace;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    opacity: 0.06;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .logo {
+    font-size: 80px;
+    font-weight: 700;
+    letter-spacing: -3px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tagline {
+    font-size: 18px;
+    color: var(--fg-dim);
+    margin-bottom: 40px;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+  .hero-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover {
+    background: var(--purple);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(122,162,247,0.3);
+  }
+  .btn-secondary {
+    background: var(--bg-light);
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    background: var(--border);
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+  .version {
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin-top: 20px;
+  }
+
+  .preview {
+    max-width: 800px;
+    margin: 0 auto 60px;
+    background: var(--bg-dim);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .preview-content {
+    padding: 20px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--fg-dim);
+  }
+  .preview-content .hl { color: var(--accent); }
+  .preview-content .gr { color: var(--green); }
+  .preview-content .rd { color: var(--red); }
+  .preview-content .pr { color: var(--purple); }
+
+  .features {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 80px 20px;
+  }
+  .features-title {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 48px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: var(--bg-dim);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    transition: border-color .2s, transform .2s;
+  }
+  .feature-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+  }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature-card h3 { font-size: 16px; margin-bottom: 8px; }
+  .feature-card p { font-size: 13px; color: var(--fg-dim); line-height: 1.6; }
+
+  .themes {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 20px;
+  }
+  .themes-title { text-align: center; font-size: 24px; margin-bottom: 32px; }
+  .theme-grid { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .theme-swatch {
+    width: 80px; height: 60px; border-radius: 6px;
+    border: 2px solid var(--border); cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+  .theme-swatch:hover { border-color: var(--fg); transform: scale(1.1); }
+  .theme-swatch .swatch-bg { position: absolute; inset: 0; }
+  .theme-swatch .swatch-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; }
+  .theme-swatch span {
+    position: absolute; bottom: 16px; left: 4px;
+    font-size: 8px; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    font-family: inherit;
+  }
+
+  .shortcuts {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 60px 20px;
+  }
+  .shortcuts-title { text-align: center; font-size: 24px; margin-bottom: 32px; }
+  .shortcut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shortcut {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: var(--bg-dim);
+    border-radius: 4px; font-size: 13px;
+  }
+  .shortcut kbd {
+    background: var(--bg-light); border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 3px;
+    font-size: 12px; color: var(--accent); font-family: inherit;
+  }
+  .shortcut span { color: var(--fg-dim); }
+
+  .footer {
+    text-align: center; padding: 40px 20px;
+    color: var(--fg-dim); font-size: 12px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="logo">Vox</div>
+  <div class="tagline">
+    Keyboard-first browser with Vim integration.<br>
+    No bloat. No distractions. Just speed.
+  </div>
+  <div class="hero-buttons">
+    <a class="btn btn-primary" href="Vox Setup 1.0.0.exe" download>
+      Download for Windows
+    </a>
+  </div>
+  <div class="version">v1.0.0 · Electron · Chromium</div>
+</div>
+
+<div class="preview">
+  <div class="preview-bar">
+    <div class="preview-dot" style="background: var(--red)"></div>
+    <div class="preview-dot" style="background: var(--orange)"></div>
+    <div class="preview-dot" style="background: var(--green)"></div>
+  </div>
+  <div class="preview-content">
+    <span class="gr">NORMAL</span> ─ <span class="hl">https://github.com</span><br>
+    <br>
+    <span class="pr">:tabnew</span> → open new tab<br>
+    <span class="pr">:bookmarks</span> → open bookmarks sidebar<br>
+    <span class="pr">f</span> → follow links (hint mode)<br>
+    <span class="pr">j / k</span> → scroll down / up<br>
+    <span class="pr">gg / G</span> → top / bottom<br>
+    <span class="pr">Ctrl+D</span> → toggle dark reader<br>
+    <span class="pr">:</span> → command palette<br>
+    <br>
+    <span class="rd">9 themes</span> · <span class="hl">6 tab shapes</span> · <span class="gr">extensions</span>
+  </div>
+</div>
+
+<div class="features">
+  <div class="features-title">Why Vox?</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⌨</div>
+      <h3>Vim Keybindings</h3>
+      <p>Native hint mode (f), command palette (:), insert mode (i), scroll (j/k). Everything from keyboard.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎨</div>
+      <h3>9 Themes + Custom</h3>
+      <p>Tokyo Night, Dracula, Monokai, Nord, Solarized, Ayu, One Dark, Gruvbox, and full custom color picker.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">◆</div>
+      <h3>6 Tab Shapes</h3>
+      <p>Square, Rounded, Pill, Trapezoid, Yandex-style, and Wave. Plus height, opacity, and radius controls.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔧</div>
+      <h3>Deep Customization</h3>
+      <p>Font family & size, bar heights, border radius, animation speed, opacity. 30+ settings total.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧩</div>
+      <h3>Extensions</h3>
+      <p>Drop Chrome extensions into userData/extensions/. Manifest V2 and V3 supported.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌙</div>
+      <h3>Dark Reader</h3>
+      <p>Built-in dark mode injection for any website. Toggle with Ctrl+D.</p>
+    </div>
+  </div>
+</div>
+
+<div class="themes">
+  <div class="themes-title">Themes</div>
+  <div class="theme-grid">
+    <div class="theme-swatch" title="Tokyo Night"><div class="swatch-bg" style="background: #1a1b26"></div><div class="swatch-accent" style="background: #7aa2f7"></div><span>Tokyo Night</span></div>
+    <div class="theme-swatch" title="Dracula"><div class="swatch-bg" style="background: #282a36"></div><div class="swatch-accent" style="background: #bd93f9"></div><span>Dracula</span></div>
+    <div class="theme-swatch" title="Monokai"><div class="swatch-bg" style="background: #272822"></div><div class="swatch-accent" style="background: #a6e22e"></div><span>Monokai</span></div>
+    <div class="theme-swatch" title="Nord"><div class="swatch-bg" style="background: #2e3440"></div><div class="swatch-accent" style="background: #88c0d0"></div><span>Nord</span></div>
+    <div class="theme-swatch" title="Solarized"><div class="swatch-bg" style="background: #002b36"></div><div class="swatch-accent" style="background: #268bd2"></div><span>Solarized</span></div>
+    <div class="theme-swatch" title="Ayu Dark"><div class="swatch-bg" style="background: #0f1419"></div><div class="swatch-accent" style="background: #36a3d9"></div><span>Ayu</span></div>
+    <div class="theme-swatch" title="One Dark"><div class="swatch-bg" style="background: #282c34"></div><div class="swatch-accent" style="background: #61afef"></div><span>One Dark</span></div>
+    <div class="theme-swatch" title="Gruvbox"><div class="swatch-bg" style="background: #282828"></div><div class="swatch-accent" style="background: #458588"></div><span>Gruvbox</span></div>
+  </div>
+</div>
+
+<div class="shortcuts">
+  <div class="shortcuts-title">Keyboard Shortcuts</div>
+  <div class="shortcut-grid">
+    <div class="shortcut"><span>Hint mode</span><kbd>f</kbd></div>
+    <div class="shortcut"><span>Insert mode</span><kbd>i</kbd></div>
+    <div class="shortcut"><span>Command palette</span><kbd>:</kbd></div>
+    <div class="shortcut"><span>New tab</span><kbd>Ctrl+T</kbd></div>
+    <div class="shortcut"><span>Close tab</span><kbd>Ctrl+W</kbd></div>
+    <div class="shortcut"><span>Next tab</span><kbd>Ctrl+Tab</kbd></div>
+    <div class="shortcut"><span>Prev tab</span><kbd>Ctrl+Shift+Tab</kbd></div>
+    <div class="shortcut"><span>Dark reader</span><kbd>Ctrl+D</kbd></div>
+    <div class="shortcut"><span>Scroll down</span><kbd>j</kbd></div>
+    <div class="shortcut"><span>Scroll up</span><kbd>k</kbd></div>
+    <div class="shortcut"><span>Page down</span><kbd>Ctrl+F / Space</kbd></div>
+    <div class="shortcut"><span>Page up</span><kbd>Ctrl+B</kbd></div>
+    <div class="shortcut"><span>Reload</span><kbd>r</kbd></div>
+    <div class="shortcut"><span>Go to top</span><kbd>gg</kbd></div>
+    <div class="shortcut"><span>Go to bottom</span><kbd>G</kbd></div>
+    <div class="shortcut"><span>Tab 1-9</span><kbd>Alt+1-9</kbd></div>
+  </div>
+</div>
+
+<div class="footer">
+  Vox Browser v1.0.0 · Built with Electron + React + Zustand
+</div>
+
+</body>
+</html>
