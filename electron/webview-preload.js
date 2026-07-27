@@ -133,15 +133,6 @@
     }
 
     window.addEventListener('keydown',handleKey,true);
-
-    // Auto-activate hints when page loads
-    function autoHints(){
-      if(window._voxAutoHintsDone)return;
-      window._voxAutoHintsDone=true;
-      setTimeout(function(){activateHints();},300);
-    }
-    if(document.readyState==='complete'){autoHints();}
-    else{window.addEventListener('load',autoHints);}
   })()`;
 
   function inject() {

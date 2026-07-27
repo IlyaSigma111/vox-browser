@@ -150,14 +150,6 @@ const VIM_ENGINE = `(function(){
   }
 
   window.addEventListener('keydown',handleKey,true);
-
-  function autoHints(){
-    if(window._voxAutoHintsDone)return;
-    window._voxAutoHintsDone=true;
-    setTimeout(function(){activateHints();},300);
-  }
-  if(document.readyState==='complete'){autoHints();}
-  else{window.addEventListener('load',autoHints);}
 })();`
 
 export default function WebContent({ id, url, active }: { id: string; url: string; active: boolean }) {
