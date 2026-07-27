@@ -16,6 +16,15 @@ function WorkspaceBar() {
   const activeWorkspace = useStore(s => s.activeWorkspace)
   const workspaces = useStore(s => s.workspaces)
   const switchWorkspace = useStore(s => s.switchWorkspace)
+  const [ctxMenu, setCtxMenu] = useState<{id: number, x: number, y: number} | null>(null)
+
+  useEffect(() => {
+    if (!ctxMenu) return
+    const h = () => setCtxMenu(null)
+    window.addEventListener('click', h)
+    window.addEventListener('contextmenu', h)
+    return () => { window.removeEventListener('click', h); window.removeEventListener('contextmenu', h) }
+  }, [ctxMenu])
 
   return (
     <div className="workspace-bar">
@@ -28,8 +37,9 @@ function WorkspaceBar() {
             onClick={() => switchWorkspace(ws.id)}
             onContextMenu={(e) => {
               e.preventDefault()
-              const name = prompt('Rename workspace:', ws.name)
-              if (name !== null) useStore.getState().renameWorkspace(ws.id, name)
+              e.stopPropagation()
+              if (workspaces.length <= 1) return
+              setCtxMenu({ id: ws.id, x: e.clientX, y: e.clientY })
             }}
           >
             {ws.name}
@@ -38,6 +48,19 @@ function WorkspaceBar() {
         ))}
         <button className="ws-btn add" onClick={() => useStore.getState().addWorkspace()}>+</button>
       </div>
+      {ctxMenu && (
+        <div className="ws-ctx-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}>
+          <button onClick={() => {
+            const name = prompt('Rename workspace:', workspaces.find(w => w.id === ctxMenu.id)?.name)
+            if (name !== null) useStore.getState().renameWorkspace(ctxMenu.id, name)
+            setCtxMenu(null)
+          }}>Rename</button>
+          <button className="danger" onClick={() => {
+            if (confirm('Delete this workspace and all its tabs?')) useStore.getState().removeWorkspace(ctxMenu.id)
+            setCtxMenu(null)
+          }}>Delete</button>
+        </div>
+      )}
     </div>
   )
 }

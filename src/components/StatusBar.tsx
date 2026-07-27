@@ -26,8 +26,17 @@ export default function StatusBar({ showWorkspaces }: Props) {
   const [editing, setEditing] = useState(false)
   const [input, setInput] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const [ctxMenu, setCtxMenu] = useState<{id: number, x: number, y: number} | null>(null)
 
   useEffect(() => { if (editing) inputRef.current?.select() }, [editing])
+
+  useEffect(() => {
+    if (!ctxMenu) return
+    const h = () => setCtxMenu(null)
+    window.addEventListener('click', h)
+    window.addEventListener('contextmenu', h)
+    return () => { window.removeEventListener('click', h); window.removeEventListener('contextmenu', h) }
+  }, [ctxMenu])
 
   const searchUrl = useStore(s => s.settings.searchUrl)
 
@@ -39,6 +48,7 @@ export default function StatusBar({ showWorkspaces }: Props) {
   }
 
   return (
+    <>
     <div className="statusbar">
       {ws && (
         <button
@@ -57,6 +67,12 @@ export default function StatusBar({ showWorkspaces }: Props) {
               className={`sb-ws-btn${w.id === activeWorkspace ? ' active' : ''}`}
               style={w.id === activeWorkspace ? { background: w.color, color: '#fff' } : undefined}
               onClick={() => useStore.getState().switchWorkspace(w.id)}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (workspaces.length <= 1) return
+                setCtxMenu({ id: w.id, x: e.clientX, y: e.clientY })
+              }}
             >
               {w.name}
               <span className="sb-ws-count">{tabs.filter(t => t.workspace === w.id).length}</span>
@@ -118,5 +134,19 @@ export default function StatusBar({ showWorkspaces }: Props) {
         </div>
       )}
     </div>
+    {ctxMenu && (
+      <div className="ws-ctx-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}>
+        <button onClick={() => {
+          const name = prompt('Rename workspace:', workspaces.find(w => w.id === ctxMenu.id)?.name)
+          if (name !== null) useStore.getState().renameWorkspace(ctxMenu.id, name)
+          setCtxMenu(null)
+        }}>Rename</button>
+        <button className="danger" onClick={() => {
+          if (confirm('Delete this workspace and all its tabs?')) useStore.getState().removeWorkspace(ctxMenu.id)
+          setCtxMenu(null)
+        }}>Delete</button>
+      </div>
+    )}
+    </>
   )
 }
