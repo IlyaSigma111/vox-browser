@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStore, THEMES } from './store'
 import { setLang } from './lang'
 import TabBar from './components/TabBar'

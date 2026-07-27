@@ -10,3 +10,5 @@
 [14912:0727/204732.484:ERROR:gpu_disk_cache.cc(713)] Gpu Cache Creation failed: -2
 (node:14912) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 did-stop-loading listeners added to [WebContents]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
 (Use `electron --trace-warnings ...` to show where the warning was created)
+(node:14912) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 did-stop-loading listeners added to [WebContents]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:14912) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 did-stop-loading listeners added to [WebContents]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
