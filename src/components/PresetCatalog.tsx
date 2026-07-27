@@ -8,6 +8,7 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<string | null>(null)
   const [tab, setTab] = useState<'builtin' | 'custom'>('builtin')
   const settings = useStore(s => s.settings)
+  const setSettings = useStore(s => s.setSettings)
   const customPresets = useStore(s => s.customPresets)
   const saveCustomPreset = useStore(s => s.saveCustomPreset)
   const removeCustomPreset = useStore(s => s.removeCustomPreset)
@@ -101,7 +102,7 @@ export default function PresetCatalog({ onClose }: { onClose: () => void }) {
               {currentPreset === p.id && <div className="preset-active-badge">●</div>}
               {selected === p.id && (
                 <div className="preset-actions">
-                  <button className="preset-apply-btn" onClick={e => { e.stopPropagation(); applyPreset(p); onClose() }}>
+                  <button className="preset-apply-btn" onClick={e => { e.stopPropagation(); applyPreset(p, setSettings); onClose() }}>
                     {t('presets.apply')}
                   </button>
                 </div>

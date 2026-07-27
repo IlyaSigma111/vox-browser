@@ -856,12 +856,10 @@ export const BUILT_IN_PRESETS: UIPreset[] = [
   },
 ]
 
-export function applyPreset(preset: UIPreset) {
-  const { useStore, THEMES } = require('./store')
-  const { setSettings } = useStore.getState()
+export function applyPreset(preset: UIPreset, setSettings: (p: any) => void) {
   setSettings({
     theme: preset.theme,
-    customColors: preset.customColors || THEMES[preset.theme],
+    customColors: preset.customColors,
     tabShape: preset.tabShape,
     fontFamily: preset.fontFamily,
     fontSize: preset.fontSize,
