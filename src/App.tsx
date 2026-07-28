@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStore, THEMES } from './store'
 import { setLang } from './lang'
+import BrowserToolbar from './components/BrowserToolbar'
 import TabBar from './components/TabBar'
 import StatusBar from './components/StatusBar'
 import WebContent from './components/WebContent'
@@ -240,7 +241,11 @@ export default function App() {
       {statusPos === 'top' && settings.showStatusBar && (
         <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
       )}
-      <div className="titlebar" style={{ height: settings.titlebarHeight }} />
+      {settings.browserChrome ? (
+        <BrowserToolbar />
+      ) : (
+        <div className="titlebar" style={{ height: settings.titlebarHeight }} />
+      )}
       {zen ? (
         <>
           <div className="content">

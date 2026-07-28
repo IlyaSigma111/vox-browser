@@ -120,6 +120,8 @@ export interface Settings {
   workspaceShow: boolean
   workspacePosition: 'top' | 'bottom'
 
+  browserChrome: boolean
+
   ntpShowClock: boolean
   ntpShowDate: boolean
   ntpShowSearch: boolean

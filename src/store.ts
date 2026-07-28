@@ -217,6 +217,7 @@ const defaultSettings: Settings = {
 
   workspaceShow: true,
   workspacePosition: 'top',
+  browserChrome: false,
 
   ntpShowClock: true,
   ntpShowDate: true,

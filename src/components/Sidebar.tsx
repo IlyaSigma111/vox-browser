@@ -334,6 +334,7 @@ function SettingsPanel() {
             <span className="st-val">{settings.sidebarWidth}px</span>
           </div>
         </StRow>
+        <StRow label="Browser Chrome"><Toggle value={settings.browserChrome} onChange={v => setSettings({ browserChrome: v })} /></StRow>
       </Section>
 
       <Section title={t('visual')}>
