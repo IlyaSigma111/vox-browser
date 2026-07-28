@@ -1,5 +1,4 @@
 // Vox webview preload — injects vim engine into every page before any page scripts
-// This is 100% reliable because preload scripts run before the page's own code
 (function() {
   const VIM_ENGINE = `(function(){
     if(window._voxEngine)return;
@@ -12,7 +11,7 @@
     var keyBuffer='';
 
     function getClickable(){
-      var sel='a[href],button,input:not([type=hidden]),textarea,select,[role=button],[role=link],[role=tab],[onclick],[tabindex]:not([tabindex="-1"]),summary';
+      var sel='a[href],button,input:not([type=hidden]),textarea,select,[role=button],[role=link],[role=tab],[onclick],[tabindex]:not([tabindex="-1"]),summary,[contenteditable]';
       var els=Array.from(document.querySelectorAll(sel));
       var r=[];
       for(var i=0;i<els.length;i++){
@@ -66,15 +65,26 @@
         else if(h.label.indexOf(typed)===0){matchCount++;h.div.style.background='#ffc542';}
         else{h.div.style.opacity='0.15';}
       }
-      if(matched){exitHints();clickEl(matched.el);}
+      if(matched){var el=matched.el;exitHints();clickEl(el);}
       else if(typed&&!matchCount){exitHints();}
     }
 
     function clickEl(el){
       if(!el)return;
       el.scrollIntoView({behavior:'smooth',block:'center'});
-      if(el.tagName==='A'&&el.href){window.location.href=el.href;}
-      else{el.focus();el.click();}
+      // Dispatch a proper mouse event instead of location.href — works with JS routers
+      try{
+        var rect=el.getBoundingClientRect();
+        var cx=rect.left+rect.width/2;
+        var cy=rect.top+rect.height/2;
+        ['mousedown','mouseup','click'].forEach(function(type){
+          el.dispatchEvent(new MouseEvent(type,{bubbles:true,cancelable:true,view:window,clientX:cx,clientY:cy}));
+        });
+      }catch(e){
+        // Fallback for anchors with real href
+        if(el.tagName==='A'&&el.href&&!el.href.startsWith('javascript:')){window.location.href=el.href;}
+        else{el.click();}
+      }
     }
 
     function exitHints(){
@@ -152,13 +162,19 @@
     inject();
   }
 
+  // Also inject when webview becomes visible (switching back to workspace)
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && !window._voxEngine) {
+      setTimeout(inject, 10);
+    }
+  });
+
   // Re-inject on SPA navigations (pushState/replaceState)
   var origPush = history.pushState;
   var origReplace = history.replaceState;
   history.pushState = function() {
     origPush.apply(this, arguments);
     window._voxEngine = false;
-    window._voxAutoHintsDone = false;
     setTimeout(inject, 50);
   };
   history.replaceState = function() {
