@@ -88,7 +88,7 @@ function History() {
         <span className="si-icon">{ICONS.clock}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="title">{h.title || h.url}</div>
-          <div className="url">{new Date(h.visitedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+          <div className="url">{new Date(h.visitedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</div>
         </div>
       </div>
     ))}

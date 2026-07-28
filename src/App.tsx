@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar'
 import ZenSidebar from './components/ZenSidebar'
 import CommandPalette from './components/CommandPalette'
 import HintOverlay from './components/HintOverlay'
+import ShortcutOverlay from './components/ShortcutOverlay'
 import FindBar from './components/FindBar'
 import NewTabPage from './components/NewTabPage'
 import './App.css'
@@ -79,6 +80,7 @@ export default function App() {
   const settings = useStore(s => s.settings)
   const switchWorkspace = useStore(s => s.switchWorkspace)
   const [showFind, setShowFind] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
 
@@ -175,6 +177,11 @@ export default function App() {
         e.preventDefault()
         setShowFind(prev => !prev)
       }
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        const el = e.target as HTMLElement
+        const inp = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable
+        if (!inp) { e.preventDefault(); setShowShortcuts(prev => !prev) }
+      }
       if (e.altKey && /^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
         e.preventDefault()
         const wsId = parseInt(e.key)
@@ -270,6 +277,7 @@ export default function App() {
       )}
       <CommandPalette />
       <FindBar show={showFind} onClose={() => setShowFind(false)} />
+      <ShortcutOverlay />
     </div>
   )
 }
