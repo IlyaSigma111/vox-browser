@@ -164,6 +164,11 @@ export default function App() {
         const s = useStore.getState()
         s.setSettings({ zenMode: !s.settings.zenMode })
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+        e.preventDefault()
+        const s = useStore.getState()
+        s.setSidebar(s.sidebarTab === 'settings' ? null : 'settings')
+      }
       if (e.altKey && /^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
         e.preventDefault()
         const wsId = parseInt(e.key)
@@ -256,9 +261,6 @@ export default function App() {
           <button className="fwc-btn" onClick={() => window.onyx?.maximize()} title="Maximize">□</button>
           <button className="fwc-btn fwc-close" onClick={() => window.onyx?.close()} title="Close">×</button>
         </div>
-      )}
-      {!settings.showStatusBar && (
-        <button className="floating-settings" onClick={() => useStore.getState().setSidebar('settings')} title="Settings">⚙</button>
       )}
       <CommandPalette />
     </div>
