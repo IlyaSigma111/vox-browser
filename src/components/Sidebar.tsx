@@ -69,9 +69,21 @@ function History() {
   const activeId = useStore(s => s.activeId)
   const setSidebar = useStore(s => s.setSidebar)
   const clearHistory = useStore(s => s.clearHistory)
+  const [search, setSearch] = useState('')
+  const filtered = search ? history.filter(h => (h.title || h.url).toLowerCase().includes(search.toLowerCase()) || h.url.toLowerCase().includes(search.toLowerCase())) : history
   if (!history.length) return <div className="sidebar-section">{t('sidebar.noHistory')}</div>
   return <>
-    {history.slice(0, 100).map(h => (
+    <div style={{ padding: '6px 12px' }}>
+      <input
+        type="text"
+        placeholder={`${t('sidebar.history')}...`}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ width: '100%', background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: '12px', padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }}
+        spellCheck={false}
+      />
+    </div>
+    {filtered.slice(0, 100).map(h => (
       <div key={h.id} className="sidebar-item" onClick={() => { navigateTo(activeId, h.url); setSidebar(null) }}>
         <span className="si-icon">{ICONS.clock}</span>
         <div style={{ flex: 1, minWidth: 0 }}>

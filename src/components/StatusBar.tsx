@@ -53,7 +53,7 @@ export default function StatusBar({ showWorkspaces }: Props) {
       {ws && (
         <button
           className="sb-btn ws-indicator"
-          style={{ color: ws.color, fontWeight: 'bold', fontSize: 11 }}
+          style={{ color: ws.color, fontWeight: 'bold', fontSize: 11, textShadow: `0 0 8px ${ws.color}40` }}
           title={`Workspace: ${ws.name}`}
         >
           WS:{ws.name}
@@ -65,7 +65,7 @@ export default function StatusBar({ showWorkspaces }: Props) {
             <button
               key={w.id}
               className={`sb-ws-btn${w.id === activeWorkspace ? ' active' : ''}`}
-              style={w.id === activeWorkspace ? { background: w.color, color: '#fff' } : undefined}
+              style={w.id === activeWorkspace ? { background: w.color, color: '#fff', boxShadow: `0 0 12px ${w.color}60` } : undefined}
               onClick={() => useStore.getState().switchWorkspace(w.id)}
               onContextMenu={(e) => {
                 e.preventDefault()

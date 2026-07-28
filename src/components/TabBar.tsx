@@ -32,6 +32,9 @@ export default function TabBar() {
   const wsGroups = groups.filter(g => g.workspace === activeWorkspace)
   const ungrouped = wsTabs.filter(t => !t.groupId || !wsGroups.find(g => g.id === t.groupId))
 
+  // Sort pinned tabs first
+  const sortedWsTabs = [...wsTabs].sort((a, b) => (a.pinned ? 0 : 1) - (b.pinned ? 0 : 1))
+
   const handleDragStart = (i: number) => (e: React.DragEvent) => {
     setDragIdx(i)
     e.dataTransfer.effectAllowed = 'move'
@@ -65,7 +68,7 @@ export default function TabBar() {
     return (
       <div
         key={t.id}
-        className={`tab${t.id === activeId ? ' active' : ''}${overIdx === i ? ' drag-over' : ''}`}
+        className={`tab${t.id === activeId ? ' active' : ''}${overIdx === i ? ' drag-over' : ''}${t.loading ? ' loading' : ''}${t.pinned ? ' pinned' : ''}`}
         style={grp ? { borderLeft: `2px solid ${grp.color}` } : undefined}
         draggable
         onDragStart={handleDragStart(i)}
@@ -74,6 +77,8 @@ export default function TabBar() {
         onDragEnd={handleDragEnd}
         onClick={() => activate(t.id)}
         onContextMenu={handleCtx(t.id)}
+        onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); closeTab(t.id) } }}
+        title={t.pinned ? `📌 ${t.title || t.url}` : undefined}
       >
         {tabBarShowIndicator && <div className="tab-indicator" />}
         {tabBarShowFavicon && t.favicon && <img className="tab-favicon" src={t.favicon} alt="" />}
@@ -141,6 +146,10 @@ export default function TabBar() {
               const t = tabs.find(x => x.id === ctxMenu.tabId)
               if (t) { const id = addTab(t.url); closeTab(ctxMenu.tabId); closeCtx() }
             }}>Duplicate tab</div>
+            <div className="ctx-item" onClick={() => {
+              const t = tabs.find(x => x.id === ctxMenu.tabId)
+              if (t) { useStore.getState().updateTab(ctxMenu.tabId, { pinned: !t.pinned }); closeCtx() }
+            }}>{tabs.find(x => x.id === ctxMenu.tabId)?.pinned ? 'Unpin tab' : 'Pin tab'}</div>
             <div className="ctx-sep" />
             <div className="ctx-label">Assign to group</div>
             <div className="ctx-item" onClick={() => { assignGroup(ctxMenu.tabId, null); closeCtx() }}>

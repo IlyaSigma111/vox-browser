@@ -259,6 +259,9 @@ function persist(store: Store) {
         tabs: tabsToSave,
         activeId: store.activeId,
       })
+      // Persist bookmarks and history
+      window.onyx.writeData('bookmarks.json', store.bookmarks)
+      window.onyx.writeData('history.json', store.history)
     }
   } catch {}
 }
@@ -326,6 +329,18 @@ export const useStore = create<Store>((set, get) => {
   window.onyx?.readData?.('custom-presets.json', []).then((data: any) => {
     if (Array.isArray(data) && data.length > 0) {
       set({ customPresets: data })
+    }
+  }).catch(() => {})
+
+  window.onyx?.readData?.('bookmarks.json', []).then((data: any) => {
+    if (Array.isArray(data)) {
+      set({ bookmarks: data })
+    }
+  }).catch(() => {})
+
+  window.onyx?.readData?.('history.json', []).then((data: any) => {
+    if (Array.isArray(data)) {
+      set({ history: data })
     }
   }).catch(() => {})
 
@@ -441,19 +456,29 @@ export const useStore = create<Store>((set, get) => {
     workspaces: s.workspaces.map(w => w.id === id ? { ...w, name } : w),
   })),
 
-  addBookmark: (b) => set(s => ({
-    bookmarks: [...s.bookmarks, { ...b, id: uid(), createdAt: Date.now() }],
-  })),
+  addBookmark: (b) => set(s => {
+    const next = { bookmarks: [...s.bookmarks, { ...b, id: uid(), createdAt: Date.now() }] }
+    setTimeout(() => persist({ ...get(), ...next } as any), 0)
+    return next
+  }),
 
-  removeBookmark: (id) => set(s => ({
-    bookmarks: s.bookmarks.filter(b => b.id !== id),
-  })),
+  removeBookmark: (id) => set(s => {
+    const next = { bookmarks: s.bookmarks.filter(b => b.id !== id) }
+    setTimeout(() => persist({ ...get(), ...next } as any), 0)
+    return next
+  }),
 
-  addHistory: (h) => set(s => ({
-    history: [{ ...h, id: uid(), visitedAt: Date.now() }, ...s.history].slice(0, 5000),
-  })),
+  addHistory: (h) => set(s => {
+    const next = { history: [{ ...h, id: uid(), visitedAt: Date.now() }, ...s.history].slice(0, 5000) }
+    setTimeout(() => persist({ ...get(), ...next } as any), 0)
+    return next
+  }),
 
-  clearHistory: () => set({ history: [] }),
+  clearHistory: () => set(s => {
+    const next = { history: [] }
+    setTimeout(() => persist({ ...get(), ...next } as any), 0)
+    return next
+  }),
 
   addDownload: (d) => set(s => ({ downloads: [d, ...s.downloads].slice(0, 200) })),
 

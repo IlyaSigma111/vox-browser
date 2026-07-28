@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar'
 import ZenSidebar from './components/ZenSidebar'
 import CommandPalette from './components/CommandPalette'
 import HintOverlay from './components/HintOverlay'
+import FindBar from './components/FindBar'
 import NewTabPage from './components/NewTabPage'
 import './App.css'
 
@@ -33,7 +34,7 @@ function WorkspaceBar() {
           <button
             key={ws.id}
             className={`ws-btn${ws.id === activeWorkspace ? ' active' : ''}`}
-            style={ws.id === activeWorkspace ? { background: ws.color, color: '#fff' } : undefined}
+            style={ws.id === activeWorkspace ? { background: ws.color, color: '#fff', boxShadow: `0 0 12px ${ws.color}60` } : undefined}
             onClick={() => switchWorkspace(ws.id)}
             onContextMenu={(e) => {
               e.preventDefault()
@@ -77,6 +78,7 @@ export default function App() {
   const vimEnabled = useStore(s => s.settings.vimEnabled)
   const settings = useStore(s => s.settings)
   const switchWorkspace = useStore(s => s.switchWorkspace)
+  const [showFind, setShowFind] = useState(false)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
 
@@ -168,6 +170,10 @@ export default function App() {
         e.preventDefault()
         const s = useStore.getState()
         s.setSidebar(s.sidebarTab === 'settings' ? null : 'settings')
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        setShowFind(prev => !prev)
       }
       if (e.altKey && /^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
         e.preventDefault()
@@ -263,6 +269,7 @@ export default function App() {
         </div>
       )}
       <CommandPalette />
+      <FindBar show={showFind} onClose={() => setShowFind(false)} />
     </div>
   )
 }
