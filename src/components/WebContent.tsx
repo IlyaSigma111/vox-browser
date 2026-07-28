@@ -159,7 +159,7 @@ const VIM_ENGINE = `(function(){
   window.addEventListener('keydown',handleKey,true);
 })();`
 
-export default function WebContent({ id, url, active }: { id: string; url: string; active: boolean }) {
+export default function WebContent({ id, url, active, visible = true }: { id: string; url: string; active: boolean; visible?: boolean }) {
   const ref = useRef<HTMLWebViewElement>(null)
   const navRef = useRef('')
   const registerWv = useStore(s => s.registerWv)
@@ -318,7 +318,7 @@ export default function WebContent({ id, url, active }: { id: string; url: strin
   if (!hasUrl) return null
 
   return (
-    <div className={`webview-container${active ? ' active' : ''}`}>
+    <div className={`webview-container${active ? ' active' : ''}`} style={visible ? undefined : { position: 'absolute', left: '-9999px', top: 0, width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none' as const }}>
       <webview
         ref={ref}
         className="wv"

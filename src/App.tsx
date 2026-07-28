@@ -212,8 +212,8 @@ export default function App() {
     <div className="content">
       {sidePos === 'left' && <Sidebar />}
       <div className="main">
-        {wsTabs.map(t => (
-          <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
+        {tabs.map(t => (
+          <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
         ))}
         {isNew && <NewTabPage />}
         <HintOverlay />
@@ -234,8 +234,8 @@ export default function App() {
             <ZenSidebar />
             {sidePos === 'left' && <Sidebar />}
             <div className="main">
-              {wsTabs.map(t => (
-                <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} />
+              {tabs.map(t => (
+                <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
               ))}
               {isNew && <NewTabPage />}
               <HintOverlay />
