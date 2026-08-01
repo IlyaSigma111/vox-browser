@@ -2946,3 +2946,84 @@ button:not(:disabled):active { transform: scale(0.96); }
 body.vox-light .sb-btn, body.vox-light .sidebar-item, body.vox-light .palette-item, body.vox-light .ctx-item, body.vox-light .store-card-desc {
   color: color-mix(in srgb, var(--fg-dim) 55%, #1c1c1c);
 }
+
+/* ═══════════ v3 — floating glass chrome redesign ═══════════ */
+
+/* Ambient canvas — the gaps around the floating chrome shells read as
+   intentional depth, tinted by the active theme's accent/purple. */
+.browser {
+  background:
+    radial-gradient(90rem 60rem at 10% -12%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 55%),
+    radial-gradient(75rem 55rem at 95% 115%, color-mix(in srgb, var(--purple) 6%, transparent), transparent 55%),
+    var(--bg);
+}
+
+/* Top / bottom chrome shells — one floating glass card per edge instead of
+   disjoint full-bleed strips. Inner bars become transparent so there are no
+   seams; the shell supplies background, blur, border and rounded corners. */
+.chrome-top,
+.chrome-bottom {
+  margin: 0 7px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent), var(--shadow-1);
+  position: relative;
+  flex-shrink: 0;
+  transition: background var(--speed) ease;
+}
+
+.chrome-top {
+  border-top: none;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.chrome-bottom {
+  border-bottom: none;
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.chrome-top:empty,
+.chrome-bottom:empty {
+  display: none;
+}
+
+/* Inner bars blend into the shell — drop their own full-bleed backgrounds. */
+.chrome-top .titlebar,
+.chrome-top .browser-toolbar,
+.chrome-top .workspace-bar,
+.chrome-top .tab-bar,
+.chrome-bottom .workspace-bar,
+.chrome-bottom .tab-bar,
+.chrome-bottom .statusbar {
+  background: transparent;
+}
+
+/* Hard edges between shell and content are owned by the shell now. */
+.chrome-top .titlebar,
+.chrome-top .browser-toolbar,
+.chrome-top .workspace-bar,
+.chrome-top .statusbar,
+.chrome-bottom .workspace-bar,
+.chrome-bottom .tab-bar,
+.chrome-bottom .statusbar {
+  border: none;
+}
+
+/* Keep only the internal divider that separates stacked bars (tab bar
+   under the workspace bar in the top shell); accent hairlines (toolbar
+   ::after, statusbar ::before) already do the rest. */
+.chrome-top .tab-bar { border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent); }
+
+/* Accent hairline only where it separates chrome from content:
+   top shell keeps the tab-bar's bottom glow, bottom shell the statusbar's. */
+.chrome-top .statusbar::before { display: none; }
+.chrome-bottom .tab-bar::after { display: none; }
+
+/* Sidebars float too — match the shell rounding & glass. */
+.sidebar { border-radius: var(--radius-lg); margin: 7px 0; }
+body:not(.zen-layout) .sidebar { border: var(--glass-border); box-shadow: var(--shadow-1); }
+.zen-sidebar { border-radius: var(--radius-lg); margin: 7px 0 7px 7px; }

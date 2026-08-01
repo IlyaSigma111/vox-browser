@@ -467,69 +467,45 @@ export default function App() {
   const statusPos = settings.statusBarPosition || 'bottom'
   const sidePos = settings.sidebarPosition || 'left'
 
-  const content = (
-    <div className="content">
-      {sidePos === 'left' && <Sidebar />}
-      <div className="main">
-        {tabs.map(t => (
-          t.url === 'vox:settings'
-            ? <SettingsPage key={t.id} />
-            : t.url === 'vox:store'
-              ? <StorePage key={t.id} />
-              : t.url.startsWith('vox:blocked')
-                ? <BlockedPage key={t.id} tabId={t.id} />
-                : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
-        ))}
-        {isNew && !isBlocked && <NewTabPage />}
-        <HintOverlay />
-      </div>
-      {sidePos === 'right' && <Sidebar />}
-    </div>
-  )
-
   return (
     <div className={`browser${zen ? ' zen-layout' : ''}`}>
-      {statusPos === 'top' && settings.showStatusBar && (
-        <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
-      )}
-      {settings.browserChrome ? (
-        <BrowserToolbar />
-      ) : (
-        <div className="titlebar" style={{ height: settings.titlebarHeight }} />
-      )}
-          {zen ? (
-          <>
-            <div className="content">
-              <ZenSidebar />
-              {sidePos === 'left' && <Sidebar />}
-              <div className="main">
-                {tabs.map(t => (
-                  t.url === 'vox:settings'
-                    ? <SettingsPage key={t.id} />
-                    : t.url === 'vox:store'
-                      ? <StorePage key={t.id} />
-                      : t.url.startsWith('vox:blocked')
-                        ? <BlockedPage key={t.id} tabId={t.id} />
-                        : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
-                ))}
-                {isNew && !isBlocked && <NewTabPage />}
-                <HintOverlay />
-              </div>
-              {sidePos === 'right' && <Sidebar />}
-            </div>
-          </>
+      <div className="chrome chrome-top">
+        {statusPos === 'top' && settings.showStatusBar && (
+          <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
+        )}
+        {settings.browserChrome ? (
+          <BrowserToolbar />
         ) : (
-        <>
-          {wsPos === 'top' && settings.workspaceShow && <WorkspaceBar />}
-          {tabPos === 'top' && settings.showTabBar && <TabBar />}
-          {content}
-          {tabPos === 'bottom' && settings.showTabBar && <TabBar />}
-          {wsPos === 'bottom' && settings.workspaceShow && !settings.showStatusBar && <WorkspaceBar />}
-        </>
-      )}
-      {statusPos === 'bottom' && settings.showStatusBar && (
-        <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
-      )}
+          <div className="titlebar" style={{ height: settings.titlebarHeight }} />
+        )}
+        {!zen && wsPos === 'top' && settings.workspaceShow && <WorkspaceBar />}
+        {!zen && tabPos === 'top' && settings.showTabBar && <TabBar />}
+      </div>
+      <div className="content">
+        {zen && <ZenSidebar />}
+        {sidePos === 'left' && <Sidebar />}
+        <div className="main">
+          {tabs.map(t => (
+            t.url === 'vox:settings'
+              ? <SettingsPage key={t.id} />
+              : t.url === 'vox:store'
+                ? <StorePage key={t.id} />
+                : t.url.startsWith('vox:blocked')
+                  ? <BlockedPage key={t.id} tabId={t.id} />
+                  : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+          ))}
+          {isNew && !isBlocked && <NewTabPage />}
+          <HintOverlay />
+        </div>
+        {sidePos === 'right' && <Sidebar />}
+      </div>
+      <div className="chrome chrome-bottom">
+        {!zen && tabPos === 'bottom' && settings.showTabBar && <TabBar />}
+        {!zen && wsPos === 'bottom' && settings.workspaceShow && !settings.showStatusBar && <WorkspaceBar />}
+        {statusPos === 'bottom' && settings.showStatusBar && (
+          <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
+        )}
+      </div>
       {(!settings.showStatusBar || statusPos === 'bottom') && (
         <div className="floating-win-controls">
           <button className="fwc-btn" onClick={() => window.onyx?.minimize()} title="Minimize">─</button>
