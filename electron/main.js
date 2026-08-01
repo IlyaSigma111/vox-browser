@@ -306,3 +306,63 @@ ipcMain.handle('pip:open', async (_, url, title) => {
 ipcMain.on('pip:close', () => {
   if (pipWindow && !pipWindow.isDestroyed()) pipWindow.close()
 })
+
+// ─── Ad Blocker ───────────────────────────────────
+const AD_HOSTS = [
+  'doubleclick.net', 'googlesyndication.com', 'googleadservices.com', 'google-analytics.com',
+  'googletagmanager.com', 'facebook.com', 'facebook.net', 'twitter.com', 'x.com', 't.co',
+  'adnxs.com', 'adsrvr.org', 'taboola.com', 'outbrain.com', 'criteo.com', 'rubiconproject.com',
+  'moatads.com', 'advertising.com', 'yieldmo.com', 'pubmatic.com', 'openx.net', 'amazon-adsystem.com',
+  'scorecardresearch.com', 'quantserve.com', 'sharethrough.com', 'teads.tv', 'spotxchange.com',
+  'adroll.com', 'bing.com', 'adform.net', 'casalemedia.com', 'sovrn.com', 'media.net',
+  'analytics.yahoo.com', 'flurry.com', 'branch.io', 'segment.com', 'mixpanel.com', 'hotjar.com',
+  'fullstory.com', 'crazyegg.com', 'newrelic.com', 'amplitude.com', 'intercom.io', 'drift.com',
+  'optimizely.com', 'vwo.com', 'mouseflow.com', 'smartadserver.com', 'undertone.com',
+]
+
+let adblockActive = false
+let adblockListener = null
+
+function applyAdblock(on) {
+  if (on && !adblockListener) {
+    adblockListener = (details, callback) => {
+      try {
+        const h = new URL(details.url).hostname.toLowerCase()
+        const parts = h.split('.')
+        const domain = parts.slice(-2).join('.')
+        if (AD_HOSTS.includes(domain)) { callback({ cancel: true }); return }
+      } catch {}
+      callback({})
+    }
+    session.defaultSession.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, adblockListener)
+    adblockActive = true
+    console.log('[Vox] adblock ON')
+  } else if (!on && adblockListener) {
+    try { session.defaultSession.webRequest.onBeforeRequest(null) } catch {}
+    adblockListener = null
+    adblockActive = false
+    console.log('[Vox] adblock OFF')
+  }
+}
+
+ipcMain.on('adblock:set', (_, on) => applyAdblock(!!on))
+
+// ─── Backup ───────────────────────────────────────
+ipcMain.handle('data:saveBackup', async (_, name, content) => {
+  const r = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: path.join(app.getPath('downloads'), name),
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  })
+  if (r.canceled || !r.filePath) return null
+  fs.writeFileSync(r.filePath, content, 'utf-8')
+  return r.filePath
+})
+
+ipcMain.handle('data:loadBackup', async () => {
+  const r = await dialog.showOpenDialog(mainWindow, {
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile'],
+  })
+  if (r.canceled || !r.filePaths[0]) return null
+  return fs.readFileSync(r.filePaths[0], 'utf-8')
+})

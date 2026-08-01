@@ -31,6 +31,55 @@ const SMOOTH_REMOVE = `
   if (s) s.remove();
 })()`
 
+const READER_CSS = `
+(function() {
+  if(document.getElementById('vox-reader'))return;
+  var s = document.createElement('style');
+  s.id = 'vox-reader';
+  s.textContent = 'html.vox-reader body{max-width:46rem!important;margin:0 auto!important;padding:1.5rem 1.25rem 4rem!important;font-size:18px!important;line-height:1.75!important;background:inherit}html.vox-reader header,html.vox-reader nav,html.vox-reader footer,html.vox-reader aside,html.vox-reader form,html.vox-reader .ad,html.vox-reader [class*="ad-"],html.vox-reader [class*="adsbygoogle"],html.vox-reader [class*="cookie"],html.vox-reader [id*="cookie"],html.vox-reader .newsletter,html.vox-reader .share{display:none!important}html.vox-reader img,html.vox-reader video{max-width:100%!important;height:auto!important}';
+  document.documentElement.classList.add('vox-reader');
+  document.documentElement.appendChild(s);
+})()`
+
+const READER_REMOVE = `
+(function() {
+  document.documentElement.classList.remove('vox-reader');
+  var s = document.getElementById('vox-reader');
+  if (s) s.remove();
+})()`
+
+const FOCUS_CSS = `
+(function() {
+  if(document.getElementById('vox-focus'))return;
+  var s = document.createElement('style');
+  s.id = 'vox-focus';
+  s.textContent = 'html.vox-focus::after{content:"";position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);height:68vh;pointer-events:none;z-index:2147483646;background:linear-gradient(180deg,rgba(0,0,0,.58),transparent 12%,transparent 88%,rgba(0,0,0,.58))}';
+  document.documentElement.classList.add('vox-focus');
+  document.documentElement.appendChild(s);
+})()`
+
+const FOCUS_REMOVE = `
+(function() {
+  document.documentElement.classList.remove('vox-focus');
+  var s = document.getElementById('vox-focus');
+  if (s) s.remove();
+})()`
+
+const NIGHT_CSS = `
+(function() {
+  if(document.getElementById('vox-night'))return;
+  var s = document.createElement('style');
+  s.id = 'vox-night';
+  s.textContent = 'body{filter:sepia(.4) saturate(.88) hue-rotate(-8deg)!important;background:#ffc79a}';
+  document.documentElement.appendChild(s);
+})()`
+
+const NIGHT_REMOVE = `
+(function() {
+  var s = document.getElementById('vox-night');
+  if (s) s.remove();
+})()`
+
 // Fetch title + favicon after page load
 const FETCH_META = `
 (function() {
@@ -214,12 +263,23 @@ const VIM_ENGINE = `(function(){
 
     var scrollAmount=window.innerHeight*0.4;
 
-    if(e.key==='j'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,scrollAmount);return;}
-    if(e.key==='k'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,-scrollAmount);return;}
-    if(e.key==='h'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(-scrollAmount,0);return;}
-    if(e.key==='l'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(scrollAmount,0);return;}
-    if(e.key==='d'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,window.innerHeight/2);return;}
-    if(e.key==='u'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,-window.innerHeight/2);return;}
+    function target(){
+      var ae=document.activeElement;
+      if(ae&&ae.tagName==='IFRAME'&&ae.contentWindow){
+        try{
+          var d=ae.contentWindow.document;
+          if(d&&d.body)return ae.contentWindow;
+        }catch(e){}
+      }
+      return window;
+    }
+
+    if(e.key==='j'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,scrollAmount);return;}
+    if(e.key==='k'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,-scrollAmount);return;}
+    if(e.key==='h'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(-scrollAmount,0);return;}
+    if(e.key==='l'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(scrollAmount,0);return;}
+    if(e.key==='d'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,window.innerHeight/2);return;}
+    if(e.key==='u'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,-window.innerHeight/2);return;}
 
     if(e.key==='f'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey){e.preventDefault();activateHints();return;}
     if(e.key==='F'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();activateHints();return;}
@@ -229,10 +289,10 @@ const VIM_ENGINE = `(function(){
     if(e.key==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.location.reload();return;}
 
     if(e.key==='g'){
-      if(keyBuffer==='g'){e.preventDefault();window.scrollTo(0,0);keyBuffer='';return;}
+      if(keyBuffer==='g'){e.preventDefault();target().scrollTo(0,0);keyBuffer='';return;}
       keyBuffer='g';return;
     }
-    if(e.key==='G'&&e.shiftKey){e.preventDefault();window.scrollTo(0,document.body.scrollHeight);keyBuffer='';return;}
+    if(e.key==='G'&&e.shiftKey){e.preventDefault();target().scrollTo(0,target().document.body.scrollHeight);keyBuffer='';return;}
 
     if(e.key==='H'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.history.back();return;}
     if(e.key==='L'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.history.forward();return;}
@@ -244,7 +304,7 @@ const VIM_ENGINE = `(function(){
     if(e.defaultPrevented)return;
     var k=(e.key||'').toLowerCase();
     var isShort=(e.ctrlKey||e.metaKey||e.altKey)&&(k==='t'||k==='w'||k==='tab'||k==='f'||k==='d'||k==='l'||k==='h'||k==='e'||k==='b'||k===','||k==='\\\\'||k==='='||k==='+'||k==='-'||k==='0'||k==='arrowleft'||k==='arrowright'||k==='r');
-    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'||k==='s'||k==='c'))isShort=true;
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'||k==='s'||k==='c'||k==='o'||k==='j'||k==='v'||k==='r'))isShort=true;
     if(e.key==='F5')isShort=true;
     if(e.key==='?'&&!(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey))isShort=true;
     if(!isShort)return;
@@ -265,6 +325,7 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
   const pushTrail = useStore(s => s.pushTrail)
   const darkReader = useStore(s => s.settings.darkReader)
   const smoothScroll = useStore(s => s.settings.smoothScroll)
+  const nightShift = useStore(s => s.settings.nightShift)
   const aurora = useStore(s => s.settings.aurora)
   const setAuroraColor = useStore(s => s.setAuroraColor)
   const lenses = useStore(s => s.settings.lenses)
@@ -362,6 +423,36 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       }, 120)
     }
 
+    const injectReader = () => {
+      if (destroyed) return
+      setTimeout(() => {
+        if (destroyed) return
+        try {
+          wv.executeJavaScript(tab?.reader ? READER_CSS : READER_REMOVE).catch(() => {})
+        } catch {}
+      }, 140)
+    }
+
+    const injectFocus = () => {
+      if (destroyed) return
+      setTimeout(() => {
+        if (destroyed) return
+        try {
+          wv.executeJavaScript(tab?.focus ? FOCUS_CSS : FOCUS_REMOVE).catch(() => {})
+        } catch {}
+      }, 160)
+    }
+
+    const injectNight = () => {
+      if (destroyed) return
+      setTimeout(() => {
+        if (destroyed) return
+        try {
+          wv.executeJavaScript(nightShift ? NIGHT_CSS : NIGHT_REMOVE).catch(() => {})
+        } catch {}
+      }, 180)
+    }
+
     const fetchMeta = () => {
       if (destroyed) return
       setTimeout(() => {
@@ -384,6 +475,9 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       tryInject(0)
       injectDark()
       injectSmooth()
+      injectReader()
+      injectFocus()
+      injectNight()
       fetchMeta()
       if (aurora) {
         setTimeout(() => {
@@ -416,7 +510,21 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       wv.removeEventListener('did-navigate-in-page', onReady)
       wv.removeEventListener('did-stop-loading', onStop)
     }
-  }, [effectiveDark, smoothScroll, aurora, id, updateTab, setAuroraColor])
+  }, [effectiveDark, smoothScroll, nightShift, aurora, tab?.reader, tab?.focus, id, updateTab, setAuroraColor])
+
+  // Live reader/focus/night toggles (no page reload needed)
+  useEffect(() => {
+    const wv = ref.current as any
+    if (!wv) return
+    const run = () => {
+      try {
+        wv.executeJavaScript(tab?.reader ? READER_CSS : READER_REMOVE).catch(() => {})
+        wv.executeJavaScript(tab?.focus ? FOCUS_CSS : FOCUS_REMOVE).catch(() => {})
+        wv.executeJavaScript(nightShift ? NIGHT_CSS : NIGHT_REMOVE).catch(() => {})
+      } catch {}
+    }
+    run()
+  }, [tab?.reader, tab?.focus, nightShift])
 
   // Events: title, favicon, navigation, history + trail capture
   useEffect(() => {
@@ -441,7 +549,9 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       if (u && u !== 'about:blank') {
         let text = ''
         try { text = await wv.executeJavaScript(TEXT_EXTRACT) } catch {}
-        addHistory({ url: u, title, text: typeof text === 'string' ? text.slice(0, 4000) : '' })
+        const sliced = typeof text === 'string' ? text.slice(0, 4000) : ''
+        useStore.getState().setPageText(id, sliced)
+        addHistory({ url: u, title, text: sliced })
       }
     }
     const onFail = (e: any) => { if (e.errorCode !== -3) updateTab(id, { loading: false }) }

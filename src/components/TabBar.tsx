@@ -11,6 +11,7 @@ export default function TabBar() {
   const groups = useStore(s => s.groups)
   const activeWorkspace = useStore(s => s.activeWorkspace)
   const assignGroup = useStore(s => s.assignGroup)
+  const bookmarks = useStore(s => s.bookmarks)
   const toggleGroupCollapse = useStore(s => s.toggleGroupCollapse)
   const addGroup = useStore(s => s.addGroup)
   const removeGroup = useStore(s => s.removeGroup)
@@ -20,6 +21,17 @@ export default function TabBar() {
   const tabBarShowFavicon = useStore(s => s.settings.tabBarShowFavicon)
   const tabBarShowIndicator = useStore(s => s.settings.tabBarShowIndicator)
   const tabShape = useStore(s => s.settings.tabShape)
+  const tabColors = useStore(s => s.settings.tabColors)
+
+  function domainStyle(t: any): React.CSSProperties | undefined {
+    if (!tabColors) return undefined
+    let host = ''
+    try { host = new URL(t.url).hostname || '' } catch {}
+    if (!host) return undefined
+    let h = 0
+    for (let i = 0; i < host.length; i++) h = (h * 31 + host.charCodeAt(i)) >>> 0
+    return { borderTop: `2px solid hsl(${h % 360} 70% 60%)` }
+  }
 
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [overIdx, setOverIdx] = useState<number | null>(null)
@@ -69,7 +81,7 @@ export default function TabBar() {
       <div
         key={t.id}
         className={`tab${t.id === activeId ? ' active' : ''}${overIdx === i ? ' drag-over' : ''}${t.loading ? ' loading' : ''}${t.pinned ? ' pinned' : ''}`}
-        style={grp ? { borderLeft: `2px solid ${grp.color}` } : undefined}
+        style={{ ...(grp ? { borderLeft: `2px solid ${grp.color}` } : {}), ...domainStyle(t) }}
         draggable
         onDragStart={handleDragStart(i)}
         onDragOver={handleDragOver(i)}
@@ -146,8 +158,18 @@ export default function TabBar() {
             <div className="ctx-item" onClick={() => { closeTab(ctxMenu.tabId); closeCtx() }}>Close tab</div>
             <div className="ctx-item" onClick={() => {
               const t = tabs.find(x => x.id === ctxMenu.tabId)
-              if (t) { const id = addTab(t.url); closeTab(ctxMenu.tabId); closeCtx() }
+              if (t) { useStore.getState().duplicateTab(ctxMenu.tabId); closeCtx() }
             }}>Duplicate tab</div>
+            <div className="ctx-item" onClick={() => {
+              const t = tabs.find(x => x.id === ctxMenu.tabId)
+              if (!t) return
+              useStore.getState().toggleBookmark(t.url, t.title || t.url, t.favicon)
+              closeCtx()
+            }}>{(() => {
+              const t = tabs.find(x => x.id === ctxMenu.tabId)
+              const isBm = t && bookmarks.find(b => b.url === t.url)
+              return isBm ? 'Remove bookmark' : 'Bookmark this tab'
+            })()}</div>
             <div className="ctx-item" onClick={() => {
               const t = tabs.find(x => x.id === ctxMenu.tabId)
               if (t) { useStore.getState().updateTab(ctxMenu.tabId, { pinned: !t.pinned }); closeCtx() }

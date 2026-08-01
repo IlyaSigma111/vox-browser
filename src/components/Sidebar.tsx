@@ -33,13 +33,15 @@ export default function Sidebar() {
   return (
     <div className={`sidebar${sidePos === 'right' ? ' sidebar-right' : ''}`}>
       <div className="sidebar-header">
-        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : t('sidebar.settings')}</h3>
+        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : sidebarTab === 'reading' ? '📚 Список чтения' : sidebarTab === 'extensions' ? '🧩 Расширения' : t('sidebar.settings')}</h3>
         <button className="sidebar-close" onClick={() => setSidebar(null)}>×</button>
       </div>
       <div className="sidebar-body">
         {sidebarTab === 'bookmarks' && <Bookmarks />}
         {sidebarTab === 'history' && <History />}
         {sidebarTab === 'downloads' && <Downloads />}
+        {sidebarTab === 'reading' && <ReadingList />}
+        {sidebarTab === 'extensions' && <ExtensionsPanel />}
         {sidebarTab === 'settings' && <SettingsPanel />}
       </div>
     </div>
@@ -94,6 +96,52 @@ function History() {
       </div>
     ))}
     <div className="sidebar-section" style={{ cursor: 'pointer' }} onClick={clearHistory}>{t('sidebar.clearHistory')}</div>
+  </>
+}
+
+function ExtensionsPanel() {
+  const [exts, setExts] = useState<string[] | null>(null)
+  useEffect(() => {
+    let alive = true
+    window.onyx?.listExtensions?.().then((d: string[]) => { if (alive) setExts(d) }).catch(() => {})
+    return () => { alive = false }
+  }, [])
+  return (
+    <div className="ext-panel">
+      <div className="st-hint" style={{ padding: '6px 14px' }}>Unpacked extensions (.crx распакованные) кладутся в папку <code>extensions</code> в userData. Vox загружает их при запуске.</div>
+      <div className="st-actions" style={{ padding: '2px 14px 8px' }}>
+        <button className="st-action-btn" onClick={() => window.onyx?.openExtensionsFolder?.()}>📂 Открыть папку расширений</button>
+      </div>
+      <div className="st-section">
+        <div className="st-section-title">Загруженные</div>
+        <div className="ext-list">
+          {exts === null && <div className="st-hint" style={{ padding: '4px 14px' }}>Проверяю…</div>}
+          {exts !== null && exts.length === 0 && <div className="st-hint" style={{ padding: '4px 14px' }}>Пока пусто. Расширения работают вместе с Магазином: файлы — вручную, флаги — в 🛍 Магазине.</div>}
+          {exts?.map(d => <div key={d} className="ext-row">🧩 {d}</div>)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReadingList() {
+  const readList = useStore(s => s.settings.readList)
+  const removeFromReadList = useStore(s => s.removeFromReadList)
+  const navigateTo = useStore(s => s.navigateTo)
+  const activeId = useStore(s => s.activeId)
+  const setSidebar = useStore(s => s.setSidebar)
+  if (!readList.length) return <div className="sidebar-section">Пока пусто. Сохраняй статьи на потом по Ctrl+Shift+R или через кнопку 📚 в статусбаре.</div>
+  return <>
+    {readList.map(r => (
+      <div key={r.url} className="sidebar-item" onClick={() => { navigateTo(activeId, r.url); setSidebar(null) }}>
+        <span className="si-icon">📄</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="title">{r.title}</div>
+          <div className="url">{new Date(r.addedAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</div>
+        </div>
+        <button className="sb-btn si-rm" onClick={e => { e.stopPropagation(); removeFromReadList(r.url) }}>×</button>
+      </div>
+    ))}
   </>
 }
 
@@ -166,6 +214,14 @@ export function SettingsPanel() {
     </div>
 
     {tab === 'general' && <div className="settings-sections">
+      <div className="store-cta" onClick={() => useStore.getState().openStore()}>
+        <span className="store-cta-icon">🛍</span>
+        <span className="store-cta-text">
+          <b>Магазин Vox</b>
+          <span>29 встроенных расширений — включай одним кликом</span>
+        </span>
+        <span className="store-cta-arrow">→</span>
+      </div>
       <Section title={t('lang')}>
         <StRow label={t('lang')}>
           <select value={settings.language} onChange={e => setLangAndSettings(e.target.value)}>

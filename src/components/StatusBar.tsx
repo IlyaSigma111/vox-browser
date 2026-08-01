@@ -6,6 +6,34 @@ interface Props {
   showWorkspaces?: boolean
 }
 
+function PomodoroBtn() {
+  const [mode, setMode] = useState<'idle' | 'work' | 'break'>('idle')
+  const [left, setLeft] = useState(25 * 60)
+  useEffect(() => {
+    if (mode === 'idle') return
+    const iv = setInterval(() => {
+      setLeft(l => {
+        if (l <= 1) {
+          if (mode === 'work') { setMode('break'); return 5 * 60 }
+          setMode('idle')
+          return 0
+        }
+        return l - 1
+      })
+    }, 1000)
+    return () => clearInterval(iv)
+  }, [mode])
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const label = mode === 'idle' ? '🍅' : mode === 'work' ? `🍅 ${fmt(left)}` : `☕ ${fmt(left)}`
+  return (
+    <button
+      className={`sb-btn sb-icon pomodoro${mode === 'work' ? ' work' : mode === 'break' ? ' break' : ''}`}
+      onClick={() => { if (mode === 'idle') setMode('work'); else if (mode === 'work') setMode('break'); else setMode('idle') }}
+      title="Pomodoro 25/5 — click to start"
+    >{label}</button>
+  )
+}
+
 export default function StatusBar({ showWorkspaces }: Props) {
   const tabs = useStore(s => s.tabs)
   const activeId = useStore(s => s.activeId)
@@ -19,9 +47,20 @@ export default function StatusBar({ showWorkspaces }: Props) {
   const showMode = useStore(s => s.settings.statusBarShowMode)
   const showUrl = useStore(s => s.settings.statusBarShowUrl)
   const showCount = useStore(s => s.settings.statusBarShowCount)
+  const readTime = useStore(s => s.settings.readTime)
+  const readlist = useStore(s => s.settings.readlist)
+  const settings = useStore(s => s.settings)
+  const pageTexts = useStore(s => s.pageTexts)
   const active = tabs.find(t => t.id === activeId)
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
   const ws = workspaces.find(w => w.id === activeWorkspace)
+  const zoomPct = Math.round((active?.zoom || 1) * 100)
+
+  const readMin = (() => {
+    if (!readTime || !active || !pageTexts[active.id]) return 0
+    const words = pageTexts[active.id].split(/\s+/).filter(Boolean).length
+    return Math.max(1, Math.round(words / 200))
+  })()
 
   const [editing, setEditing] = useState(false)
   const [input, setInput] = useState('')
@@ -110,11 +149,18 @@ export default function StatusBar({ showWorkspaces }: Props) {
               autoFocus
             />
           ) : (
-            <span>{active?.url === 'about:blank' ? '' : active?.url === 'vox:settings' ? '⚙ Settings' : active?.url || ''}</span>
+            <span>{active?.url === 'about:blank' ? '' : active?.url === 'vox:settings' ? '⚙ Settings' : active?.url === 'vox:store' ? '🛍 Store' : active?.url || ''}</span>
           )}
         </div>
       )}
       <button className="sb-btn" onClick={() => addTab()} title="New Tab (Ctrl+T)">+</button>
+      {readMin > 0 && <span className="sb-btn sb-readtime" title="Estimated reading time">≈ {readMin} мин</span>}
+      {zoomPct !== 100 && <span className="sb-btn sb-zoom" title="Zoom">{zoomPct}%</span>}
+      {settings.reader && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleReader()} title="Reader mode">📖</button>}
+      {settings.focus && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleFocus()} title="Focus mode">🎯</button>}
+      {settings.translator && <button className="sb-btn sb-icon" onClick={() => useStore.getState().translatePage()} title="Translate page">🌐</button>}
+      {settings.pomodoro && <PomodoroBtn />}
+      {readlist && <button className="sb-btn sb-icon" onClick={() => setSidebar('reading')} title="Reading list">📚</button>}
       <button className="sb-btn sb-icon" onClick={() => setSidebar('bookmarks')} title="Bookmarks">★</button>
       <button className="sb-btn sb-icon" onClick={() => setSidebar('history')} title="History">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -133,6 +179,8 @@ export default function StatusBar({ showWorkspaces }: Props) {
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
+      <button className="sb-btn sb-icon store" onClick={() => useStore.getState().openStore()} title="Store (Ctrl+Shift+O)">🛍</button>
+      <button className="sb-btn sb-icon" onClick={() => setSidebar('extensions')} title="Extensions">🧩</button>
       {showCount && <span className="sb-count">{wsTabs.length}</span>}
       {window.onyx && (
         <div className="sb-win">

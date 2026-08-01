@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, TabGroup, Workspace, Bookmark, HistoryEntry, Download, Settings, VimMode, ThemePreset, ThemeColors, TrailEntry } from './types'
+import type { Tab, TabGroup, Workspace, Bookmark, HistoryEntry, Download, Settings, VimMode, ThemePreset, ThemeColors, TrailEntry, ReadItem } from './types'
 import type { UIPreset } from './presets'
 import { GROUP_COLORS, WORKSPACE_COLORS } from './types'
 import { setLang } from './lang'
@@ -14,6 +14,20 @@ function normalize(input: string, searchUrl?: string): string {
   if (/^[\w-]+(\.[\w-]+)+/.test(s)) return `https://${s}`
   const url = searchUrl || 'https://www.google.com/search?q=%s'
   return url.replace('%s', encodeURIComponent(s))
+}
+
+function resolveUrl(input: string, settings: Settings): string {
+  const s = input.trim()
+  if (settings.aliases && settings.urlAliases) {
+    const parts = s.split(/\s+/)
+    const key = parts[0].toLowerCase().replace(/^www\./, '')
+    const target = settings.urlAliases[key]
+    if (target) {
+      const base = /^https?:\/\//i.test(target) ? target : `https://${target}`
+      return parts.length > 1 ? `${base}/${parts.slice(1).join('/')}` : base
+    }
+  }
+  return normalize(s, settings.searchUrl)
 }
 
 function makeTab(over?: Partial<Tab>): Tab {
@@ -203,14 +217,16 @@ interface Store {
   showSessionGraph: boolean
   closedTabs: Tab[]
   navTrails: Record<string, TrailEntry[]>
+  pageTexts: Record<string, string>
   focusUrlBar: number
   auroraColor: string
-  sidebarTab: 'bookmarks' | 'history' | 'downloads' | 'settings' | null
+  sidebarTab: 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | null
   webviews: Map<string, any>
   customPresets: UIPreset[]
 
   addTab: (url?: string, workspace?: number, incognito?: boolean) => string
   openSettings: () => void
+  openStore: () => void
   closeTab: (id: string) => void
   reopenTab: () => void
   activate: (id: string) => void
@@ -255,18 +271,30 @@ interface Store {
   pushTrail: (id: string, entry: TrailEntry) => void
   setZoom: (id: string, zoom: number) => void
   setAuroraColor: (c: string) => void
-  setSidebar: (s: 'bookmarks' | 'history' | 'downloads' | 'settings' | null) => void
+  setSidebar: (s: 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | null) => void
 
   registerWv: (id: string, ref: any) => void
   unregisterWv: (id: string) => void
   navigateTo: (id: string, url: string) => void
+
+  toggleReader: () => void
+  toggleFocus: () => void
+  searchSelection: () => void
+  setPageText: (id: string, text: string) => void
+  duplicateTab: (id: string) => void
+  closeDuplicates: () => void
+  exportSettings: () => void
+  importSettings: () => void
+  addToReadList: (url: string, title: string) => void
+  removeFromReadList: (url: string) => void
+  translatePage: () => void
 }
 
 const defaultSettings: Settings = {
   homepage: 'about:blank',
   searchEngine: 'Google',
   searchUrl: 'https://www.google.com/search?q=%s',
-  vimEnabled: true,
+  vimEnabled: false,
   showStatusBar: true,
   showTabBar: true,
   darkReader: false,
@@ -321,11 +349,39 @@ const defaultSettings: Settings = {
   transitionSpeed: 150,
   tabOpacity: 1,
 
-  smoothScroll: true,
+  smoothScroll: false,
   restoreTabs: true,
   confirmClose: false,
   zenMode: false,
   defaultZoom: 1,
+
+  palette: false,
+  expose: false,
+  grep: false,
+  pip: false,
+  trail: false,
+  sleep: false,
+  lens: false,
+  incognito: false,
+  shots: false,
+  reader: false,
+  focus: false,
+  nightShift: false,
+  adblock: false,
+  aliases: false,
+  urlAliases: { yt: 'youtube.com', gh: 'github.com', g: 'google.com', w: 'wikipedia.org' },
+  clipboard: false,
+  selectSearch: false,
+  readTime: false,
+  tabColors: false,
+  duplicate: false,
+  dedupe: false,
+  backup: false,
+  readlist: false,
+  readList: [],
+  translator: false,
+  pomodoro: false,
+  featureVersion: 0,
 }
 
 function persist(store: Store) {
@@ -385,9 +441,10 @@ export const useStore = create<Store>((set, get) => {
     showSessionGraph: false,
     closedTabs: [] as Tab[],
     navTrails: {} as Record<string, TrailEntry[]>,
+    pageTexts: {} as Record<string, string>,
     focusUrlBar: 0,
     auroraColor: '',
-    sidebarTab: null as 'bookmarks' | 'history' | 'downloads' | 'settings' | null,
+    sidebarTab: null as 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | null,
     webviews: new Map<string, any>(),
     customPresets: [] as UIPreset[],
   }
@@ -413,7 +470,8 @@ export const useStore = create<Store>((set, get) => {
       }))
       restored.activeId = data.activeId || restored.tabs[0].id
     } else {
-      const t = makeTab({ workspace: restored.activeWorkspace })
+      const hp = pendingSettings && typeof pendingSettings.homepage === 'string' && pendingSettings.homepage !== 'about:blank' ? pendingSettings.homepage : ''
+      const t = makeTab(hp ? { url: hp, title: hp, workspace: restored.activeWorkspace, zoom: pendingSettings.defaultZoom || 1 } : { workspace: restored.activeWorkspace })
       restored.tabs = [t]
       restored.activeId = t.id
     }
@@ -468,7 +526,7 @@ export const useStore = create<Store>((set, get) => {
     const s = get()
     const workspace = ws ?? s.activeWorkspace
     const zoom = s.settings.defaultZoom || 1
-    const t = makeTab(url ? { url: normalize(url, s.settings.searchUrl), title: url, workspace, incognito: !!incognito, zoom } : { workspace, incognito: !!incognito, zoom })
+    const t = makeTab(url ? { url: resolveUrl(url, s.settings), title: url, workspace, incognito: !!incognito, zoom } : { workspace, incognito: !!incognito, zoom })
     set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
     persistNow()
     return t.id
@@ -479,6 +537,15 @@ export const useStore = create<Store>((set, get) => {
     const existing = s.tabs.find(t => t.url === 'vox:settings' && t.workspace === s.activeWorkspace)
     if (existing) { set({ activeId: existing.id }); return }
     const t = makeTab({ url: 'vox:settings', title: 'Settings', workspace: s.activeWorkspace })
+    set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
+    persistNow()
+  },
+
+  openStore: () => {
+    const s = get()
+    const existing = s.tabs.find(t => t.url === 'vox:store' && t.workspace === s.activeWorkspace)
+    if (existing) { set({ activeId: existing.id }); return }
+    const t = makeTab({ url: 'vox:store', title: 'Store', workspace: s.activeWorkspace })
     set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
     persistNow()
   },
@@ -701,8 +768,107 @@ export const useStore = create<Store>((set, get) => {
 
   navigateTo: (id, url) => {
     const s = get()
-    const n = normalize(url, s.settings.searchUrl)
+    const n = resolveUrl(url, s.settings)
     get().updateTab(id, { url: n, loading: true })
+  },
+
+  toggleReader: () => {
+    const s = get()
+    const t = s.tabs.find(x => x.id === s.activeId)
+    if (!t || t.url === 'about:blank' || t.url === 'vox:settings' || t.url === 'vox:store') return
+    const reader = !t.reader
+    set(st => ({ tabs: st.tabs.map(x => x.id === s.activeId ? { ...x, reader } : x) }))
+    setTimeout(() => { const wv = get().webviews.get(get().activeId); if (wv?.reload) wv.reload() }, 60)
+  },
+
+  toggleFocus: () => {
+    const s = get()
+    const t = s.tabs.find(x => x.id === s.activeId)
+    if (!t || t.url === 'about:blank' || t.url === 'vox:settings' || t.url === 'vox:store') return
+    const focus = !t.focus
+    set(st => ({ tabs: st.tabs.map(x => x.id === s.activeId ? { ...x, focus } : x) }))
+  },
+
+  searchSelection: async () => {
+    const s = get()
+    const wv = s.webviews.get(s.activeId)
+    if (!wv) return
+    let sel = ''
+    try { sel = (await wv.executeJavaScript('window.getSelection().toString()')) || '' } catch {}
+    if (sel && sel.trim()) {
+      get().navigateTo(s.activeId, s.settings.searchUrl.replace('%s', encodeURIComponent(sel.trim())))
+    }
+  },
+
+  setPageText: (id, text) => set(s => ({ pageTexts: { ...s.pageTexts, [id]: text ? text.slice(0, 4000) : '' } })),
+
+  duplicateTab: (id) => {
+    const s = get()
+    const t = s.tabs.find(x => x.id === id)
+    if (!t) return
+    const nt = makeTab({ url: t.url, title: t.title, favicon: t.favicon, workspace: t.workspace, zoom: t.zoom })
+    set(st => ({ tabs: [...st.tabs, nt], activeId: nt.id, showTabSearch: false }))
+    persistNow()
+  },
+
+  closeDuplicates: () => {
+    const s = get()
+    const seen = new Set<string>()
+    const remove = new Set<string>()
+    for (const t of s.tabs) {
+      if (t.url === 'about:blank') continue
+      const k = `${t.workspace}|${t.url}`
+      if (seen.has(k)) remove.add(t.id)
+      else seen.add(k)
+    }
+    if (!remove.size) return
+    let next = s.tabs.filter(t => !remove.has(t.id))
+    if (!next.length) { const t = makeTab({ workspace: s.activeWorkspace }); next = [t] }
+    const newActive = next.find(t => t.id === s.activeId) ? s.activeId : next[0].id
+    set({ tabs: next, activeId: newActive })
+    persistNow()
+  },
+
+  exportSettings: async () => {
+    const s = get()
+    try {
+      const d = new Date()
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const name = `vox-backup-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`
+      const data = JSON.stringify({ app: 'vox', version: 1, settings: s.settings, bookmarks: s.bookmarks, history: s.history }, null, 2)
+      const path = await window.onyx?.saveBackup?.(name, data)
+      if (path) window.onyx?.showInFolder?.(path)
+    } catch {}
+  },
+
+  importSettings: async () => {
+    try {
+      const text = await window.onyx?.loadBackup?.()
+      if (!text) return
+      const data = JSON.parse(text)
+      const merged = data && typeof data.settings === 'object' ? data.settings : null
+      if (merged) get().setSettings({ ...merged, onboarded: true })
+    } catch {}
+  },
+
+  addToReadList: (url, title) => {
+    const s = get()
+    if (!url || url === 'about:blank' || url === 'vox:settings' || url === 'vox:store') return
+    if (s.settings.readList.some(r => r.url === url)) return
+    get().setSettings({ readList: [...s.settings.readList, { url, title: title || url, addedAt: Date.now() }] })
+  },
+
+  removeFromReadList: (url) => {
+    const s = get()
+    get().setSettings({ readList: s.settings.readList.filter(r => r.url !== url) })
+  },
+
+  translatePage: () => {
+    const s = get()
+    const t = s.tabs.find(x => x.id === s.activeId)
+    const u = t?.url && t.url !== 'about:blank' ? t.url : ''
+    const tl = s.settings.language === 'ru' ? 'ru' : 'en'
+    get().addTab(`https://translate.google.com/?sl=auto&tl=${tl}${u ? '&u=' + encodeURIComponent(u) : ''}`)
   },
 }})
 

@@ -17,6 +17,8 @@ import GrepOverlay from './components/GrepOverlay'
 import SessionGraph from './components/SessionGraph'
 import Onboarding from './components/Onboarding'
 import SettingsPage from './components/SettingsPage'
+import StorePage from './components/StorePage'
+import { LATEST_FEATURE_VERSION } from './features'
 import './App.css'
 
 function WorkspaceBar() {
@@ -90,8 +92,23 @@ export default function App() {
   const showTabSearch = useStore(s => s.showTabSearch)
   const auroraColor = useStore(s => s.auroraColor)
   const [showFind, setShowFind] = useState(false)
+  const [showWarmup, setShowWarmup] = useState(false)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
+
+  // Adblock wiring
+  useEffect(() => {
+    window.onyx?.setAdblock?.(settings.adblock)
+  }, [settings.adblock])
+
+  // Nightly warmup: quietly nudge once per feature batch
+  useEffect(() => {
+    if (!settings.onboarded) return
+    if (settings.featureVersion < LATEST_FEATURE_VERSION) {
+      const t = setTimeout(() => setShowWarmup(true), 2200)
+      return () => clearTimeout(t)
+    }
+  }, [settings.onboarded, settings.featureVersion])
 
   // Sync language from settings on mount
   useEffect(() => {
@@ -222,6 +239,26 @@ export default function App() {
           window.onyx?.pipOpen?.(t.url, t.title || 'Vox PiP')
         }
       }
+      if (meta && e.shiftKey && e.key === 'O') {
+        e.preventDefault()
+        useStore.getState().openStore()
+      }
+      if (meta && e.shiftKey && e.key === 'J') {
+        e.preventDefault()
+        const st = useStore.getState()
+        if (st.settings.duplicate) st.duplicateTab(st.activeId)
+      }
+      if (meta && e.shiftKey && e.key === 'V') {
+        e.preventDefault()
+        const st = useStore.getState()
+        if (st.settings.clipboard && navigator.clipboard?.readText) {
+          navigator.clipboard.readText().then((txt: string) => {
+            txt = (txt || '').trim()
+            if (/^https?:\/\//i.test(txt)) st.navigateTo(st.activeId, txt)
+            else if (/^[\w-]+(\.[\w-]+)+/.test(txt)) st.navigateTo(st.activeId, txt)
+          }).catch(() => {})
+        }
+      }
 
       // Page actions
       if (meta && !e.shiftKey && e.key === 'd') {
@@ -229,6 +266,12 @@ export default function App() {
         const st = useStore.getState()
         const t = st.tabs.find(x => x.id === st.activeId)
         if (t) st.toggleBookmark(t.url, t.title || t.url, t.favicon)
+      }
+      if (meta && e.shiftKey && e.key === 'R') {
+        e.preventDefault()
+        const st = useStore.getState()
+        const t = st.tabs.find(x => x.id === st.activeId)
+        if (st.settings.readlist && t) st.addToReadList(t.url, t.title || t.url)
       }
       if (meta && e.shiftKey && e.key === 'D') {
         e.preventDefault()
@@ -315,7 +358,9 @@ export default function App() {
         {tabs.map(t => (
           t.url === 'vox:settings'
             ? <SettingsPage key={t.id} />
-            : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+            : t.url === 'vox:store'
+              ? <StorePage key={t.id} />
+              : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
         ))}
         {isNew && <NewTabPage />}
         <HintOverlay />
@@ -343,7 +388,9 @@ export default function App() {
               {tabs.map(t => (
                 t.url === 'vox:settings'
                   ? <SettingsPage key={t.id} />
-                  : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+                  : t.url === 'vox:store'
+                    ? <StorePage key={t.id} />
+                    : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
               ))}
               {isNew && <NewTabPage />}
               <HintOverlay />
@@ -377,6 +424,22 @@ export default function App() {
       <GrepOverlay />
       <SessionGraph />
       <Onboarding />
+      {showWarmup && (
+        <div className="warmup-toast">
+          <span>🛍 В магазине появились новые расширения</span>
+          <button
+            onClick={() => {
+              useStore.getState().openStore()
+              useStore.getState().setSettings({ featureVersion: LATEST_FEATURE_VERSION })
+              setShowWarmup(false)
+            }}
+          >Открыть</button>
+          <button className="warmup-dismiss" onClick={() => {
+            useStore.getState().setSettings({ featureVersion: LATEST_FEATURE_VERSION })
+            setShowWarmup(false)
+          }}>×</button>
+        </div>
+      )}
     </div>
   )
 }

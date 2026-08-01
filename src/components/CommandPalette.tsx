@@ -16,6 +16,15 @@ const COMMANDS = [
   { name: 'devtools', alias: ['dev'], desc: 'Toggle DevTools' },
   { name: 'newgroup', alias: ['ng'], desc: 'New tab group' },
   { name: 'newworkspace', alias: ['nws'], desc: 'New workspace' },
+  { name: 'store', alias: ['shop'], desc: 'Open the store' },
+  { name: 'dedupe', alias: ['dupes'], desc: 'Close duplicate tabs' },
+  { name: 'translate', alias: ['tr'], desc: 'Translate current page' },
+  { name: 'export', alias: [], desc: 'Export backup (settings/bookmarks/history)' },
+  { name: 'import', alias: [], desc: 'Import backup from JSON' },
+  { name: 'reader', alias: ['read'], desc: 'Toggle reader mode' },
+  { name: 'focus', alias: ['focusmode'], desc: 'Toggle focus mode' },
+  { name: 'searchsel', alias: ['sels', 'searchselection'], desc: 'Search selected text' },
+  { name: 'readlist', alias: ['rl'], desc: 'Save current page to reading list' },
   { name: 'help', alias: ['h'], desc: 'Show help' },
 ]
 
@@ -74,6 +83,19 @@ export default function CommandPalette() {
         if (name) { const gid = addGroup(name); assignGroup(activeId, gid) }
       },
       newworkspace: () => useStore.getState().addWorkspace(),
+      store: () => useStore.getState().openStore(),
+      dedupe: () => useStore.getState().closeDuplicates(),
+      translate: () => useStore.getState().translatePage(),
+      export: () => useStore.getState().exportSettings(),
+      import: () => useStore.getState().importSettings(),
+      reader: () => useStore.getState().toggleReader(),
+      focus: () => useStore.getState().toggleFocus(),
+      searchsel: () => useStore.getState().searchSelection(),
+      readlist: () => {
+        const st = useStore.getState()
+        const t = st.tabs.find(x => x.id === st.activeId)
+        if (t) st.addToReadList(t.url, t.title || t.url)
+      },
       devtools: () => {
         const wv = useStore.getState().webviews.get(activeId)
         if (wv) wv.openDevTools()

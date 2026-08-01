@@ -116,12 +116,23 @@
 
       var scrollAmount=window.innerHeight*0.4;
 
-      if(e.key==='j'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,scrollAmount);return;}
-      if(e.key==='k'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,-scrollAmount);return;}
-      if(e.key==='h'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(-scrollAmount,0);return;}
-      if(e.key==='l'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(scrollAmount,0);return;}
-      if(e.key==='d'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,window.innerHeight/2);return;}
-      if(e.key==='u'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.scrollBy(0,-window.innerHeight/2);return;}
+      function target(){
+        var ae=document.activeElement;
+        if(ae&&ae.tagName==='IFRAME'&&ae.contentWindow){
+          try{
+            var d=ae.contentWindow.document;
+            if(d&&d.body)return ae.contentWindow;
+          }catch(e){}
+        }
+        return window;
+      }
+
+      if(e.key==='j'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,scrollAmount);return;}
+      if(e.key==='k'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,-scrollAmount);return;}
+      if(e.key==='h'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(-scrollAmount,0);return;}
+      if(e.key==='l'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(scrollAmount,0);return;}
+      if(e.key==='d'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,window.innerHeight/2);return;}
+      if(e.key==='u'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();target().scrollBy(0,-window.innerHeight/2);return;}
 
       if(e.key==='f'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey){e.preventDefault();activateHints();return;}
       if(e.key==='F'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();activateHints();return;}
@@ -131,10 +142,10 @@
       if(e.key==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.location.reload();return;}
 
       if(e.key==='g'){
-        if(keyBuffer==='g'){e.preventDefault();window.scrollTo(0,0);keyBuffer='';return;}
+        if(keyBuffer==='g'){e.preventDefault();target().scrollTo(0,0);keyBuffer='';return;}
         keyBuffer='g';return;
       }
-      if(e.key==='G'&&e.shiftKey){e.preventDefault();window.scrollTo(0,document.body.scrollHeight);keyBuffer='';return;}
+      if(e.key==='G'&&e.shiftKey){e.preventDefault();target().scrollTo(0,target().document.body.scrollHeight);keyBuffer='';return;}
 
       if(e.key==='H'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.history.back();return;}
       if(e.key==='L'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();window.history.forward();return;}
@@ -146,7 +157,7 @@
       if(e.defaultPrevented)return;
       var k=(e.key||'').toLowerCase();
       var isShort=(e.ctrlKey||e.metaKey||e.altKey)&&(k==='t'||k==='w'||k==='tab'||k==='f'||k==='d'||k==='l'||k==='h'||k==='e'||k==='b'||k===','||k==='\\'||k==='='||k==='+'||k==='-'||k==='0'||k==='arrowleft'||k==='arrowright'||k==='r');
-      if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'||k==='s'||k==='c'))isShort=true;
+      if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'||k==='s'||k==='c'||k==='o'||k==='j'||k==='v'||k==='r'))isShort=true;
       if(e.key==='F5')isShort=true;
       if(e.key==='?'&&!(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey))isShort=true;
       if(!isShort)return;

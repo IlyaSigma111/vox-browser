@@ -20,6 +20,15 @@ export interface Tab {
   zoom: number
   incognito: boolean
   muted: boolean
+  reader?: boolean
+  focus?: boolean
+  color?: string
+}
+
+export interface ReadItem {
+  url: string
+  title: string
+  addedAt: number
 }
 
 export interface TrailEntry {
@@ -164,6 +173,35 @@ export interface Settings {
   confirmClose: boolean
   zenMode: boolean
   defaultZoom: number
+
+  // ─── Feature Store ──────────────────────────────
+  palette: boolean
+  expose: boolean
+  grep: boolean
+  pip: boolean
+  trail: boolean
+  sleep: boolean
+  lens: boolean
+  incognito: boolean
+  shots: boolean
+  reader: boolean
+  focus: boolean
+  nightShift: boolean
+  adblock: boolean
+  aliases: boolean
+  urlAliases: Record<string, string>
+  clipboard: boolean
+  selectSearch: boolean
+  readTime: boolean
+  tabColors: boolean
+  duplicate: boolean
+  dedupe: boolean
+  backup: boolean
+  readlist: boolean
+  readList: ReadItem[]
+  translator: boolean
+  pomodoro: boolean
+  featureVersion: number
 }
 
 declare global {
@@ -191,6 +229,9 @@ declare global {
       saveShot: (buf: ArrayBuffer, name: string) => Promise<string>
       copyImage: (buf: ArrayBuffer) => Promise<void>
       pipOpen: (url: string, title?: string) => Promise<void>
+      setAdblock: (enabled: boolean) => void
+      saveBackup: (name: string, text: string) => Promise<string>
+      loadBackup: () => Promise<string | null>
       onDownloadStart: (cb: (info: any) => void) => void
       onDownloadProgress: (cb: (data: any) => void) => void
       onDownloadDone: (cb: (data: any) => void) => void
