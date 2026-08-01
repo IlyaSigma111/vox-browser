@@ -2832,3 +2832,117 @@ body.vox-glowui .tab.active, body.vox-glowui .sb-btn:hover, body.vox-glowui .st-
 body.vox-glowui .tab-bar, body.vox-glowui .status-bar, body.vox-glowui .titlebar { background: linear-gradient(90deg, transparent, var(--accent)14, transparent); }
 body.vox-tabgrad .tab.active .tab-title { background: linear-gradient(90deg, var(--accent), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 body.vox-ntpgrad .ntp { background: radial-gradient(1200px 600px at 20% 0%, var(--accent)22, transparent 60%), radial-gradient(1000px 500px at 90% 100%, var(--purple)18, transparent 55%), var(--ntp-bg, var(--bg)); }
+
+/* ═══════════ v2.0 — design polish (adaptive to any theme) ═══════════ */
+:root {
+  --radius-sm: max(calc(var(--radius) - 2px), 3px);
+  --radius-lg: calc(var(--radius) + 7px);
+  --font-mono: 'JetBrains Mono', 'Consolas', 'SF Mono', monospace;
+  --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
+  --accent-softer: color-mix(in srgb, var(--accent) 7%, transparent);
+  --accent-grad: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--purple)));
+  --shadow-1: 0 1px 2px rgba(0,0,0,.22), 0 3px 10px rgba(0,0,0,.16);
+  --shadow-2: 0 6px 18px rgba(0,0,0,.24), 0 16px 44px rgba(0,0,0,.26);
+  --shadow-3: 0 12px 34px rgba(0,0,0,.3), 0 30px 80px rgba(0,0,0,.4);
+  --glass-bg: color-mix(in srgb, var(--bg-dim) 74%, transparent);
+  --glass-blur: blur(22px) saturate(160%);
+  --glass-border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  --glow: 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 26%, transparent);
+  --glow-strong: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 0 26px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 70px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+html { color-scheme: dark; }
+html:has(body.vox-light) { color-scheme: light; }
+body.vox-light { --glass-bg: color-mix(in srgb, var(--bg-dim) 80%, transparent); }
+body:not(.vox-light) { --fg-muted: color-mix(in srgb, var(--fg-dim) 85%, var(--fg)); }
+body.vox-light { --fg-muted: color-mix(in srgb, var(--fg-dim) 60%, #1c1c1c); }
+
+/* Shared springy timing for interactive chrome */
+.tab, .sidebar-item, .ws-btn, .sb-ws-btn, .sb-btn, .ntp-link, .store-card, .expose-card, .preset-card, .palette-item, .ctx-item {
+  transition-timing-function: var(--ease-spring);
+}
+
+/* Tactile press feedback */
+button:not(:disabled):active { transform: scale(0.96); }
+
+/* Slim premium scrollbars */
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--fg-dim) 30%, transparent); border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); background-clip: padding-box; }
+
+/* Focus ring with soft halo */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 75%, transparent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* Ambient main area — pleasant during loads / behind transparent NTP */
+.main {
+  background:
+    radial-gradient(70rem 50rem at 70% -20%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+    radial-gradient(60rem 45rem at -15% 120%, color-mix(in srgb, var(--purple) 5%, transparent), transparent 60%),
+    var(--bg);
+}
+
+/* ── Tab bar ── */
+.tab-bar { background: linear-gradient(180deg, color-mix(in srgb, var(--bg-light) 42%, var(--bg-dim)) 0%, var(--bg-dim) 45%); }
+.tab { border-radius: calc(var(--radius) + 2px) calc(var(--radius) + 2px) 0 0; }
+.tab:hover { background: color-mix(in srgb, var(--bg-light) 74%, transparent); }
+.tab.active {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-light) 55%, var(--bg)) 0%, var(--bg) 92%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 12%, transparent), inset 0 -2px 0 var(--accent), 0 0 26px color-mix(in srgb, var(--accent) 13%, transparent);
+}
+.tab-favicon, .zen-tab-favicon, .expose-fav { border-radius: 4px; }
+.tab.new-tab:hover { background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green); }
+
+/* ── Status bar & workspaces ── */
+.statusbar { padding: 0 6px; }
+.sb-btn { border-radius: calc(var(--radius) + 2px); }
+.sb-btn:hover { background: var(--accent-soft); color: var(--fg); }
+.sb-btn.mode { border-radius: 999px; box-shadow: 0 2px 8px color-mix(in srgb, var(--green) 35%, transparent); }
+.sb-ws-btn, .ws-btn { border-radius: 999px; }
+.sb-ws-btn.active, .ws-btn.active, .zen-ws-btn.active { background: var(--accent-soft); }
+
+/* ── Sidebar ── */
+.sidebar { background: color-mix(in srgb, var(--bg-dim) 74%, transparent); }
+.sidebar-section { letter-spacing: 1.4px; font-size: 9.5px; }
+.sidebar-item { border-radius: var(--radius); margin: 1px 6px; padding: 7px 10px; }
+.sidebar-item:hover { background: var(--accent-softer); border-left-color: var(--accent); }
+
+/* ── Command palette ── */
+.palette { border-radius: var(--radius-lg); box-shadow: var(--shadow-3), var(--glow-strong); }
+.palette-input-row { padding: 2px 16px; }
+.palette-item { padding: 8px 14px; }
+.palette-item:hover, .palette-item.sel { background: var(--accent-soft); }
+
+/* ── New tab page ── */
+.ntp-clock { font-size: 70px; font-weight: 300; letter-spacing: 6px; background: linear-gradient(180deg, var(--fg) 25%, color-mix(in srgb, var(--fg) 45%, var(--accent))); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.ntp-search { border-radius: calc(var(--radius) + 8px); box-shadow: var(--shadow-2); }
+.ntp-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-2); }
+.ntp-link { border-radius: 999px; }
+.ntp-quote { color: color-mix(in srgb, var(--fg-dim) 80%, var(--accent)); }
+
+/* ── Toggles ── */
+.toggle { background: color-mix(in srgb, var(--border) 60%, transparent); }
+.toggle.on { background: var(--accent-grad); }
+.toggle-knob { background: var(--fg); }
+
+/* ── Controls: consistent comfortable radius ── */
+.st-row select, .st-row input[type="number"], .find-input, .ntp-add-name, .ntp-add-url, .lens-domain-input, .tg-name-input, .sb-url-input, .zen-rename-input, .preset-save-form input, .store-search {
+  border-radius: calc(var(--radius) + 2px);
+}
+
+/* ── Modals & cards: layered depth ── */
+.expose-inner, .grep-inner, .graph-inner, .preset-modal, .qr-card { box-shadow: var(--shadow-3); }
+.preset-card { border-radius: calc(var(--radius) + 2px); }
+.store-btn { border-radius: 10px; }
+.store-btn:hover { box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* ── Muted text (shared, light-mode friendly) ── */
+.sb-url, .sb-count, .bt-url-text, .bt-title, .sidebar-item, .ctx-item, .palette-item, .ntp-label, .st-row, .store-card-desc {
+  color: var(--fg-muted);
+}
+body.vox-light .sb-btn, body.vox-light .sidebar-item, body.vox-light .palette-item, body.vox-light .ctx-item, body.vox-light .store-card-desc {
+  color: color-mix(in srgb, var(--fg-dim) 55%, #1c1c1c);
+}

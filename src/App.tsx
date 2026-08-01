@@ -232,6 +232,12 @@ export default function App() {
     if (settings.ntpBgColor) {
       root.style.setProperty('--ntp-bg', settings.ntpBgColor)
     }
+    const bgHex = (c.bg ?? '#1a1b26').replace('#', '')
+    const bgR = parseInt(bgHex.slice(0, 2), 16) / 255
+    const bgG = parseInt(bgHex.slice(2, 4), 16) / 255
+    const bgB = parseInt(bgHex.slice(4, 6), 16) / 255
+    const lum = 0.2126 * bgR + 0.7152 * bgG + 0.0722 * bgB
+    document.body.classList.toggle('vox-light', lum > 0.55)
   }, [settings, auroraColor])
 
   // Confirm-close guard
