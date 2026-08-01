@@ -22,6 +22,19 @@ export default function TabBar() {
   const tabBarShowIndicator = useStore(s => s.settings.tabBarShowIndicator)
   const tabShape = useStore(s => s.settings.tabShape)
   const tabColors = useStore(s => s.settings.tabColors)
+  const unreaddot = useStore(s => s.settings.unreaddot)
+  const tabage = useStore(s => s.settings.tabage)
+  const taboverflow = useStore(s => s.settings.taboverflow)
+
+  function ageLabel(ts?: number): string {
+    if (!ts) return ''
+    const m = Math.floor((Date.now() - ts) / 60000)
+    if (m < 1) return 'just now'
+    if (m < 60) return `${m} min`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h} h`
+    return `${Math.floor(h / 24)} d`
+  }
 
   function domainStyle(t: any): React.CSSProperties | undefined {
     if (!tabColors) return undefined
@@ -95,6 +108,8 @@ export default function TabBar() {
         {tabBarShowIndicator && <div className="tab-indicator" />}
         {tabBarShowFavicon && t.favicon && <img className="tab-favicon" src={t.favicon} alt="" />}
         <span className="tab-title">{t.title || t.url || 'New Tab'}</span>
+        {unreaddot && t.unread && t.id !== activeId && <span className="tab-badge unread" title="Unread">●</span>}
+        {tabage && t.createdAt && t.id !== activeId && <span className="tab-badge age" title={`Opened ${new Date(t.createdAt).toLocaleString()}`}>{ageLabel(t.createdAt)}</span>}
         {t.incognito && <span className="tab-badge incognito" title="Incognito">🕶</span>}
         {t.muted && t.id !== activeId && <span className="tab-badge sleeping" title="Sleeping (muted)">zZ</span>}
         {tabBarShowClose && wsTabs.length > 1 && (
@@ -111,7 +126,7 @@ export default function TabBar() {
 
   return (
     <>
-      <div className="tab-bar" data-shape={tabShape}>
+      <div className={`tab-bar${taboverflow && wsTabs.length >= 12 ? ' compact' : ''}`} data-shape={tabShape}>
         {wsGroups.map(grp => {
           const grpTabs = wsTabs.filter(t => t.groupId === grp.id)
           if (grpTabs.length === 0) return null

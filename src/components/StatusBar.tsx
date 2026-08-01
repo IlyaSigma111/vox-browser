@@ -34,6 +34,74 @@ function PomodoroBtn() {
   )
 }
 
+function ClockBtn() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const iv = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(iv)
+  }, [])
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+  const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  return <span className="sb-btn sb-clock" title={now.toLocaleString()}>{hh}:{mm} · {date}</span>
+}
+
+function TimerBtn() {
+  const minutes = useStore(s => s.settings.timerMinutes)
+  const [left, setLeft] = useState(0)
+  useEffect(() => {
+    if (left <= 0) return
+    const iv = setInterval(() => setLeft(l => Math.max(0, l - 1)), 1000)
+    return () => clearInterval(iv)
+  }, [left > 0])
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  return (
+    <button
+      className={`sb-btn sb-icon${left > 0 ? ' timer-running' : ''}`}
+      title={`Timer ${minutes} min — click to start, click again to reset`}
+      onClick={() => setLeft(left > 0 ? 0 : minutes * 60)}
+    >{left > 0 ? `⏲ ${fmt(left)}` : '⏲'}</button>
+  )
+}
+
+function SessionTime() {
+  const start = useStore(s => s.sessionStart)
+  const [min, setMin] = useState(0)
+  useEffect(() => {
+    const tick = () => setMin(Math.floor((Date.now() - start) / 60000))
+    tick()
+    const iv = setInterval(tick, 30000)
+    return () => clearInterval(iv)
+  }, [start])
+  if (min < 1) return <span className="sb-btn sb-clock">🕘 0 мин</span>
+  const h = Math.floor(min / 60)
+  return <span className="sb-btn sb-clock" title="Session time">{h > 0 ? `🕘 ${h} ч ${min % 60} мин` : `🕘 ${min} мин`}</span>
+}
+
+function QrButton() {
+  const tabs = useStore(s => s.tabs)
+  const activeId = useStore(s => s.activeId)
+  const [open, setOpen] = useState(false)
+  const active = tabs.find(t => t.id === activeId)
+  const url = active && active.url !== 'about:blank' ? active.url : ''
+  return (
+    <>
+      <button className="sb-btn sb-icon" title="QR of current page" onClick={() => setOpen(o => !o)}>▦</button>
+      {open && (
+        <div className="qr-modal" onClick={() => setOpen(false)}>
+          <div className="qr-card" onClick={e => e.stopPropagation()}>
+            {url ? (
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`} alt="QR" width={220} height={220} />
+            ) : <div className="qr-empty">Открой страницу, чтобы получить её QR-код</div>}
+            <div className="qr-url">{url || 'no page'}</div>
+            <button className="qr-close" onClick={() => setOpen(false)}>Закрыть</button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 export default function StatusBar({ showWorkspaces }: Props) {
   const tabs = useStore(s => s.tabs)
   const activeId = useStore(s => s.activeId)
@@ -156,6 +224,17 @@ export default function StatusBar({ showWorkspaces }: Props) {
       <button className="sb-btn" onClick={() => addTab()} title="New Tab (Ctrl+T)">+</button>
       {readMin > 0 && <span className="sb-btn sb-readtime" title="Estimated reading time">≈ {readMin} мин</span>}
       {zoomPct !== 100 && <span className="sb-btn sb-zoom" title="Zoom">{zoomPct}%</span>}
+      {settings.clock && <ClockBtn />}
+      {settings.timer && <TimerBtn />}
+      {settings.sessiontime && <SessionTime />}
+      {settings.copyurl && <button className="sb-btn sb-icon" onClick={() => { if (active) useStore.getState().copyText(active.url) }} title="Copy URL (Ctrl+Shift+Y)">🔗</button>}
+      {settings.muteall && <button className="sb-btn sb-icon" onClick={() => useStore.getState().muteAllTabs()} title="Mute all tabs">🔇</button>}
+      {settings.mediactl && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleMedia()} title="Play / pause media">▶️</button>}
+      {settings.tts && <button className="sb-btn sb-icon" onClick={() => {
+        const wv = useStore.getState().webviews.get(activeId)
+        if (wv) wv.executeJavaScript('window.__voxTTS?window.__voxTTS():false').then((r: boolean) => { if (!r) useStore.getState().pushToast('Nothing to read aloud') }).catch(() => {})
+      }} title="Read page aloud">🗣</button>}
+      {settings.qrcode && <QrButton />}
       {settings.reader && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleReader()} title="Reader mode">📖</button>}
       {settings.focus && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleFocus()} title="Focus mode">🎯</button>}
       {settings.translator && <button className="sb-btn sb-icon" onClick={() => useStore.getState().translatePage()} title="Translate page">🌐</button>}

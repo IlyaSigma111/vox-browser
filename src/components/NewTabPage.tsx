@@ -68,6 +68,18 @@ export default function NewTabPage() {
     </form>
   )
 
+  const QUOTES = [
+    '«Браузер — это не то, что ты видишь, а то, куда ты идёшь.»',
+    '«Клавиатура быстрее мыши. Докажи мне обратное.»',
+    '«Каждая вкладка — маленькая мечта.»',
+    '«Vim forever. Мышь — это рудимент.»',
+    '«Грепай историю, а не воспоминания.»',
+    '«Тишина — лучший фон для работы.»',
+  ]
+  const quote = settings.ntpquote && (
+    <div className="ntp-quote">{QUOTES[new Date().getDate() % QUOTES.length]}</div>
+  )
+
   const quickLinks = settings.ntpShowQuickLinks && (
     <div className="ntp-links-wrap">
       <div className="ntp-links">
@@ -143,6 +155,7 @@ export default function NewTabPage() {
           {clock}
           {date}
           {search}
+          {quote}
           {quickLinks}
         </div>
         {footer}
@@ -167,6 +180,7 @@ export default function NewTabPage() {
           {clock}
           {date}
           {search}
+          {quote}
           {quickLinks}
           {bms}
         </div>
@@ -181,6 +195,7 @@ export default function NewTabPage() {
       {clock}
       {date}
       {search}
+      {quote}
       {quickLinks}
       {bms}
       {footer}

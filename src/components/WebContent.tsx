@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { useStore } from '../store'
+import { enabledPageMods, buildApplyScript } from '../pageMods'
 
 const DARK_READER_CSS = `
 (function() {
@@ -304,7 +305,7 @@ const VIM_ENGINE = `(function(){
     if(e.defaultPrevented)return;
     var k=(e.key||'').toLowerCase();
     var isShort=(e.ctrlKey||e.metaKey||e.altKey)&&(k==='t'||k==='w'||k==='tab'||k==='f'||k==='d'||k==='l'||k==='h'||k==='e'||k==='b'||k===','||k==='\\\\'||k==='='||k==='+'||k==='-'||k==='0'||k==='arrowleft'||k==='arrowright'||k==='r');
-    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'||k==='s'||k==='c'||k==='o'||k==='j'||k==='v'||k==='r'))isShort=true;
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'||k==='s'||k==='c'||k==='o'||k==='j'||k==='v'||k==='r'||k==='y'||k==='u'||k==='k'))isShort=true;
     if(e.key==='F5')isShort=true;
     if(e.key==='?'&&!(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey))isShort=true;
     if(!isShort)return;
@@ -331,6 +332,7 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
   const lensOn = useStore(s => s.settings.lens)
   const lenses = useStore(s => s.settings.lenses)
   const tab = useStore(s => s.tabs.find(t => t.id === id))
+  const settings = useStore(s => s.settings)
 
   let host = ''
   try { host = new URL(url).hostname } catch {}
@@ -340,6 +342,16 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
   const muted = tab?.muted ?? false
   const incognito = tab?.incognito ?? false
   const effectiveDark = lens ? !!lens.darkReader : darkReader
+
+  const nightAutoOn = (() => {
+    if (!settings.nightauto) return false
+    const h = new Date().getHours()
+    const start = settings.nightAutoStart ?? 22
+    const end = settings.nightAutoEnd ?? 7
+    return start <= end ? h >= start && h < end : h >= start || h < end
+  })()
+
+  const effectiveNight = nightShift || nightAutoOn
 
   const webviewPreload = window.onyx?.getWebviewPreload?.() || ''
 
@@ -449,9 +461,19 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       setTimeout(() => {
         if (destroyed) return
         try {
-          wv.executeJavaScript(nightShift ? NIGHT_CSS : NIGHT_REMOVE).catch(() => {})
+          wv.executeJavaScript(effectiveNight ? NIGHT_CSS : NIGHT_REMOVE).catch(() => {})
         } catch {}
       }, 180)
+    }
+
+    const injectMods = () => {
+      if (destroyed) return
+      setTimeout(() => {
+        if (destroyed) return
+        try {
+          wv.executeJavaScript(buildApplyScript(enabledPageMods(settings), settings.webFont)).catch(() => {})
+        } catch {}
+      }, 100)
     }
 
     const fetchMeta = () => {
@@ -479,6 +501,7 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       injectReader()
       injectFocus()
       injectNight()
+      injectMods()
       fetchMeta()
       if (aurora) {
         setTimeout(() => {
@@ -511,9 +534,20 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       wv.removeEventListener('did-navigate-in-page', onReady)
       wv.removeEventListener('did-stop-loading', onStop)
     }
-  }, [effectiveDark, smoothScroll, nightShift, aurora, tab?.reader, tab?.focus, id, updateTab, setAuroraColor])
+  }, [effectiveDark, smoothScroll, nightShift, aurora, tab?.reader, tab?.focus, id, updateTab, setAuroraColor, settings])
 
-  // Live reader/focus/night toggles (no page reload needed)
+  // Live page-mod toggles (grayscale, scrollmem, toc, etc.) — no reload needed
+  const modKey = enabledPageMods(settings).sort().join('|') + '|' + (settings.webFont || '')
+  useEffect(() => {
+    const wv = ref.current as any
+    if (!wv) return
+    const t = setTimeout(() => {
+      try {
+        wv.executeJavaScript(buildApplyScript(enabledPageMods(settings), settings.webFont)).catch(() => {})
+      } catch {}
+    }, 90)
+    return () => clearTimeout(t)
+  }, [modKey]) // eslint-disable-line
   useEffect(() => {
     const wv = ref.current as any
     if (!wv) return
@@ -521,11 +555,11 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       try {
         wv.executeJavaScript(tab?.reader ? READER_CSS : READER_REMOVE).catch(() => {})
         wv.executeJavaScript(tab?.focus ? FOCUS_CSS : FOCUS_REMOVE).catch(() => {})
-        wv.executeJavaScript(nightShift ? NIGHT_CSS : NIGHT_REMOVE).catch(() => {})
+        wv.executeJavaScript(effectiveNight ? NIGHT_CSS : NIGHT_REMOVE).catch(() => {})
       } catch {}
     }
     run()
-  }, [tab?.reader, tab?.focus, nightShift])
+  }, [tab?.reader, tab?.focus, effectiveNight])
 
   // Events: title, favicon, navigation, history + trail capture
   useEffect(() => {
@@ -536,7 +570,8 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       if (!e.url || e.url === 'about:blank') return
       navRef.current = e.url
       updateTab(id, { url: e.url, loading: false })
-      pushTrail(id, { url: e.url, title: '', t: Date.now() })
+      const st = useStore.getState()
+      if (!st.settings.trailoff) pushTrail(id, { url: e.url, title: '', t: Date.now() })
     }
     const onTitle = (e: any) => updateTab(id, { title: e.title })
     const onFavicon = (e: any) => { if (e.favicons?.length) updateTab(id, { favicon: e.favicons[0] }) }
@@ -546,13 +581,16 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       let title = ''
       try { title = wv.getTitle?.() || '' } catch {}
       if (title) updateTab(id, { title })
+      const st = useStore.getState()
+      const active = st.activeId === id
+      if (!active) updateTab(id, { unread: true })
       const u = navRef.current || url
       if (u && u !== 'about:blank') {
         let text = ''
         try { text = await wv.executeJavaScript(TEXT_EXTRACT) } catch {}
         const sliced = typeof text === 'string' ? text.slice(0, 4000) : ''
-        useStore.getState().setPageText(id, sliced)
-        addHistory({ url: u, title, text: sliced })
+        st.setPageText(id, sliced)
+        if (!st.settings.historyoff) addHistory({ url: u, title, text: sliced })
       }
     }
     const onFail = (e: any) => { if (e.errorCode !== -3) updateTab(id, { loading: false }) }
@@ -560,7 +598,8 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       if (e.isMainFrame && e.url && e.url !== 'about:blank') {
         navRef.current = e.url
         updateTab(id, { url: e.url })
-        pushTrail(id, { url: e.url, title: '', t: Date.now() })
+        const st = useStore.getState()
+        if (!st.settings.trailoff) pushTrail(id, { url: e.url, title: '', t: Date.now() })
       }
     }
 
@@ -592,7 +631,7 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
         className="wv"
         src={url}
         partition={incognito ? `vox-incognito-${id}` : `persist:vox`}
-        allowpopups={'true' as any}
+        {...(!settings.blockpop ? { allowpopups: 'true' as any } : {})}
         preload={webviewPreload}
       />
     </div>

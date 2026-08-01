@@ -23,6 +23,8 @@ export interface Tab {
   reader?: boolean
   focus?: boolean
   color?: string
+  createdAt?: number
+  unread?: boolean
 }
 
 export interface ReadItem {
@@ -35,6 +37,19 @@ export interface TrailEntry {
   url: string
   title: string
   t: number
+}
+
+export interface Snapshot {
+  id: string
+  name: string
+  at: number
+  tabs: Array<{ url: string; title: string }>
+}
+
+export interface Note {
+  id: string
+  text: string
+  at: number
 }
 
 export interface SiteLens {
@@ -202,6 +217,126 @@ export interface Settings {
   translator: boolean
   pomodoro: boolean
   featureVersion: number
+
+  // ─── v1.3.0 — 100 new store features ──────────────
+  // Page mods (Оформление / visual + Умные / behavior)
+  grayscale: boolean
+  sepia: boolean
+  contrast: boolean
+  dim: boolean
+  invert: boolean
+  maxcol: boolean
+  serif: boolean
+  leading: boolean
+  bigtext: boolean
+  imgdim: boolean
+  linkhl: boolean
+  fontsmooth: boolean
+  vidhide: boolean
+  commenthide: boolean
+  stickykill: boolean
+  hidedistract: boolean
+  readingbar: boolean
+  tabgrad: boolean
+  roundui: boolean
+  density: boolean
+  glowui: boolean
+  ntpgrad: boolean
+  ntpquote: boolean
+  amoled: boolean
+  duotone: boolean
+  twocolreader: boolean
+  justify: boolean
+  hyphen: boolean
+  paraspace: boolean
+  webfont: boolean
+  webFont: string
+  codefont: boolean
+  scrollmem: boolean
+  wordcount: boolean
+  toc: boolean
+  nightauto: boolean
+  nightAutoStart: number
+  nightAutoEnd: number
+  hidecookie: boolean
+
+  // StatusBar widgets + tab control (Управление)
+  clock: boolean
+  timer: boolean
+  timerMinutes: number
+  sessiontime: boolean
+  copyurl: boolean
+  copyalltabs: boolean
+  yankmd: boolean
+  yanktitle: boolean
+  calc: boolean
+  units: boolean
+  baseconv: boolean
+  pwgen: boolean
+  uuid: boolean
+  colorparse: boolean
+  wc: boolean
+  stats: boolean
+  sorturl: boolean
+  groupby: boolean
+  muteall: boolean
+  mediactl: boolean
+  qrcode: boolean
+  tabage: boolean
+  unreaddot: boolean
+  taboverflow: boolean
+  snap: boolean
+  cliphist: boolean
+  clipHistory: string[]
+
+  // Smart tools (Умные)
+  spellcheck: boolean
+  autoplay: boolean
+  tts: boolean
+  watch: boolean
+  formfill: boolean
+  searchsite: boolean
+  findregex: boolean
+  themeauto: boolean
+  savemd: boolean
+  savepdf: boolean
+  printclean: boolean
+  emoji: boolean
+  translit: boolean
+  slugify: boolean
+  caseconv: boolean
+  hash: boolean
+  b64: boolean
+  urlenc: boolean
+  jsonfmt: boolean
+  openselection: boolean
+  quicknote: boolean
+  notes: Note[]
+  snapshots: Snapshot[]
+
+  // Privacy (Приватность)
+  refstrip: boolean
+  ua: boolean
+  userAgent: string
+  webrtc: boolean
+  cookiekill: boolean
+  cookieTtl: number
+  noautofill: boolean
+  autodelete: boolean
+  imagelite: boolean
+  trackhide: boolean
+  privateclick: boolean
+  fingerprint: boolean
+  historyoff: boolean
+  trailoff: boolean
+  forgetsite: boolean
+  siteblock: boolean
+  blockedSites: string[]
+  dnt: boolean
+  cleanurl: boolean
+  blockpop: boolean
+  cacheclear: boolean
+  cookieview: boolean
 }
 
 declare global {
@@ -230,8 +365,16 @@ declare global {
       copyImage: (buf: ArrayBuffer) => Promise<void>
       pipOpen: (url: string, title?: string) => Promise<void>
       setAdblock: (enabled: boolean) => void
+      setPrivacy: (cfg: { ua?: string | null; refstrip?: boolean; dnt?: boolean; imagelite?: boolean; trackhide?: boolean; cleanurl?: boolean; webrtc?: boolean; noautofill?: boolean; autodelete?: boolean }) => void
+      setCookieTtl: (days: number) => void
       saveBackup: (name: string, text: string) => Promise<string>
       loadBackup: () => Promise<string | null>
+      clearCache: () => Promise<void>
+      getCookies: () => Promise<Array<{ name: string; domain: string; expires: number }>>
+      clearSiteData: (origin: string) => Promise<void>
+      clearAllCookies: () => Promise<void>
+      readClipboard: () => string
+      writeClipboard: (s: string) => void
       onDownloadStart: (cb: (info: any) => void) => void
       onDownloadProgress: (cb: (data: any) => void) => void
       onDownloadDone: (cb: (data: any) => void) => void

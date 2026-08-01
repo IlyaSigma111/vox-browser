@@ -96,10 +96,87 @@ export default function App() {
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
 
+  // Toasts render + auto-dismiss is handled in store.pushToast
+  const toasts = useStore(s => s.toasts)
+
   // Adblock wiring
   useEffect(() => {
     window.onyx?.setAdblock?.(settings.adblock)
   }, [settings.adblock])
+
+  // Privacy wiring (referer strip, DNT, light images, tracker hide, clean URLs, WebRTC, UA)
+  useEffect(() => {
+    window.onyx?.setPrivacy?.({
+      ua: settings.userAgent || null,
+      refstrip: settings.refstrip,
+      dnt: settings.dnt,
+      imagelite: settings.imagelite,
+      trackhide: settings.trackhide,
+      cleanurl: settings.cleanurl,
+      webrtc: settings.webrtc,
+      autodelete: settings.autodelete,
+    })
+  }, [settings.userAgent, settings.refstrip, settings.dnt, settings.imagelite, settings.trackhide, settings.cleanurl, settings.webrtc, settings.autodelete])
+
+  // Cookie TTL cleanup once on startup
+  useEffect(() => {
+    if (settings.cookieTtl && settings.cookieTtl > 0) window.onyx?.setCookieTtl?.(settings.cookieTtl)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Cookie-kill: sweep all cookies whenever the flag is on
+  useEffect(() => {
+    if (!settings.cookiekill) return
+    window.onyx?.clearAllCookies?.().then(() => {
+      useStore.getState().pushToast('🍪 Все куки удалены')
+    }).catch(() => {})
+  }, [settings.cookiekill])
+
+  // Auto night / theme: dim the chrome when the flag is on and it's night time
+  useEffect(() => {
+    const apply = () => {
+      const h = new Date().getHours()
+      let night = false
+      if (settings.nightauto) {
+        const start = settings.nightAutoStart ?? 22
+        const end = settings.nightAutoEnd ?? 7
+        night = start <= end ? h >= start && h < end : h >= start || h < end
+      } else if (settings.themeauto) {
+        night = h < 6 || h >= 18
+      }
+      document.body.classList.toggle('vox-night', night)
+    }
+    apply()
+    const iv = setInterval(apply, 60000)
+    return () => clearInterval(iv)
+  }, [settings.nightauto, settings.themeauto, settings.nightAutoStart, settings.nightAutoEnd])
+
+  // UI chrome flags → body classes
+  useEffect(() => {
+    const map: Array<[string, boolean]> = [
+      ['vox-amoled', settings.amoled],
+      ['vox-roundui', settings.roundui],
+      ['vox-density', settings.density],
+      ['vox-glowui', settings.glowui],
+      ['vox-tabgrad', settings.tabgrad],
+      ['vox-ntpgrad', settings.ntpgrad],
+    ]
+    for (const [cls, on] of map) document.body.classList.toggle(cls, !!on)
+    return () => { for (const [cls] of map) document.body.classList.remove(cls) }
+  }, [settings.amoled, settings.roundui, settings.density, settings.glowui, settings.tabgrad, settings.ntpgrad])
+
+  // Watch-timer toast (installs a "time tracker" on the active page once per session)
+  useEffect(() => {
+    if (!settings.watch) return
+    const st = useStore.getState()
+    const wv = st.webviews.get(st.activeId)
+    if (wv) {
+      wv.executeJavaScript(
+        `(function(){var d=document;if(d.querySelector('[data-vox-watch]'))return;var div=d.createElement('div');div.setAttribute('data-vox-watch','1');div.style.cssText='position:fixed;bottom:44px;right:14px;z-index:2147483000;background:#111c;color:#fff;font:12px/1 monospace;padding:6px 10px;border-radius:8px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)';var t0=Date.now();div.textContent='⏱ 0:00';d.body.appendChild(div);setInterval(function(){var s=Math.floor((Date.now()-t0)/1000);div.textContent='⏱ '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000)})()`,
+      ).catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.watch, settings.watch && activeId])
 
   // Nightly warmup: quietly nudge once per feature batch
   useEffect(() => {
@@ -248,6 +325,30 @@ export default function App() {
         const st = useStore.getState()
         if (st.settings.duplicate) st.duplicateTab(st.activeId)
       }
+      if (meta && e.shiftKey && e.key === 'Y') {
+        e.preventDefault()
+        const st = useStore.getState()
+        if (st.settings.copyurl) {
+          const t = st.tabs.find(x => x.id === st.activeId)
+          if (t) st.copyText(t.url)
+        }
+      }
+      if (meta && e.shiftKey && e.key === 'U') {
+        e.preventDefault()
+        const st = useStore.getState()
+        if (st.settings.yanktitle) {
+          const t = st.tabs.find(x => x.id === st.activeId)
+          if (t) st.copyText(t.title || t.url)
+        }
+      }
+      if (meta && e.shiftKey && e.key === 'K') {
+        e.preventDefault()
+        const st = useStore.getState()
+        if (st.settings.copyalltabs) {
+          const wsT = st.tabs.filter(x => x.workspace === st.activeWorkspace && x.url && x.url !== 'about:blank')
+          st.copyText(wsT.map(x => x.url).join('\n'))
+        }
+      }
       if (meta && e.shiftKey && e.key === 'V') {
         e.preventDefault()
         const st = useStore.getState()
@@ -312,7 +413,15 @@ export default function App() {
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       const d = e.data
-      if (!d || !d.voxKey) return
+      if (!d) return
+      if (d.voxWatch) {
+        try {
+          const host = new URL(d.url).hostname
+          useStore.getState().pushToast(`⏱ На странице ${host} что-то меняется — следим за обновлениями`)
+        } catch {}
+        return
+      }
+      if (!d.voxKey) return
       try {
         window.dispatchEvent(new KeyboardEvent('keydown', {
           key: d.key, ctrlKey: d.ctrl, shiftKey: d.shift, altKey: d.alt, metaKey: d.meta, bubbles: true,
@@ -344,6 +453,7 @@ export default function App() {
 
   const active = tabs.find(t => t.id === activeId)
   const isNew = active?.url === 'about:blank'
+  const isBlocked = active?.url.startsWith('vox:blocked')
 
   const wsPos = settings.workspacePosition || 'top'
   const zen = settings.zenMode
@@ -360,9 +470,11 @@ export default function App() {
             ? <SettingsPage key={t.id} />
             : t.url === 'vox:store'
               ? <StorePage key={t.id} />
-              : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+              : t.url.startsWith('vox:blocked')
+                ? <BlockedPage key={t.id} tabId={t.id} />
+                : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
         ))}
-        {isNew && <NewTabPage />}
+        {isNew && !isBlocked && <NewTabPage />}
         <HintOverlay />
       </div>
       {sidePos === 'right' && <Sidebar />}
@@ -379,26 +491,28 @@ export default function App() {
       ) : (
         <div className="titlebar" style={{ height: settings.titlebarHeight }} />
       )}
-      {zen ? (
-        <>
-          <div className="content">
-            <ZenSidebar />
-            {sidePos === 'left' && <Sidebar />}
-            <div className="main">
-              {tabs.map(t => (
-                t.url === 'vox:settings'
-                  ? <SettingsPage key={t.id} />
-                  : t.url === 'vox:store'
-                    ? <StorePage key={t.id} />
-                    : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
-              ))}
-              {isNew && <NewTabPage />}
-              <HintOverlay />
+          {zen ? (
+          <>
+            <div className="content">
+              <ZenSidebar />
+              {sidePos === 'left' && <Sidebar />}
+              <div className="main">
+                {tabs.map(t => (
+                  t.url === 'vox:settings'
+                    ? <SettingsPage key={t.id} />
+                    : t.url === 'vox:store'
+                      ? <StorePage key={t.id} />
+                      : t.url.startsWith('vox:blocked')
+                        ? <BlockedPage key={t.id} tabId={t.id} />
+                        : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+                ))}
+                {isNew && !isBlocked && <NewTabPage />}
+                <HintOverlay />
+              </div>
+              {sidePos === 'right' && <Sidebar />}
             </div>
-            {sidePos === 'right' && <Sidebar />}
-          </div>
-        </>
-      ) : (
+          </>
+        ) : (
         <>
           {wsPos === 'top' && settings.workspaceShow && <WorkspaceBar />}
           {tabPos === 'top' && settings.showTabBar && <TabBar />}
@@ -424,6 +538,11 @@ export default function App() {
       <GrepOverlay />
       <SessionGraph />
       <Onboarding />
+      <div className="toasts">
+        {toasts.map(t => (
+          <div key={t.id} className="toast">{t.text}</div>
+        ))}
+      </div>
       {showWarmup && (
         <div className="warmup-toast">
           <span>🛍 В магазине появились новые расширения</span>
@@ -440,6 +559,29 @@ export default function App() {
           }}>×</button>
         </div>
       )}
+    </div>
+  )
+}
+
+function BlockedPage({ tabId }: { tabId: string }) {
+  const tabs = useStore(s => s.tabs)
+  const unblockSite = useStore(s => s.unblockSite)
+  const closeTab = useStore(s => s.closeTab)
+  const t = tabs.find(x => x.id === tabId)
+  let host = ''
+  if (t?.url) {
+    const m = t.url.match(/[?&]host=([^&]+)/)
+    if (m) host = decodeURIComponent(m[1])
+  }
+  return (
+    <div className="blocked-page">
+      <div className="bp-shield">🚫</div>
+      <h1>Сайт заблокирован</h1>
+      <p>Сайт <code>{host || '…'}</code> добавлен в список заблокированных в настройках конфиденциальности.</p>
+      <div className="bp-actions">
+        <button className="bp-btn" onClick={() => unblockSite(host)}>Разблокировать</button>
+        <button className="bp-btn secondary" onClick={() => closeTab(tabId)}>Закрыть вкладку</button>
+      </div>
     </div>
   )
 }

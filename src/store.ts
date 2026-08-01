@@ -34,7 +34,7 @@ function makeTab(over?: Partial<Tab>): Tab {
   return {
     id: uid(), url: 'about:blank', title: 'New tab',
     favicon: '', loading: false, pinned: false,
-    groupId: null, workspace: 1, zoom: 1, incognito: false, muted: false, ...over,
+    groupId: null, workspace: 1, zoom: 1, incognito: false, muted: false, createdAt: Date.now(), ...over,
   }
 }
 
@@ -220,9 +220,11 @@ interface Store {
   pageTexts: Record<string, string>
   focusUrlBar: number
   auroraColor: string
-  sidebarTab: 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | null
+  sidebarTab: 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | 'notes' | null
   webviews: Map<string, any>
   customPresets: UIPreset[]
+  toasts: Array<{ id: number; text: string }>
+  sessionStart: number
 
   addTab: (url?: string, workspace?: number, incognito?: boolean) => string
   openSettings: () => void
@@ -271,7 +273,7 @@ interface Store {
   pushTrail: (id: string, entry: TrailEntry) => void
   setZoom: (id: string, zoom: number) => void
   setAuroraColor: (c: string) => void
-  setSidebar: (s: 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | null) => void
+  setSidebar: (s: 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | 'notes' | null) => void
 
   registerWv: (id: string, ref: any) => void
   unregisterWv: (id: string) => void
@@ -288,6 +290,25 @@ interface Store {
   addToReadList: (url: string, title: string) => void
   removeFromReadList: (url: string) => void
   translatePage: () => void
+
+  // v1.3.0 — new actions
+  pushToast: (text: string) => void
+  copyText: (s: string) => void
+  sortTabs: () => void
+  groupByDomain: () => void
+  muteAllTabs: () => void
+  toggleMedia: () => void
+  saveSnapshot: (name: string) => void
+  restoreSnapshot: (id: string) => void
+  removeSnapshot: (id: string) => void
+  addNote: (text: string) => void
+  removeNote: (id: string) => void
+  addClip: (s: string) => void
+  forgetSite: () => void
+  blockSite: () => void
+  unblockSite: (domain: string) => void
+  clearCacheNow: () => Promise<void>
+  cookiesNow: () => Promise<Array<{ name: string; domain: string; expires: number }>>
 }
 
 const defaultSettings: Settings = {
@@ -382,6 +403,33 @@ const defaultSettings: Settings = {
   translator: false,
   pomodoro: false,
   featureVersion: 0,
+
+  // v1.3.0 — 100 new features (all OFF, lean by default)
+  grayscale: false, sepia: false, contrast: false, dim: false, invert: false,
+  maxcol: false, serif: false, leading: false, bigtext: false, imgdim: false,
+  linkhl: false, fontsmooth: false, vidhide: false, commenthide: false, stickykill: false,
+  hidedistract: false, readingbar: false, tabgrad: false, roundui: false, density: false,
+  glowui: false, ntpgrad: false, ntpquote: false, amoled: false, duotone: false,
+  twocolreader: false, justify: false, hyphen: false, paraspace: false, webfont: false,
+  webFont: "'Georgia', 'Times New Roman', serif", codefont: false, scrollmem: false,
+  wordcount: false, toc: false, nightauto: false, nightAutoStart: 22, nightAutoEnd: 7,
+  hidecookie: false,
+  clock: false, timer: false, timerMinutes: 15, sessiontime: false, copyurl: false,
+  copyalltabs: false, yankmd: false, yanktitle: false, calc: false, units: false,
+  baseconv: false, pwgen: false, uuid: false, colorparse: false, wc: false,
+  stats: false, sorturl: false, groupby: false, muteall: false, mediactl: false,
+  qrcode: false, tabage: false, unreaddot: false, taboverflow: false, snap: false,
+  cliphist: false, clipHistory: [],
+  spellcheck: false, autoplay: false, tts: false, watch: false, formfill: false,
+  searchsite: false, findregex: false, themeauto: false, savemd: false, savepdf: false,
+  printclean: false, emoji: false, translit: false, slugify: false, caseconv: false,
+  hash: false, b64: false, urlenc: false, jsonfmt: false, openselection: false,
+  quicknote: false, notes: [], snapshots: [],
+  refstrip: false, ua: false, userAgent: '', webrtc: false, cookiekill: false,
+  cookieTtl: 60, noautofill: false, autodelete: false, imagelite: false,
+  trackhide: false, privateclick: false, fingerprint: false, historyoff: false,
+  trailoff: false, forgetsite: false, siteblock: false, blockedSites: [],
+  dnt: false, cleanurl: false, blockpop: false, cacheclear: false, cookieview: false,
 }
 
 function persist(store: Store) {
@@ -444,9 +492,11 @@ export const useStore = create<Store>((set, get) => {
     pageTexts: {} as Record<string, string>,
     focusUrlBar: 0,
     auroraColor: '',
-    sidebarTab: null as 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | null,
+    sidebarTab: null as 'bookmarks' | 'history' | 'downloads' | 'settings' | 'reading' | 'extensions' | 'notes' | null,
     webviews: new Map<string, any>(),
     customPresets: [] as UIPreset[],
+    toasts: [] as Array<{ id: number; text: string }>,
+    sessionStart: Date.now(),
   }
 
   let pendingWs: any = null
@@ -526,7 +576,18 @@ export const useStore = create<Store>((set, get) => {
     const s = get()
     const workspace = ws ?? s.activeWorkspace
     const zoom = s.settings.defaultZoom || 1
-    const t = makeTab(url ? { url: resolveUrl(url, s.settings), title: url, workspace, incognito: !!incognito, zoom } : { workspace, incognito: !!incognito, zoom })
+    let n = url ? resolveUrl(url, s.settings) : ''
+    if (n) {
+      let h = ''
+      try { h = new URL(n).hostname } catch {}
+      if (h && s.settings.blockedSites.includes(h)) {
+        const bt = makeTab({ url: `vox:blocked?host=${encodeURIComponent(h)}`, title: `Blocked: ${h}`, workspace, incognito: !!incognito, zoom })
+        set(st => ({ tabs: [...st.tabs, bt], activeId: bt.id, showTabSearch: false }))
+        persistNow()
+        return bt.id
+      }
+    }
+    const t = makeTab(n ? { url: n, title: url, workspace, incognito: !!incognito, zoom } : { workspace, incognito: !!incognito, zoom })
     set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
     persistNow()
     return t.id
@@ -577,7 +638,7 @@ export const useStore = create<Store>((set, get) => {
     persistNow()
   },
 
-  activate: (id) => set({ activeId: id }),
+  activate: (id) => set(st => ({ activeId: id, tabs: st.tabs.map(t => t.id === id ? { ...t, unread: false } : t) })),
 
   updateTab: (id, p) => set(s => {
     const next = { tabs: s.tabs.map(t => t.id === id ? { ...t, ...p } : t) }
@@ -769,6 +830,21 @@ export const useStore = create<Store>((set, get) => {
   navigateTo: (id, url) => {
     const s = get()
     const n = resolveUrl(url, s.settings)
+    let host = ''
+    try { host = new URL(n).hostname } catch {}
+    if (host && s.settings.blockedSites.includes(host)) {
+      get().updateTab(id, { url: `vox:blocked?host=${encodeURIComponent(host)}`, title: `Blocked: ${host}`, loading: false })
+      return
+    }
+    if (s.settings.privateclick && /^https?:/i.test(n)) {
+      const cur = s.tabs.find(t => t.id === id)
+      let curHost = ''
+      try { curHost = new URL(cur?.url || '').hostname } catch {}
+      if (cur && !cur.incognito && curHost && curHost !== host) {
+        get().addTab(n, cur.workspace, true)
+        return
+      }
+    }
     get().updateTab(id, { url: n, loading: true })
   },
 
@@ -869,6 +945,148 @@ export const useStore = create<Store>((set, get) => {
     const u = t?.url && t.url !== 'about:blank' ? t.url : ''
     const tl = s.settings.language === 'ru' ? 'ru' : 'en'
     get().addTab(`https://translate.google.com/?sl=auto&tl=${tl}${u ? '&u=' + encodeURIComponent(u) : ''}`)
+  },
+
+  pushToast: (text) => {
+    const id = Date.now() + Math.random()
+    set(st => ({ toasts: [...st.toasts, { id, text }] }))
+    setTimeout(() => {
+      set(st => ({ toasts: st.toasts.filter(t => t.id !== id) }))
+    }, 3800)
+  },
+
+  copyText: (s) => {
+    try {
+      if (window.onyx?.writeClipboard) window.onyx.writeClipboard(s)
+      else if (navigator.clipboard?.writeText) navigator.clipboard.writeText(s).catch(() => {})
+    } catch {}
+    if (get().settings.cliphist) get().addClip(s)
+    get().pushToast('Copied to clipboard')
+  },
+
+  addClip: (s) => {
+    if (!s) return
+    get().setSettings({ clipHistory: [s, ...get().settings.clipHistory.filter(x => x !== s)].slice(0, 30) })
+  },
+
+  sortTabs: () => {
+    const st = get()
+    const ws = st.activeWorkspace
+    const group = st.tabs.filter(t => t.workspace === ws)
+    const idx = st.tabs.map(t => t.id)
+    const sorted = [...group].sort((a, b) => a.url.localeCompare(b.url))
+    const sortedIds = sorted.map(t => t.id)
+    const rest = st.tabs.filter(t => t.workspace !== ws).map(t => t.id)
+    const order = [...rest, ...sortedIds]
+    set({ tabs: order.map(id => st.tabs.find(t => t.id === id)!).filter(Boolean) })
+  },
+
+  groupByDomain: () => {
+    const st = get()
+    const ws = st.activeWorkspace
+    const groups = st.tabs.filter(t => t.workspace === ws && !t.pinned)
+    const dom = new Map<string, string>()
+    for (const t of groups) {
+      let host = ''
+      try { host = new URL(t.url).hostname.replace(/^www\./, '') } catch {}
+      if (!host) continue
+      if (!dom.has(host)) {
+        const gid = st.addGroup(host)
+        dom.set(host, gid)
+      }
+      st.assignGroup(t.id, dom.get(host)!)
+    }
+  },
+
+  muteAllTabs: () => {
+    const st = get()
+    const anyUnmuted = st.tabs.some(t => !t.muted)
+    const next = st.tabs.map(t => ({ ...t, muted: anyUnmuted }))
+    set({ tabs: next })
+    st.webviews.forEach((wv, id) => {
+      try { wv.setAudioMuted(anyUnmuted) } catch {}
+    })
+  },
+
+  toggleMedia: () => {
+    const st = get()
+    const wv = st.webviews.get(st.activeId)
+    if (!wv) return
+    const js = `(function(){var v=document.querySelectorAll('video,audio');if(!v.length)return;var allPaused=true;for(var i=0;i<v.length;i++){if(!v[i].paused){allPaused=false;break}}for(var j=0;j<v.length;j++){if(allPaused){v[j].play().catch(function(){})}else{v[j].pause()}}}())`
+    try { wv.executeJavaScript(js).catch(() => {}) } catch {}
+  },
+
+  saveSnapshot: (name) => {
+    const st = get()
+    const ws = st.activeWorkspace
+    const tabs = st.tabs.filter(t => t.workspace === ws && t.url && t.url !== 'about:blank')
+      .map(t => ({ url: t.url, title: t.title || t.url }))
+    if (!tabs.length) return
+    const snap = { id: String(Date.now()), name: name || `snap ${st.settings.snapshots.length + 1}`, at: Date.now(), tabs }
+    get().setSettings({ snapshots: [...st.settings.snapshots, snap] })
+    get().pushToast(`Snapshot saved: ${snap.name}`)
+  },
+
+  restoreSnapshot: (id) => {
+    const st = get()
+    const snap = st.settings.snapshots.find(x => x.id === id)
+    if (!snap) return
+    for (const t of snap.tabs) st.addTab(t.url)
+    get().pushToast(`Restored: ${snap.name} (${snap.tabs.length} tabs)`)
+  },
+
+  removeSnapshot: (id) => {
+    get().setSettings({ snapshots: get().settings.snapshots.filter(x => x.id !== id) })
+  },
+
+  addNote: (text) => {
+    if (!text.trim()) return
+    get().setSettings({ notes: [{ id: String(Date.now() + Math.random()), text: text.trim(), at: Date.now() }, ...get().settings.notes] })
+  },
+
+  removeNote: (id) => {
+    get().setSettings({ notes: get().settings.notes.filter(n => n.id !== id) })
+  },
+
+  forgetSite: () => {
+    const st = get()
+    const t = st.tabs.find(x => x.id === st.activeId)
+    if (!t?.url || t.url === 'about:blank') return
+    let host = ''
+    try { host = new URL(t.url).hostname } catch {}
+    if (!host) return
+    set({ history: st.history.filter(h => !h.url.includes(host)) })
+    const origin = (() => { try { return new URL(t.url).origin } catch { return '' } })()
+    if (origin && window.onyx?.clearSiteData) window.onyx.clearSiteData(origin).catch(() => {})
+    get().pushToast(`Forget: ${host}`)
+  },
+
+  blockSite: () => {
+    const st = get()
+    const t = st.tabs.find(x => x.id === st.activeId)
+    if (!t?.url || t.url === 'about:blank') return
+    let host = ''
+    try { host = new URL(t.url).hostname } catch {}
+    if (!host) return
+    const cur = st.settings.blockedSites
+    if (!cur.includes(host)) {
+      get().setSettings({ blockedSites: [...cur, host] })
+      get().pushToast(`Blocked: ${host} (reload to apply)`)
+    }
+  },
+
+  unblockSite: (domain) => {
+    get().setSettings({ blockedSites: get().settings.blockedSites.filter(d => d !== domain) })
+  },
+
+  clearCacheNow: async () => {
+    if (window.onyx?.clearCache) await window.onyx.clearCache().catch(() => {})
+    get().pushToast('Cache cleared')
+  },
+
+  cookiesNow: async () => {
+    if (window.onyx?.getCookies) return await window.onyx.getCookies().catch(() => []) || []
+    return []
   },
 }})
 

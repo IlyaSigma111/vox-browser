@@ -4,7 +4,7 @@ import { useStore, THEMES } from '../store'
 import type { ThemePreset } from '../types'
 import { t, setLang } from '../lang'
 import PresetCatalog from './PresetCatalog'
-import { featureOn } from '../features'
+import { featureOn, FEATURES } from '../features'
 
 const ICONS = {
   bookmark: (
@@ -34,7 +34,7 @@ export default function Sidebar() {
   return (
     <div className={`sidebar${sidePos === 'right' ? ' sidebar-right' : ''}`}>
       <div className="sidebar-header">
-        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : sidebarTab === 'reading' ? '📚 Список чтения' : sidebarTab === 'extensions' ? '🧩 Расширения' : t('sidebar.settings')}</h3>
+        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : sidebarTab === 'reading' ? '📚 Список чтения' : sidebarTab === 'extensions' ? '🧩 Расширения' : sidebarTab === 'notes' ? '📝 Заметки' : t('sidebar.settings')}</h3>
         <button className="sidebar-close" onClick={() => setSidebar(null)}>×</button>
       </div>
       <div className="sidebar-body">
@@ -43,6 +43,7 @@ export default function Sidebar() {
         {sidebarTab === 'downloads' && <Downloads />}
         {sidebarTab === 'reading' && <ReadingList />}
         {sidebarTab === 'extensions' && <ExtensionsPanel />}
+        {sidebarTab === 'notes' && <NotesPanel />}
         {sidebarTab === 'settings' && <SettingsPanel />}
       </div>
     </div>
@@ -146,6 +147,44 @@ function ReadingList() {
   </>
 }
 
+function NotesPanel() {
+  const notes = useStore(s => s.settings.notes)
+  const addNote = useStore(s => s.addNote)
+  const removeNote = useStore(s => s.removeNote)
+  const [text, setText] = useState('')
+  const copyNote = (t: string) => { useStore.getState().copyText(t); useStore.getState().pushToast('Copied') }
+  return (
+    <>
+      <div className="st-section">
+        <div className="st-section-title">Новая заметка</div>
+        <div className="st-section-body" style={{ padding: '6px 12px' }}>
+          <textarea
+            className="note-input"
+            placeholder="Быстрая заметка… (Enter для сохранения)"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { addNote(text); setText('') } }}
+          />
+          <button className="st-action-btn" onClick={() => { addNote(text); setText('') }}>+ Сохранить</button>
+        </div>
+      </div>
+      <div className="st-section">
+        <div className="st-section-title">Заметки ({notes.length})</div>
+        {notes.map(n => (
+          <div key={n.id} className="note-row">
+            <div className="note-text" onClick={() => copyNote(n.text)}>{n.text}</div>
+            <div className="note-meta">
+              {new Date(n.at).toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              <button className="sb-btn si-rm" onClick={() => removeNote(n.id)}>×</button>
+            </div>
+          </div>
+        ))}
+        {notes.length === 0 && <div className="st-hint" style={{ padding: '6px 14px' }}>Пока пусто. Или пиши <code>:note текст</code> прямо в палитре (Ctrl+P).</div>}
+      </div>
+    </>
+  )
+}
+
 function Downloads() {
   const downloads = useStore(s => s.downloads)
   const removeDownload = useStore(s => s.removeDownload)
@@ -219,7 +258,7 @@ export function SettingsPanel() {
         <span className="store-cta-icon">🛍</span>
         <span className="store-cta-text">
           <b>Магазин Vox</b>
-          <span>29 встроенных расширений — включай одним кликом</span>
+          <span>{FEATURES.length} дополнений — включай одним кликом</span>
         </span>
         <span className="store-cta-arrow">→</span>
       </div>
@@ -548,7 +587,62 @@ export function SettingsPanel() {
             <span className="st-val">{Math.round((settings.defaultZoom || 1) * 100)}%</span>
           </div>
         </StRow>
+        <StRow label="Timer (minutes, ⏲ in statusbar)">
+          <input type="number" min="1" max="120" value={settings.timerMinutes || 15}
+            onChange={e => setSettings({ timerMinutes: Math.max(1, Math.min(120, Number(e.target.value)) || 15) })}
+            style={{ width: 70, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }} />
+        </StRow>
       </Section>
+
+      {featureOn(settings, 'nightauto') && (
+        <Section title="🌙 Ночной режим">
+          <StRow label="Включить в (час)">
+            <input type="number" min="0" max="23" value={settings.nightAutoStart ?? 22}
+              onChange={e => setSettings({ nightAutoStart: Number(e.target.value) })}
+              style={{ width: 70, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }} />
+          </StRow>
+          <StRow label="Выключить в (час)">
+            <input type="number" min="0" max="23" value={settings.nightAutoEnd ?? 7}
+              onChange={e => setSettings({ nightAutoEnd: Number(e.target.value) })}
+              style={{ width: 70, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }} />
+          </StRow>
+          <div className="st-hint">Автоматически включает тёмную тему и night shift в указанные часы.</div>
+        </Section>
+      )}
+
+      {featureOn(settings, 'webfont') && (
+        <Section title="🔤 Шрифт страниц">
+          <StRow label="Web font">
+            <select value={settings.webFont || ''} onChange={e => setSettings({ webFont: e.target.value })}>
+              <option value="">Системный</option>
+              <option value="'Georgia', serif">Georgia</option>
+              <option value="'Palatino', serif">Palatino</option>
+              <option value="'Book Antiqua', serif">Book Antiqua</option>
+              <option value="'Verdana', sans-serif">Verdana</option>
+              <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+              <option value="'Courier New', monospace">Courier New</option>
+            </select>
+          </StRow>
+        </Section>
+      )}
+
+      {featureOn(settings, 'siteblock') && (
+        <Section title="🚫 Заблокированные сайты">
+          <BlockedSites />
+        </Section>
+      )}
+
+      {featureOn(settings, 'snap') && (
+        <Section title="📸 Снимки окон (snapshots)">
+          <SnapshotsList />
+        </Section>
+      )}
+
+      {featureOn(settings, 'cookieview') && (
+        <Section title="🍪 Куки текущего сайта">
+          <CookiesView />
+        </Section>
+      )}
 
       <Section title={t('settings.system')}>
         <div className="st-actions">
@@ -589,6 +683,108 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     <div className={`toggle${value ? ' on' : ''}`} onClick={() => onChange(!value)}>
       <div className="toggle-knob" />
     </div>
+  )
+}
+
+function BlockedSites() {
+  const blockedSites = useStore(s => s.settings.blockedSites)
+  const unblockSite = useStore(s => s.unblockSite)
+  const navigateTo = useStore(s => s.navigateTo)
+  const activeId = useStore(s => s.activeId)
+  const [domain, setDomain] = useState('')
+  if (blockedSites.length === 0 && !domain) {
+    return <div className="st-hint" style={{ padding: '6px 14px' }}>Добавляй сюда домены или жми <code>:block</code> на странице — сайт будет открываться на странице-заглушке.</div>
+  }
+  return <>
+    {blockedSites.map(d => (
+      <div key={d} className="lens-row">
+        <span className="lens-domain">🚫 {d}</span>
+        <button className="sb-btn" onClick={() => unblockSite(d)}>unblock</button>
+      </div>
+    ))}
+    <div className="st-actions" style={{ padding: '2px 12px 10px' }}>
+      <input
+        type="text"
+        placeholder="example.com"
+        value={domain}
+        onChange={e => setDomain(e.target.value)}
+        style={{ flex: 1, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }}
+        spellCheck={false}
+      />
+      <button className="st-action-btn" onClick={() => {
+        const d = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+        if (d) { useStore.getState().setSettings({ blockedSites: [...blockedSites, d] }); setDomain('') }
+      }}>+</button>
+    </div>
+  </>
+}
+
+function SnapshotsList() {
+  const snapshots = useStore(s => s.settings.snapshots)
+  const restoreSnapshot = useStore(s => s.restoreSnapshot)
+  const removeSnapshot = useStore(s => s.removeSnapshot)
+  const saveSnapshot = useStore(s => s.saveSnapshot)
+  const [name, setName] = useState('')
+  if (snapshots.length === 0) {
+    return <div className="st-hint" style={{ padding: '6px 14px' }}>Снимок сохраняет все вкладки текущего окна. Создавай через <code>:snap save имя</code>.</div>
+  }
+  return <>
+    <div className="st-actions" style={{ padding: '2px 12px 8px' }}>
+      <input
+        type="text"
+        placeholder="имя снимка"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        style={{ flex: 1, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }}
+        spellCheck={false}
+      />
+      <button className="st-action-btn" onClick={() => { saveSnapshot(name); setName('') }}>💾</button>
+    </div>
+    {snapshots.map(s => (
+      <div key={s.id} className="lens-row">
+        <span className="lens-domain">{s.name}</span>
+        <span className="lens-meta">{s.tabs.length} вкладок</span>
+        <button className="sb-btn" title="Restore" onClick={() => restoreSnapshot(s.id)}>↩</button>
+        <button className="sb-btn" title="Delete" onClick={() => removeSnapshot(s.id)}>×</button>
+      </div>
+    ))}
+  </>
+}
+
+function CookiesView() {
+  const [cookies, setCookies] = useState<Array<{ name: string; domain: string; expires: number }>>([])
+  const [host, setHost] = useState('')
+  const refresh = async () => {
+    const list = await useStore.getState().cookiesNow()
+    const t = useStore.getState().tabs.find(x => x.id === useStore.getState().activeId)
+    let h = ''
+    if (t?.url) try { h = new URL(t.url).hostname } catch {}
+    setHost(h)
+    const mine = h ? list.filter(c => c.domain.includes(h) || h.includes(c.domain.replace(/^\./, ''))) : list
+    setCookies(mine)
+  }
+  useEffect(() => { refresh() }, [])
+  const clear = async () => {
+    const t = useStore.getState().tabs.find(x => x.id === useStore.getState().activeId)
+    let origin = ''
+    if (t?.url) try { origin = new URL(t.url).origin } catch {}
+    if (origin && window.onyx?.clearSiteData) { await window.onyx.clearSiteData(origin).catch(() => {}); useStore.getState().pushToast('Site data cleared') }
+    refresh()
+  }
+  return (
+    <>
+      <div className="st-actions" style={{ padding: '2px 12px 8px' }}>
+        <button className="st-action-btn" onClick={refresh}>↻ Обновить</button>
+        <button className="st-action-btn secondary" onClick={clear}>🧹 Очистить</button>
+      </div>
+      <div className="st-hint" style={{ padding: '0 14px 8px' }}>Куки сайта {host || '…'} ({cookies.length})</div>
+      {cookies.slice(0, 20).map(c => (
+        <div key={c.name + c.domain} className="lens-row">
+          <span className="lens-domain" style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+          <span className="lens-meta">{c.domain}{c.expires ? ` · до ${new Date(c.expires * 1000).toLocaleDateString()}` : ' · сессия'}</span>
+        </div>
+      ))}
+    </>
   )
 }
 

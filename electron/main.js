@@ -128,6 +128,8 @@ app.whenReady().then(() => {
 
   session.defaultSession.setPermissionCheckHandler(() => true)
 
+  installRequestFilters()
+
   // Load extensions from userData/extensions/
   loadExtensions()
 
@@ -320,32 +322,140 @@ const AD_HOSTS = [
   'optimizely.com', 'vwo.com', 'mouseflow.com', 'smartadserver.com', 'undertone.com',
 ]
 
-let adblockActive = false
-let adblockListener = null
+const TRACK_HOSTS = [
+  'hubspot.com', 'pardot.com', 'salesloft.com', 'outreach.io', 'liveperson.com', 'genesys.com',
+  'evergage.com', 'insightgrit.com', 'clarity.ms', 'adobe.com', 'demandbase.com', '6sense.com',
+  'zoominfo.com', 'bombora.com', 'g2crowd.com', 'trustpilot.com', 'reviews.io', 'pricepirates.com',
+  'appsflyer.com', 'adjust.com', 'kochava.com', 'singular.net', 'attribution-app.com',
+]
 
-function applyAdblock(on) {
-  if (on && !adblockListener) {
-    adblockListener = (details, callback) => {
+const privacyState = { adblock: false, refstrip: false, dnt: false, imagelite: false, trackhide: false, cleanurl: false, webrtc: false, autodelete: false }
+const UA_OVERRIDE = { value: '' }
+
+function voxSessions() {
+  const out = [session.defaultSession]
+  try { out.push(session.fromPartition('persist:vox')) } catch {}
+  return out
+}
+
+function installRequestFilters() {
+  for (const ses of voxSessions()) {
+    ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, (details, callback) => {
       try {
-        const h = new URL(details.url).hostname.toLowerCase()
-        const parts = h.split('.')
-        const domain = parts.slice(-2).join('.')
-        if (AD_HOSTS.includes(domain)) { callback({ cancel: true }); return }
+        const u = new URL(details.url)
+        const host = u.hostname.toLowerCase()
+        const domain = host.split('.').slice(-2).join('.')
+        if (privacyState.adblock && AD_HOSTS.includes(domain)) { callback({ cancel: true }); return }
+        if (privacyState.trackhide && TRACK_HOSTS.includes(domain)) { callback({ cancel: true }); return }
+        if (privacyState.imagelite && details.resourceType === 'image') {
+          let refHost = ''
+          try { refHost = details.referrer ? new URL(details.referrer).hostname.toLowerCase() : '' } catch {}
+          if (refHost && refHost !== host) { callback({ cancel: true }); return }
+        }
+        if (privacyState.cleanurl && u.search) {
+          const sp = u.searchParams
+          let changed = false
+          for (const p of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', 'yclid', 'mc_cid', 'mc_eid', 'ref']) {
+            if (sp.has(p)) { sp.delete(p); changed = true }
+          }
+          if (changed) { u.search = sp.toString(); callback({ redirectURL: u.toString() }); return }
+        }
       } catch {}
       callback({})
-    }
-    session.defaultSession.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, adblockListener)
-    adblockActive = true
-    console.log('[Vox] adblock ON')
-  } else if (!on && adblockListener) {
-    try { session.defaultSession.webRequest.onBeforeRequest(null) } catch {}
-    adblockListener = null
-    adblockActive = false
-    console.log('[Vox] adblock OFF')
+    })
+
+    ses.webRequest.onBeforeSendHeaders({ urls: ['http://*/*', 'https://*/*'] }, (details, callback) => {
+      const req = { ...details.requestHeaders }
+      if (privacyState.refstrip && req['Referer']) delete req['Referer']
+      if (privacyState.dnt) req['DNT'] = '1'
+      callback({ requestHeaders: req })
+    })
+
+    ses.setPermissionRequestHandler((webContents, permission, callback) => {
+      if (privacyState.webrtc && (permission === 'media' || permission === 'mediaKeySystem')) { callback(false); return }
+      callback(true)
+    })
+    ses.setPermissionCheckHandler((wc, permission) => {
+      if (privacyState.webrtc && (permission === 'media' || permission === 'mediaKeySystem')) return false
+      return true
+    })
+
+    if (UA_OVERRIDE.value) ses.setUserAgent(UA_OVERRIDE.value)
   }
 }
 
-ipcMain.on('adblock:set', (_, on) => applyAdblock(!!on))
+ipcMain.on('adblock:set', (_, on) => {
+  privacyState.adblock = !!on
+  installRequestFilters()
+  console.log('[Vox] adblock', on ? 'ON' : 'OFF')
+})
+
+ipcMain.on('privacy:set', (_, cfg) => {
+  if (cfg && typeof cfg === 'object') {
+    for (const k of ['refstrip', 'dnt', 'imagelite', 'trackhide', 'cleanurl', 'webrtc', 'autodelete']) {
+      if (typeof cfg[k] === 'boolean') privacyState[k] = cfg[k]
+    }
+    if (typeof cfg.ua === 'string') UA_OVERRIDE.value = cfg.ua || ''
+    else if (cfg.ua === null) UA_OVERRIDE.value = ''
+  }
+  installRequestFilters()
+})
+
+ipcMain.handle('privacy:clearCache', async () => {
+  for (const ses of voxSessions()) await ses.clearCache().catch(() => {})
+  return true
+})
+
+ipcMain.handle('privacy:cookies', async () => {
+  const all = []
+  for (const ses of voxSessions()) {
+    try {
+      const list = await ses.cookies.get({})
+      all.push(...list.map(c => ({ name: c.name, domain: c.domain, expires: c.expirationDate || 0 })))
+    } catch {}
+  }
+  return all
+})
+
+ipcMain.handle('privacy:clearSite', async (_, origin) => {
+  for (const ses of voxSessions()) await ses.clearStorageData({ origin }).catch(() => {})
+  return true
+})
+
+ipcMain.on('privacy:ttl', (_, days) => {
+  const d = Number(days)
+  if (!(d > 0)) return
+  const cutoff = Date.now() - d * 86400000
+  for (const ses of voxSessions()) {
+    ses.cookies.get({}).then(list => {
+      for (const c of list) {
+        if (c.expirationDate && c.expirationDate * 1000 < cutoff) {
+          ses.cookies.remove(c.url, c.name).catch(() => {})
+        }
+      }
+    }).catch(() => {})
+  }
+})
+
+ipcMain.handle('privacy:clearAllCookies', async () => {
+  for (const ses of voxSessions()) {
+    const list = await ses.cookies.get({}).catch(() => [])
+    for (const c of list) await ses.cookies.remove(c.url, c.name).catch(() => {})
+  }
+  return true
+})
+
+app.on('before-quit', async (e) => {
+  if (!privacyState.autodelete) return
+  e.preventDefault()
+  try {
+    for (const ses of voxSessions()) {
+      const list = await ses.cookies.get({}).catch(() => [])
+      for (const c of list) await ses.cookies.remove(c.url, c.name).catch(() => {})
+    }
+  } catch {}
+  app.exit(0)
+})
 
 // ─── Backup ───────────────────────────────────────
 ipcMain.handle('data:saveBackup', async (_, name, content) => {
@@ -365,4 +475,13 @@ ipcMain.handle('data:loadBackup', async () => {
   })
   if (r.canceled || !r.filePaths[0]) return null
   return fs.readFileSync(r.filePaths[0], 'utf-8')
+})
+
+// ─── Clipboard ────────────────────────────────────
+ipcMain.handle('clipboard:read', () => {
+  try { return clipboard.readText() } catch { return '' }
+})
+ipcMain.handle('clipboard:write', (_, txt) => {
+  try { clipboard.writeText(String(txt)) } catch {}
+  return true
 })
