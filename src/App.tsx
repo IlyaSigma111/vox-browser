@@ -164,6 +164,21 @@ export default function App() {
         if (n === 'reload') wv.reload()
       }
 
+      const shot = async (mode: 'save' | 'copy') => {
+        const st = useStore.getState()
+        const w = st.webviews.get(st.activeId)
+        if (!w?.capturePage) return
+        try {
+          const img = await w.capturePage()
+          const png = img.toPNG()
+          if (mode === 'copy') { window.onyx?.copyImage?.(png); return }
+          const d = new Date()
+          const pad = (n: number) => String(n).padStart(2, '0')
+          const name = `vox-shot-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`
+          window.onyx?.saveShot?.(png, name)
+        } catch {}
+      }
+
       // Navigation
       if (e.key === 'F5') { e.preventDefault(); nav('reload') }
       if (meta && !e.shiftKey && e.key === 'r') { e.preventDefault(); nav('reload') }
@@ -218,6 +233,8 @@ export default function App() {
         e.preventDefault()
         s.setSettings({ darkReader: !s.settings.darkReader })
       }
+      if (meta && e.shiftKey && e.key === 'S') { e.preventDefault(); shot('save') }
+      if (meta && e.shiftKey && e.key === 'C') { e.preventDefault(); shot('copy') }
       if (meta && e.key === 'f') { e.preventDefault(); setShowFind(prev => !prev) }
       if (meta && !e.shiftKey && e.key === 'l') { e.preventDefault(); useStore.getState().triggerUrlBar() }
       if (meta && !e.shiftKey && e.key === 'h') { e.preventDefault(); useStore.getState().setSidebar('history') }

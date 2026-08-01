@@ -25,6 +25,8 @@ const shortcuts = [
     ['Ctrl+Shift+A', 'Tab Exposé'],
     ['Ctrl+Shift+F', 'Grep full history'],
     ['Ctrl+Shift+P', 'Page in PiP window'],
+    ['Ctrl+Shift+S', 'Save page screenshot'],
+    ['Ctrl+Shift+C', 'Copy page screenshot'],
     ['Ctrl+H', 'History sidebar'],
     ['Ctrl+E', 'Downloads sidebar'],
     ['Ctrl+B', 'Bookmarks sidebar'],

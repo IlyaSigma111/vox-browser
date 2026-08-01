@@ -82,6 +82,20 @@ export default function BrowserToolbar() {
         <button className="bt-btn" onClick={() => setZoom(activeId, (active?.zoom || 1) + 0.1)} title="Zoom in">+</button>
         <button className="bt-btn" onClick={() => setSessionGraph(!useStore.getState().showSessionGraph)} title="Session trail">🌐</button>
         <button className="bt-btn" onClick={() => setTabSearch(!useStore.getState().showTabSearch)} title="Tab Exposé (Ctrl+Shift+A)">▦</button>
+        <button
+          className="bt-btn"
+          title="Save screenshot (Ctrl+Shift+S)"
+          onClick={async () => {
+            const wv = useStore.getState().webviews.get(useStore.getState().activeId)
+            if (!wv?.capturePage) return
+            try {
+              const img = await wv.capturePage()
+              const d = new Date()
+              const pad = (n: number) => String(n).padStart(2, '0')
+              window.onyx?.saveShot?.(img.toPNG(), `vox-shot-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`)
+            } catch {}
+          }}
+        >📷</button>
         <button className="bt-btn" onClick={() => setSidebar('bookmarks')} title="Bookmarks">★</button>
         <button className="bt-btn" onClick={() => setSidebar('history')} title="History">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
