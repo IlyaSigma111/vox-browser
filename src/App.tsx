@@ -506,7 +506,7 @@ export default function App() {
           <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
         )}
       </div>
-      {(!settings.showStatusBar || statusPos === 'bottom') && (
+      {!settings.browserChrome && (!settings.showStatusBar || statusPos === 'bottom') && (
         <div className="floating-win-controls">
           <button className="fwc-btn" onClick={() => window.onyx?.minimize()} title="Minimize">─</button>
           <button className="fwc-btn" onClick={() => window.onyx?.maximize()} title="Maximize">□</button>

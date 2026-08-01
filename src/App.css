@@ -263,8 +263,6 @@ html, body, #root {
   justify-content: center;
   align-items: center;
   background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: var(--glass-border);
   padding: 4px 0;
   flex-shrink: 0;
@@ -613,8 +611,6 @@ html, body, #root {
   gap: 2px;
   height: var(--status-h);
   background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border-top: var(--glass-border);
   padding: 0 4px;
   flex-shrink: 0;
@@ -762,8 +758,6 @@ html, body, #root {
 .sidebar {
   width: var(--sidebar-w, 340px);
   background: color-mix(in srgb, var(--bg-dim) 82%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-right: var(--glass-border);
   display: flex;
   flex-direction: column;
@@ -1463,7 +1457,9 @@ html, body, #root {
   justify-content: center;
   gap: 20px;
   z-index: 500;
-  background: var(--ntp-bg, var(--bg));
+  background:
+    radial-gradient(1100px 560px at 50% -12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+    var(--ntp-bg, var(--bg));
 }
 
 .ntp-clock {
@@ -1485,8 +1481,6 @@ html, body, #root {
   align-items: center;
   width: min(520px, 80vw);
   background: color-mix(in srgb, var(--bg-light) 60%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
   border-radius: calc(var(--radius) + 2px);
   padding: 0 14px;
@@ -1519,8 +1513,6 @@ html, body, #root {
 
 .ntp-link {
   background: color-mix(in srgb, var(--bg-light) 60%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   color: var(--fg-dim);
   font-family: inherit;
@@ -1826,8 +1818,6 @@ html, body, #root {
 .zen-sidebar {
   width: 220px;
   background: color-mix(in srgb, var(--bg-dim) 80%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
   display: flex;
   flex-direction: column;
@@ -2829,7 +2819,8 @@ body.vox-density { --tab-h: 26px !important; --status-h: 24px !important; }
 body.vox-density .tab { padding: 0 6px; }
 body.vox-density .sb-btn { padding: 0 8px; }
 body.vox-glowui .tab.active, body.vox-glowui .sb-btn:hover, body.vox-glowui .st-action-btn { box-shadow: 0 0 14px var(--accent)55; }
-body.vox-glowui .tab-bar, body.vox-glowui .status-bar, body.vox-glowui .titlebar { background: linear-gradient(90deg, transparent, var(--accent)14, transparent); }
+body.vox-glowui .chrome-top, body.vox-glowui .chrome-bottom { box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--accent) 14%, transparent), var(--shadow-1); }
+body.vox-glowui .chrome-bottom { box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 color-mix(in srgb, var(--accent) 14%, transparent), var(--shadow-1); }
 body.vox-tabgrad .tab.active .tab-title { background: linear-gradient(90deg, var(--accent), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 body.vox-ntpgrad .ntp { background: radial-gradient(1200px 600px at 20% 0%, var(--accent)22, transparent 60%), radial-gradient(1000px 500px at 90% 100%, var(--purple)18, transparent 55%), var(--ntp-bg, var(--bg)); }
 
@@ -2877,12 +2868,11 @@ button:not(:disabled):active { transform: scale(0.96); }
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-/* Ambient main area — pleasant during loads / behind transparent NTP */
+/* Ambient main area — `.main` stays transparent so the single `.browser`
+   canvas shows through behind the opaque NTP/webview layers; no redundant
+   full-viewport gradient layer is painted. */
 .main {
-  background:
-    radial-gradient(70rem 50rem at 70% -20%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
-    radial-gradient(60rem 45rem at -15% 120%, color-mix(in srgb, var(--purple) 5%, transparent), transparent 60%),
-    var(--bg);
+  background: transparent;
 }
 
 /* ── Tab bar ── */
@@ -2978,12 +2968,14 @@ body.vox-light .sb-btn, body.vox-light .sidebar-item, body.vox-light .palette-it
   border-top: none;
   border-bottom-left-radius: var(--radius-lg);
   border-bottom-right-radius: var(--radius-lg);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--fg) 7%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent), var(--shadow-1);
 }
 
 .chrome-bottom {
   border-bottom: none;
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 7%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent), var(--shadow-1);
 }
 
 .chrome-top:empty,
@@ -3025,5 +3017,51 @@ body.vox-light .sb-btn, body.vox-light .sidebar-item, body.vox-light .palette-it
 
 /* Sidebars float too — match the shell rounding & glass. */
 .sidebar { border-radius: var(--radius-lg); margin: 7px 0; }
-body:not(.zen-layout) .sidebar { border: var(--glass-border); box-shadow: var(--shadow-1); }
+body:not(.zen-layout) .sidebar { border: var(--glass-border); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 6%, transparent), var(--shadow-1); }
 .zen-sidebar { border-radius: var(--radius-lg); margin: 7px 0 7px 7px; }
+
+/* Status bar icon buttons — compact round pills. */
+.sb-btn.sb-icon {
+  width: 26px;
+  height: calc(var(--status-h) - 8px);
+  padding: 0;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+/* Interactive chrome items get a pointer cursor. */
+.sidebar-item, .ctx-item, .palette-item, .store-card, .preset-card, .expose-card { cursor: pointer; }
+
+/* Toasts — match the floating glass language. */
+.toast {
+  background: color-mix(in srgb, var(--bg-dim) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2), 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* Titlebar drag strip — faint accent tint so the 6px edge reads as part of
+   the shell instead of an empty gap. */
+.chrome-top .titlebar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent) 3%, transparent) 60%, transparent);
+}
+
+/* Frame window controls — tuck into the top-right corner aligned with the
+   floating shell, as a matching glass pill. */
+.floating-win-controls {
+  top: 4px;
+  right: 12px;
+  gap: 2px;
+  padding: 2px;
+  background: color-mix(in srgb, var(--bg-dim) 60%, transparent);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 5%, transparent), var(--shadow-1);
+}
+.floating-win-controls .fwc-btn { width: 40px; height: 26px; border-radius: var(--radius-sm); }
+
+/* Tabs are the hottest interactive element — transition only paint-safe
+   properties, not layout. */
+.tab { transition-property: background-color, color, box-shadow, opacity; }
