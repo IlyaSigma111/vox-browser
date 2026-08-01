@@ -87,6 +87,7 @@ export default function App() {
   const setShowShortcuts = useStore(s => s.setShowShortcuts)
   const showShortcuts = useStore(s => s.showShortcuts)
   const showTabSearch = useStore(s => s.showTabSearch)
+  const auroraColor = useStore(s => s.auroraColor)
   const [showFind, setShowFind] = useState(false)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
@@ -109,8 +110,7 @@ export default function App() {
   useEffect(() => {
     const colors = THEMES[settings.theme] || THEMES['tokyo-night']
     const c = settings.theme === 'custom' ? settings.customColors : colors
-    const aurora = useStore.getState().auroraColor
-    const accent = settings.aurora && aurora ? `rgb(${aurora})` : c.accent
+    const accent = settings.aurora && auroraColor ? `rgb(${auroraColor})` : c.accent
     const root = document.documentElement
     root.style.setProperty('--bg', c.bg)
     root.style.setProperty('--bg-dim', c.bgDim)
@@ -137,7 +137,7 @@ export default function App() {
     if (settings.ntpBgColor) {
       root.style.setProperty('--ntp-bg', settings.ntpBgColor)
     }
-  }, [settings, useStore(s => s.auroraColor)])
+  }, [settings, auroraColor])
 
   // Confirm-close guard
   useEffect(() => {
