@@ -1,7 +1,7 @@
 {
   "name": "vox-browser",
   "productName": "Vox",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Keyboard-driven browser with Vim integration",
   "main": "dist-electron/main.js",
   "private": true,

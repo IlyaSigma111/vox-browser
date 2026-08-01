@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, TabGroup, Workspace, Bookmark, HistoryEntry, Download, Settings, VimMode, ThemePreset, ThemeColors } from './types'
+import type { Tab, TabGroup, Workspace, Bookmark, HistoryEntry, Download, Settings, VimMode, ThemePreset, ThemeColors, TrailEntry } from './types'
 import type { UIPreset } from './presets'
 import { GROUP_COLORS, WORKSPACE_COLORS } from './types'
 import { setLang } from './lang'
@@ -20,7 +20,7 @@ function makeTab(over?: Partial<Tab>): Tab {
   return {
     id: uid(), url: 'about:blank', title: 'New tab',
     favicon: '', loading: false, pinned: false,
-    groupId: null, workspace: 1, ...over,
+    groupId: null, workspace: 1, zoom: 1, incognito: false, muted: false, ...over,
   }
 }
 
@@ -109,6 +109,31 @@ export const THEMES: Record<ThemePreset, ThemeColors> = {
     accent: '#1e66f5', green: '#40a02b', red: '#d20f39',
     orange: '#df8e1d', cyan: '#179299', purple: '#8839ef',
   },
+  // ─── Experimental themes ⚗ ─────────────────────────
+  'firefox-nova': {
+    bg: '#2b2826', bgDim: '#232120', bgLight: '#3a3633',
+    fg: '#f5f0e8', fgDim: '#9a9185', border: '#47413c',
+    accent: '#ff6a3d', green: '#a3be8c', red: '#e05a47',
+    orange: '#ff8f4c', cyan: '#7fc8d8', purple: '#c3a6e8',
+  },
+  'nova-light': {
+    bg: '#fbf7f0', bgDim: '#f3ede2', bgLight: '#fffaf2',
+    fg: '#3d3832', fgDim: '#8a8177', border: '#e4dccf',
+    accent: '#e2560f', green: '#5c7c4a', red: '#c8452f',
+    orange: '#e8762c', cyan: '#2f7d8c', purple: '#8259a8',
+  },
+  'synthwave': {
+    bg: '#150b2a', bgDim: '#0e071e', bgLight: '#241239',
+    fg: '#f8f0ff', fgDim: '#8d7bab', border: '#3a2460',
+    accent: '#ff2ea6', green: '#36f9c1', red: '#ff3860',
+    orange: '#ffb347', cyan: '#45e0ff', purple: '#b56cff',
+  },
+  'forest': {
+    bg: '#1b2317', bgDim: '#141b11', bgLight: '#27321f',
+    fg: '#e8f0e0', fgDim: '#7d8f6f', border: '#33401f',
+    accent: '#8bc34a', green: '#aed581', red: '#ef5350',
+    orange: '#ffab40', cyan: '#80cbc4', purple: '#b39ddb',
+  },
   'custom': {
     bg: '#1a1b26', bgDim: '#16161e', bgLight: '#24283b',
     fg: '#c0caf5', fgDim: '#565f89', border: '#292e42',
@@ -137,15 +162,24 @@ interface Store {
   vimMode: VimMode
   showPalette: boolean
   paletteInput: string
+  showShortcuts: boolean
+  showTabSearch: boolean
+  showSessionGraph: boolean
+  closedTabs: Tab[]
+  navTrails: Record<string, TrailEntry[]>
+  focusUrlBar: number
+  auroraColor: string
   sidebarTab: 'bookmarks' | 'history' | 'downloads' | 'settings' | null
   webviews: Map<string, any>
   customPresets: UIPreset[]
 
-  addTab: (url?: string, workspace?: number) => string
+  addTab: (url?: string, workspace?: number, incognito?: boolean) => string
   closeTab: (id: string) => void
+  reopenTab: () => void
   activate: (id: string) => void
   updateTab: (id: string, p: Partial<Tab>) => void
   moveTab: (a: number, b: number) => void
+  moveTabToWorkspace: (id: string, ws: number) => void
 
   addGroup: (name: string, workspace?: number) => string
   removeGroup: (id: string) => void
@@ -161,12 +195,14 @@ interface Store {
 
   addBookmark: (b: Omit<Bookmark, 'id' | 'createdAt'>) => void
   removeBookmark: (id: string) => void
+  toggleBookmark: (url: string, title: string, favicon?: string) => void
 
   addHistory: (h: Omit<HistoryEntry, 'id' | 'visitedAt'>) => void
   clearHistory: () => void
 
   addDownload: (d: Download) => void
   updateDownload: (id: string, p: Partial<Download>) => void
+  removeDownload: (id: string) => void
 
   saveCustomPreset: (p: UIPreset) => void
   removeCustomPreset: (id: string) => void
@@ -175,6 +211,13 @@ interface Store {
   setVimMode: (m: VimMode) => void
   setPalette: (v: boolean) => void
   setPaletteInput: (s: string) => void
+  setShowShortcuts: (v: boolean) => void
+  setTabSearch: (v: boolean) => void
+  setSessionGraph: (v: boolean) => void
+  triggerUrlBar: () => void
+  pushTrail: (id: string, entry: TrailEntry) => void
+  setZoom: (id: string, zoom: number) => void
+  setAuroraColor: (c: string) => void
   setSidebar: (s: 'bookmarks' | 'history' | 'downloads' | 'settings' | null) => void
 
   registerWv: (id: string, ref: any) => void
@@ -218,6 +261,9 @@ const defaultSettings: Settings = {
   workspaceShow: true,
   workspacePosition: 'top',
   browserChrome: false,
+  aurora: false,
+  lenses: [],
+  onboarded: false,
 
   ntpShowClock: true,
   ntpShowDate: true,
@@ -239,19 +285,20 @@ const defaultSettings: Settings = {
   tabOpacity: 1,
 
   smoothScroll: true,
-  restoreTabs: false,
+  restoreTabs: true,
   confirmClose: false,
   zenMode: false,
+  defaultZoom: 1,
 }
 
 function persist(store: Store) {
   try {
     if (window.onyx?.writeData) {
       window.onyx.writeData('settings.json', store.settings)
-      // Save tab state (strip webview refs)
-      const tabsToSave = store.tabs.map(t => ({
+      // Save tab state (strip webview refs, drop incognito tabs)
+      const tabsToSave = store.tabs.filter(t => !t.incognito).map(t => ({
         id: t.id, url: t.url, title: t.title, favicon: t.favicon,
-        pinned: t.pinned, groupId: t.groupId, workspace: t.workspace,
+        pinned: t.pinned, groupId: t.groupId, workspace: t.workspace, zoom: t.zoom,
       }))
       window.onyx.writeData('workspace-state.json', {
         groups: store.groups,
@@ -296,9 +343,46 @@ export const useStore = create<Store>((set, get) => {
     vimMode: 'normal' as VimMode,
     showPalette: false,
     paletteInput: '',
+    showShortcuts: false,
+    showTabSearch: false,
+    showSessionGraph: false,
+    closedTabs: [] as Tab[],
+    navTrails: {} as Record<string, TrailEntry[]>,
+    focusUrlBar: 0,
+    auroraColor: '',
     sidebarTab: null as 'bookmarks' | 'history' | 'downloads' | 'settings' | null,
     webviews: new Map<string, any>(),
     customPresets: [] as UIPreset[],
+  }
+
+  let pendingWs: any = null
+  let pendingSettings: any = null
+
+  function applyWorkspaceRestore() {
+    if (!pendingWs || pendingSettings === undefined) return
+    const data = pendingWs
+    const restoreTabs = pendingSettings.restoreTabs
+    const restored: any = {
+      groups: data.groups || [],
+      workspaces: data.workspaces || defaultWorkspaces,
+      activeWorkspace: data.activeWorkspace || 1,
+    }
+    if (restoreTabs !== false && data.tabs && Array.isArray(data.tabs) && data.tabs.length > 0) {
+      restored.tabs = data.tabs.map((t: any) => ({
+        id: t.id || uid(), url: t.url || 'about:blank', title: t.title || 'New tab',
+        favicon: t.favicon || '', loading: false, pinned: t.pinned || false,
+        groupId: t.groupId || null, workspace: t.workspace || 1,
+        zoom: t.zoom || (pendingSettings.defaultZoom || 1), incognito: false, muted: false,
+      }))
+      restored.activeId = data.activeId || restored.tabs[0].id
+    } else {
+      const t = makeTab({ workspace: restored.activeWorkspace })
+      restored.tabs = [t]
+      restored.activeId = t.id
+    }
+    set(restored)
+    pendingWs = null
+    pendingSettings = undefined
   }
 
   window.onyx?.readData?.('settings.json', null).then((data: any) => {
@@ -306,26 +390,21 @@ export const useStore = create<Store>((set, get) => {
       set({ settings: { ...defaultSettings, ...data, customColors: { ...defaultSettings.customColors, ...data.customColors } } })
       if (data.language) setLang(data.language)
     }
-  }).catch(() => {})
+    pendingSettings = data && typeof data === 'object' ? data : {}
+    applyWorkspaceRestore()
+  }).catch(() => {
+    pendingSettings = {}
+    applyWorkspaceRestore()
+  })
 
   window.onyx?.readData?.('workspace-state.json', null).then((data: any) => {
     if (data && typeof data === 'object') {
-      const restored: any = {
-        groups: data.groups || [],
-        workspaces: data.workspaces || defaultWorkspaces,
-        activeWorkspace: data.activeWorkspace || 1,
-      }
-      if (data.tabs && Array.isArray(data.tabs) && data.tabs.length > 0) {
-        restored.tabs = data.tabs.map((t: any) => ({
-          id: t.id || uid(), url: t.url || 'about:blank', title: t.title || 'New tab',
-          favicon: t.favicon || '', loading: false, pinned: t.pinned || false,
-          groupId: t.groupId || null, workspace: t.workspace || 1,
-        }))
-        restored.activeId = data.activeId || restored.tabs[0].id
-      }
-      set(restored)
+      pendingWs = data
     }
-  }).catch(() => {})
+    applyWorkspaceRestore()
+  }).catch(() => {
+    applyWorkspaceRestore()
+  })
 
   window.onyx?.readData?.('custom-presets.json', []).then((data: any) => {
     if (Array.isArray(data) && data.length > 0) {
@@ -348,24 +427,40 @@ export const useStore = create<Store>((set, get) => {
   return {
   ...initialState,
 
-  addTab: (url, ws) => {
+  addTab: (url, ws, incognito) => {
     const s = get()
     const workspace = ws ?? s.activeWorkspace
-    const t = makeTab(url ? { url: normalize(url, s.settings.searchUrl), title: url, workspace } : { workspace })
-    set(st => ({ tabs: [...st.tabs, t], activeId: t.id }))
+    const zoom = s.settings.defaultZoom || 1
+    const t = makeTab(url ? { url: normalize(url, s.settings.searchUrl), title: url, workspace, incognito: !!incognito, zoom } : { workspace, incognito: !!incognito, zoom })
+    set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
     persistNow()
     return t.id
   },
 
   closeTab: (id) => {
-    set(s => {
-      const next = s.tabs.filter(t => t.id !== id)
-      if (!next.length) { const t = makeTab({ workspace: s.activeWorkspace }); return { tabs: [t], activeId: t.id } }
+    const s = get()
+    const tab = s.tabs.find(t => t.id === id)
+    const closedTabs = tab ? [...s.closedTabs, tab].slice(-50) : s.closedTabs
+    set(st => {
+      const next = st.tabs.filter(t => t.id !== id)
+      if (!next.length) { const t = makeTab({ workspace: st.activeWorkspace }); return { tabs: [t], activeId: t.id, closedTabs } }
       return {
         tabs: next,
-        activeId: s.activeId === id ? next[Math.min(s.tabs.findIndex(x => x.id === id), next.length - 1)].id : s.activeId,
+        activeId: st.activeId === id ? next[Math.min(st.tabs.findIndex(x => x.id === id), next.length - 1)].id : st.activeId,
+        closedTabs,
       }
     })
+    persistNow()
+  },
+
+  reopenTab: () => {
+    const s = get()
+    if (!s.closedTabs.length) return
+    const stack = [...s.closedTabs]
+    const t = stack.pop()!
+    const ws = s.workspaces.find(w => w.id === t.workspace) ? t.workspace : s.activeWorkspace
+    const nt = { ...t, workspace: ws, groupId: null }
+    set(st => ({ tabs: [...st.tabs, nt], activeId: nt.id, closedTabs: stack }))
     persistNow()
   },
 
@@ -380,6 +475,15 @@ export const useStore = create<Store>((set, get) => {
   moveTab: (a, b) => set(s => {
     const tabs = [...s.tabs]; const [m] = tabs.splice(a, 1); tabs.splice(b, 0, m); return { tabs }
   }),
+
+  moveTabToWorkspace: (id, ws) => {
+    const s = get()
+    if (!s.workspaces.find(w => w.id === ws)) return
+    set(st => ({ tabs: st.tabs.map(t => t.id === id ? { ...t, workspace: ws, groupId: null } : t) }))
+    const wsTabs = get().tabs.filter(t => t.workspace === ws)
+    set({ activeWorkspace: ws, activeId: (wsTabs.find(t => t.id === id) || wsTabs[0]).id })
+    persist(get())
+  },
 
   addGroup: (name, ws) => {
     const workspace = ws ?? get().activeWorkspace
@@ -469,6 +573,15 @@ export const useStore = create<Store>((set, get) => {
     return next
   }),
 
+  toggleBookmark: (url, title, favicon) => set(s => {
+    const existing = s.bookmarks.find(b => b.url === url)
+    const next = existing
+      ? { bookmarks: s.bookmarks.filter(b => b.id !== existing.id) }
+      : { bookmarks: [{ id: uid(), title: title || url, url, favicon: favicon || '', createdAt: Date.now() }, ...s.bookmarks] }
+    setTimeout(() => persist({ ...get(), ...next } as any), 0)
+    return next
+  }),
+
   addHistory: (h) => set(s => {
     const next = { history: [{ ...h, id: uid(), visitedAt: Date.now() }, ...s.history].slice(0, 5000) }
     setTimeout(() => persist({ ...get(), ...next } as any), 0)
@@ -485,6 +598,10 @@ export const useStore = create<Store>((set, get) => {
 
   updateDownload: (id, p) => set(s => ({
     downloads: s.downloads.map(d => d.id === id ? { ...d, ...p } : d),
+  })),
+
+  removeDownload: (id) => set(s => ({
+    downloads: s.downloads.filter(d => d.id !== id),
   })),
 
   saveCustomPreset: (p) => set(s => {
@@ -515,6 +632,18 @@ export const useStore = create<Store>((set, get) => {
   setVimMode: (m) => set({ vimMode: m }),
   setPalette: (v) => set({ showPalette: v, paletteInput: '' }),
   setPaletteInput: (s) => set({ paletteInput: s }),
+  setShowShortcuts: (v) => set({ showShortcuts: v }),
+  setTabSearch: (v) => set({ showTabSearch: v }),
+  setSessionGraph: (v) => set({ showSessionGraph: v }),
+  triggerUrlBar: () => set(s => ({ focusUrlBar: s.focusUrlBar + 1 })),
+  pushTrail: (id, entry) => set(s => {
+    const trail = s.navTrails[id] ? [...s.navTrails[id], entry].slice(-50) : [entry]
+    return { navTrails: { ...s.navTrails, [id]: trail } }
+  }),
+  setZoom: (id, zoom) => set(s => ({
+    tabs: s.tabs.map(t => t.id === id ? { ...t, zoom: Math.min(3, Math.max(0.5, zoom)) } : t),
+  })),
+  setAuroraColor: (c) => set({ auroraColor: c }),
   setSidebar: (s) => set(st => ({ sidebarTab: st.sidebarTab === s ? null : s })),
 
   registerWv: (id, ref) => set(s => {

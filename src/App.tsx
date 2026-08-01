@@ -12,6 +12,10 @@ import HintOverlay from './components/HintOverlay'
 import ShortcutOverlay from './components/ShortcutOverlay'
 import FindBar from './components/FindBar'
 import NewTabPage from './components/NewTabPage'
+import TabExpose from './components/TabExpose'
+import GrepOverlay from './components/GrepOverlay'
+import Onboarding from './components/Onboarding'
+import SessionGraph from './components/SessionGraph'
 import './App.css'
 
 function WorkspaceBar() {
@@ -80,8 +84,10 @@ export default function App() {
   const vimEnabled = useStore(s => s.settings.vimEnabled)
   const settings = useStore(s => s.settings)
   const switchWorkspace = useStore(s => s.switchWorkspace)
+  const setShowShortcuts = useStore(s => s.setShowShortcuts)
+  const showShortcuts = useStore(s => s.showShortcuts)
+  const showTabSearch = useStore(s => s.showTabSearch)
   const [showFind, setShowFind] = useState(false)
-  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
 
@@ -95,14 +101,16 @@ export default function App() {
     const addDownload = useStore.getState().addDownload
     const updateDownload = useStore.getState().updateDownload
     window.onyx?.onDownloadStart?.((info: any) => addDownload(info))
-    window.onyx?.onDownloadProgress?.((data: any) => updateDownload(data.id, { receivedBytes: data.receivedBytes }))
-    window.onyx?.onDownloadDone?.((data: any) => updateDownload(data.id, { state: data.state, receivedBytes: data.receivedBytes }))
+    window.onyx?.onDownloadProgress?.((data: any) => updateDownload(data.id, { receivedBytes: data.receivedBytes, state: data.state || 'progressing' }))
+    window.onyx?.onDownloadDone?.((data: any) => updateDownload(data.id, { state: data.state, receivedBytes: data.receivedBytes, savePath: data.savePath || undefined }))
   }, [])
 
   // Theme + layout CSS vars
   useEffect(() => {
     const colors = THEMES[settings.theme] || THEMES['tokyo-night']
     const c = settings.theme === 'custom' ? settings.customColors : colors
+    const aurora = useStore.getState().auroraColor
+    const accent = settings.aurora && aurora ? `rgb(${aurora})` : c.accent
     const root = document.documentElement
     root.style.setProperty('--bg', c.bg)
     root.style.setProperty('--bg-dim', c.bgDim)
@@ -110,7 +118,7 @@ export default function App() {
     root.style.setProperty('--fg', c.fg)
     root.style.setProperty('--fg-dim', c.fgDim)
     root.style.setProperty('--border', c.border)
-    root.style.setProperty('--accent', c.accent)
+    root.style.setProperty('--accent', accent)
     root.style.setProperty('--green', c.green)
     root.style.setProperty('--red', c.red)
     root.style.setProperty('--orange', c.orange)
@@ -129,61 +137,106 @@ export default function App() {
     if (settings.ntpBgColor) {
       root.style.setProperty('--ntp-bg', settings.ntpBgColor)
     }
-  }, [settings])
+  }, [settings, useStore(s => s.auroraColor)])
 
-  // Global keyboard shortcuts (Ctrl+T, Ctrl+W, Alt+N, Ctrl+Tab)
+  // Confirm-close guard
+  useEffect(() => {
+    if (!settings.confirmClose) return
+    const h = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', h)
+    return () => window.removeEventListener('beforeunload', h)
+  }, [settings.confirmClose])
+
+  // Global keyboard shortcuts
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 't') { e.preventDefault(); addTab() }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'w') { e.preventDefault(); closeTab(useStore.getState().activeId) }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Tab') {
+      const s = useStore.getState()
+      const meta = e.ctrlKey || e.metaKey
+      const wv = s.webviews.get(s.activeId)
+
+      const nav = (n: 'back' | 'forward' | 'reload') => {
+        if (!wv) return
+        if (n === 'back' && wv.canGoBack?.()) wv.goBack()
+        if (n === 'forward' && wv.canGoForward?.()) wv.goForward()
+        if (n === 'reload') wv.reload()
+      }
+
+      // Navigation
+      if (e.key === 'F5') { e.preventDefault(); nav('reload') }
+      if (meta && !e.shiftKey && e.key === 'r') { e.preventDefault(); nav('reload') }
+      if (e.altKey && !meta && e.key === 'ArrowLeft') { e.preventDefault(); nav('back') }
+      if (e.altKey && !meta && e.key === 'ArrowRight') { e.preventDefault(); nav('forward') }
+
+      // Tabs
+      if (meta && !e.shiftKey && e.key === 't') { e.preventDefault(); addTab() }
+      if (meta && e.shiftKey && e.key === 'T') { e.preventDefault(); useStore.getState().reopenTab() }
+      if (meta && e.shiftKey && e.key === 'N') { e.preventDefault(); addTab(undefined, undefined, true) }
+      if (meta && !e.shiftKey && e.key === 'w') { e.preventDefault(); closeTab(s.activeId) }
+      if (meta && e.key === 'Tab') {
         e.preventDefault()
-        const s = useStore.getState()
         const wTabs = s.tabs.filter(t => t.workspace === s.activeWorkspace)
         const i = wTabs.findIndex(t => t.id === s.activeId)
         if (e.shiftKey) { if (i > 0) activate(wTabs[i - 1].id) }
         else { if (i < wTabs.length - 1) activate(wTabs[i + 1].id) }
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault()
-        const s = useStore.getState()
-        s.setSettings({ darkReader: !s.settings.darkReader })
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-        e.preventDefault()
-        const s = useStore.getState()
-        s.setSettings({ workspaceShow: !s.settings.workspaceShow })
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
-        e.preventDefault()
-        useStore.getState().addWorkspace()
-      }
-      if ((e.ctrlKey || e.metaKey) && e.altKey && /^[1-9]$/.test(e.key)) {
+      if (meta && e.altKey && /^[1-9]$/.test(e.key)) {
         e.preventDefault()
         const wsId = parseInt(e.key)
         const st = useStore.getState()
-        if (st.workspaces.find(w => w.id === wsId)) switchWorkspace(wsId)
+        if (st.workspaces.find(w => w.id === wsId)) {
+          useStore.getState().moveTabToWorkspace(st.activeId, wsId)
+        }
       }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+      if (meta && e.shiftKey && e.key === 'A') {
         e.preventDefault()
-        const s = useStore.getState()
-        s.setSettings({ zenMode: !s.settings.zenMode })
+        useStore.getState().setTabSearch(!s.showTabSearch)
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+      if (meta && e.shiftKey && e.key === 'G') {
         e.preventDefault()
-        const s = useStore.getState()
-        s.setSidebar(s.sidebarTab === 'settings' ? null : 'settings')
+        useStore.getState().setSessionGraph(!s.showSessionGraph)
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      if (meta && e.shiftKey && e.key === 'P') {
         e.preventDefault()
-        setShowFind(prev => !prev)
+        const st = useStore.getState()
+        const t = st.tabs.find(x => x.id === st.activeId)
+        if (t && t.url && t.url !== 'about:blank') {
+          window.onyx?.pipOpen?.(t.url, t.title || 'Vox PiP')
+        }
       }
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+
+      // Page actions
+      if (meta && !e.shiftKey && e.key === 'd') {
+        e.preventDefault()
+        const st = useStore.getState()
+        const t = st.tabs.find(x => x.id === st.activeId)
+        if (t) st.toggleBookmark(t.url, t.title || t.url, t.favicon)
+      }
+      if (meta && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        s.setSettings({ darkReader: !s.settings.darkReader })
+      }
+      if (meta && e.key === 'f') { e.preventDefault(); setShowFind(prev => !prev) }
+      if (meta && !e.shiftKey && e.key === 'l') { e.preventDefault(); useStore.getState().triggerUrlBar() }
+      if (meta && !e.shiftKey && e.key === 'h') { e.preventDefault(); useStore.getState().setSidebar('history') }
+      if (meta && !e.shiftKey && e.key === 'e') { e.preventDefault(); useStore.getState().setSidebar('downloads') }
+      if (meta && !e.shiftKey && e.key === 'b') { e.preventDefault(); useStore.getState().setSidebar('bookmarks') }
+      if (meta && !e.shiftKey && e.key === ',') { e.preventDefault(); useStore.getState().setSidebar('settings') }
+      if (meta && !e.shiftKey && e.key === '\\') { e.preventDefault(); s.setSettings({ zenMode: !s.settings.zenMode }) }
+
+      // Zoom
+      if (meta && (e.key === '=' || e.key === '+')) { e.preventDefault(); useStore.getState().setZoom(s.activeId, (s.tabs.find(t => t.id === s.activeId)?.zoom || 1) + 0.1) }
+      if (meta && e.key === '-') { e.preventDefault(); useStore.getState().setZoom(s.activeId, (s.tabs.find(t => t.id === s.activeId)?.zoom || 1) - 0.1) }
+      if (meta && e.key === '0') { e.preventDefault(); useStore.getState().setZoom(s.activeId, 1) }
+
+      if (e.key === '?' && !meta) {
         const el = e.target as HTMLElement
         const inp = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable
-        if (!inp) { e.preventDefault(); setShowShortcuts(prev => !prev) }
+        if (!inp) { e.preventDefault(); setShowShortcuts(!showShortcuts) }
       }
-      if (e.altKey && /^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+      if (e.altKey && /^[1-9]$/.test(e.key) && !meta) {
         e.preventDefault()
         const wsId = parseInt(e.key)
         const st = useStore.getState()
@@ -192,7 +245,22 @@ export default function App() {
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
-  }, [addTab, closeTab, activate, switchWorkspace])
+  }, [addTab, closeTab, activate, switchWorkspace, setShowShortcuts, showShortcuts])
+
+  // Webview → UI shortcut bridge (guest pages forward combos via postMessage)
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data
+      if (!d || !d.voxKey) return
+      try {
+        window.dispatchEvent(new KeyboardEvent('keydown', {
+          key: d.key, ctrlKey: d.ctrl, shiftKey: d.shift, altKey: d.alt, metaKey: d.meta, bubbles: true,
+        }))
+      } catch {}
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
 
   // NTP keyboard handler: command palette (:), Escape, etc.
   useEffect(() => {
@@ -283,6 +351,10 @@ export default function App() {
       <CommandPalette />
       <FindBar show={showFind} onClose={() => setShowFind(false)} />
       <ShortcutOverlay />
+      <TabExpose />
+      <GrepOverlay />
+      <SessionGraph />
+      <Onboarding />
     </div>
   )
 }

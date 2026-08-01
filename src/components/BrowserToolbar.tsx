@@ -6,6 +6,9 @@ export default function BrowserToolbar() {
   const activeId = useStore(s => s.activeId)
   const navigateTo = useStore(s => s.navigateTo)
   const setSidebar = useStore(s => s.setSidebar)
+  const setZoom = useStore(s => s.setZoom)
+  const setTabSearch = useStore(s => s.setTabSearch)
+  const setSessionGraph = useStore(s => s.setSessionGraph)
   const active = tabs.find(t => t.id === activeId)
 
   const [editing, setEditing] = useState(false)
@@ -14,6 +17,14 @@ export default function BrowserToolbar() {
   const searchUrl = useStore(s => s.settings.searchUrl)
 
   useEffect(() => { if (editing) inputRef.current?.select() }, [editing])
+
+  const focusUrlBar = useStore(s => s.focusUrlBar)
+  useEffect(() => {
+    if (focusUrlBar > 0) {
+      setInput(displayUrl)
+      setEditing(true)
+    }
+  }, [focusUrlBar])
 
   const isNtp = active?.url === 'about:blank'
   const displayUrl = isNtp ? '' : active?.url || ''
@@ -66,6 +77,11 @@ export default function BrowserToolbar() {
       <div className="bt-title">{isNtp ? 'New Tab' : active?.title || ''}</div>
 
       <div className="bt-actions">
+        <button className="bt-btn" onClick={() => setZoom(activeId, (active?.zoom || 1) - 0.1)} title="Zoom out">−</button>
+        <span className="bt-zoom">{Math.round((active?.zoom || 1) * 100)}%</span>
+        <button className="bt-btn" onClick={() => setZoom(activeId, (active?.zoom || 1) + 0.1)} title="Zoom in">+</button>
+        <button className="bt-btn" onClick={() => setSessionGraph(!useStore.getState().showSessionGraph)} title="Session trail">🌐</button>
+        <button className="bt-btn" onClick={() => setTabSearch(!useStore.getState().showTabSearch)} title="Tab Exposé (Ctrl+Shift+A)">▦</button>
         <button className="bt-btn" onClick={() => setSidebar('bookmarks')} title="Bookmarks">★</button>
         <button className="bt-btn" onClick={() => setSidebar('history')} title="History">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

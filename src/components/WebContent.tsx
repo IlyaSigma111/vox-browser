@@ -16,6 +16,21 @@ const DARK_READER_REMOVE = `
   if (s) s.remove();
 })()`
 
+const SMOOTH_CSS = `
+(function() {
+  if(document.getElementById('vox-smooth'))return;
+  var s = document.createElement('style');
+  s.id = 'vox-smooth';
+  s.textContent = 'html{scroll-behavior:smooth !important}';
+  document.documentElement.appendChild(s);
+})()`
+
+const SMOOTH_REMOVE = `
+(function() {
+  var s = document.getElementById('vox-smooth');
+  if (s) s.remove();
+})()`
+
 // Fetch title + favicon after page load
 const FETCH_META = `
 (function() {
@@ -23,6 +38,44 @@ const FETCH_META = `
   var link = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
   var fav = link ? link.href : '';
   return JSON.stringify({title: title, favicon: fav});
+})()`
+
+// Extract readable text for full-history grep
+const TEXT_EXTRACT = `
+(function(){
+  var root = document.body;
+  if(!root) return '';
+  var clone = root.cloneNode(true);
+  clone.querySelectorAll('script,style,noscript,svg,canvas,iframe,video,audio,button,input,select,textarea,pre,[aria-hidden="true"]').forEach(function(n){n.remove()});
+  var t = (clone.innerText || '').replace(/\\s+/g,' ').trim().slice(0, 4000);
+  return t;
+})()`
+
+// Sample dominant background color for Aurora adaptive theme
+const AURORA_SAMPLE = `
+(function(){
+  try{
+    var colors={},total=0;
+    function push(c,w){ if(c&&c!=='transparent'&&c.indexOf('rgba(0, 0, 0, 0)')!==0){ colors[c]=(colors[c]||0)+w; total+=w; } }
+    var el=document.documentElement;
+    push(getComputedStyle(el).backgroundColor, 40);
+    push(getComputedStyle(document.body).backgroundColor, 40);
+    var walk=function(n,d){
+      if(d>8||!n||!n.children)return;
+      for(var i=0;i<n.children.length;i++){
+        var ch=n.children[i];
+        if(ch.getBoundingClientRect){var r=ch.getBoundingClientRect();if(r.width>120&&r.height>120){push(getComputedStyle(ch).backgroundColor,8);}}
+        if(i<12)walk(ch,d+1);
+      }
+    };
+    walk(document.body,0);
+    var best='',max=0;
+    for(var c in colors){ if(colors[c]>max){max=colors[c];best=c;} }
+    if(!best||!total)return '';
+    var m=best.match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/);
+    if(!m)return '';
+    return m[1]+','+m[2]+','+m[3];
+  }catch(e){return '';}
 })()`
 
 const VIM_ENGINE = `(function(){
@@ -156,6 +209,18 @@ const VIM_ENGINE = `(function(){
     keyBuffer='';
   }
 
+  function forwardCombo(e){
+    if(e.defaultPrevented)return;
+    var k=(e.key||'').toLowerCase();
+    var isShort=(e.ctrlKey||e.metaKey||e.altKey)&&(k==='t'||k==='w'||k==='tab'||k==='f'||k==='d'||k==='l'||k==='h'||k==='e'||k==='b'||k===','||k==='\\\\'||k==='='||k==='+'||k==='-'||k==='0'||k==='arrowleft'||k==='arrowright'||k==='r');
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='t'||k==='n'||k==='a'||k==='p'||k==='g'||k==='d'))isShort=true;
+    if(e.key==='F5')isShort=true;
+    if(e.key==='?'&&!(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey))isShort=true;
+    if(!isShort)return;
+    try{window.parent.postMessage({voxKey:true,key:e.key,ctrl:e.ctrlKey,shift:e.shiftKey,alt:e.altKey,meta:e.metaKey},'*');}catch(err){}
+  }
+  window.addEventListener('keydown',forwardCombo,false);
+
   window.addEventListener('keydown',handleKey,true);
 })();`
 
@@ -166,7 +231,22 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
   const unregisterWv = useStore(s => s.unregisterWv)
   const updateTab = useStore(s => s.updateTab)
   const addHistory = useStore(s => s.addHistory)
+  const pushTrail = useStore(s => s.pushTrail)
   const darkReader = useStore(s => s.settings.darkReader)
+  const smoothScroll = useStore(s => s.settings.smoothScroll)
+  const aurora = useStore(s => s.settings.aurora)
+  const setAuroraColor = useStore(s => s.setAuroraColor)
+  const lenses = useStore(s => s.settings.lenses)
+  const tab = useStore(s => s.tabs.find(t => t.id === id))
+
+  let host = ''
+  try { host = new URL(url).hostname } catch {}
+
+  const lens = lenses.find(l => l.enabled !== false && l.domain === host)
+  const zoom = (lens?.zoom) || (tab?.zoom ?? 1)
+  const muted = tab?.muted ?? false
+  const incognito = tab?.incognito ?? false
+  const effectiveDark = lens ? !!lens.darkReader : darkReader
 
   const webviewPreload = window.onyx?.getWebviewPreload?.() || ''
 
@@ -195,7 +275,27 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
     try { wv.loadURL(url).catch(() => {}) } catch {}
   }, [url, hasUrl]) // eslint-disable-line
 
-  // Inject vim engine + dark reader on page load
+  // Per-tab zoom
+  useEffect(() => {
+    const wv = ref.current as any
+    if (!wv) return
+    try { wv.setZoomFactor(zoom) } catch {}
+  }, [zoom])
+
+  // Sleeping tabs: mute when not active
+  useEffect(() => {
+    const wv = ref.current as any
+    if (!wv) return
+    try { wv.setAudioMuted(muted) } catch {}
+  }, [muted, id, active])
+
+  // Keep muted flag in sync with active state
+  useEffect(() => {
+    if (!active && tab && !tab.muted) updateTab(id, { muted: true })
+    if (active && tab?.muted) updateTab(id, { muted: false })
+  }, [active]) // eslint-disable-line
+
+  // Inject vim engine + dark reader + smooth scroll on page load
   useEffect(() => {
     const wv = ref.current as any
     if (!wv) return
@@ -216,9 +316,19 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       setTimeout(() => {
         if (destroyed) return
         try {
-          wv.executeJavaScript(darkReader ? DARK_READER_CSS : DARK_READER_REMOVE).catch(() => {})
+          wv.executeJavaScript(effectiveDark ? DARK_READER_CSS : DARK_READER_REMOVE).catch(() => {})
         } catch {}
       }, 100)
+    }
+
+    const injectSmooth = () => {
+      if (destroyed) return
+      setTimeout(() => {
+        if (destroyed) return
+        try {
+          wv.executeJavaScript(smoothScroll ? SMOOTH_CSS : SMOOTH_REMOVE).catch(() => {})
+        } catch {}
+      }, 120)
     }
 
     const fetchMeta = () => {
@@ -242,7 +352,18 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       wv.focus()
       tryInject(0)
       injectDark()
+      injectSmooth()
       fetchMeta()
+      if (aurora) {
+        setTimeout(() => {
+          if (destroyed) return
+          try {
+            wv.executeJavaScript(AURORA_SAMPLE).then((c: string) => {
+              if (c) setAuroraColor(c)
+            }).catch(() => {})
+          } catch {}
+        }, 400)
+      }
     }
 
     wv.addEventListener('dom-ready', onReady)
@@ -264,9 +385,9 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       wv.removeEventListener('did-navigate-in-page', onReady)
       wv.removeEventListener('did-stop-loading', onStop)
     }
-  }, [darkReader, id, updateTab])
+  }, [effectiveDark, smoothScroll, aurora, id, updateTab, setAuroraColor])
 
-  // Events: title, favicon, navigation
+  // Events: title, favicon, navigation, history + trail capture
   useEffect(() => {
     const wv = ref.current as any
     if (!wv) return
@@ -275,24 +396,29 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       if (!e.url || e.url === 'about:blank') return
       navRef.current = e.url
       updateTab(id, { url: e.url, loading: false })
-      addHistory({ url: e.url, title: '' })
+      pushTrail(id, { url: e.url, title: '', t: Date.now() })
     }
     const onTitle = (e: any) => updateTab(id, { title: e.title })
     const onFavicon = (e: any) => { if (e.favicons?.length) updateTab(id, { favicon: e.favicons[0] }) }
     const onStart = () => updateTab(id, { loading: true })
-    const onStop = () => {
+    const onStop = async () => {
       updateTab(id, { loading: false })
-      // Re-fetch title in case page-title-updated didn't fire
-      try {
-        const t = wv.getTitle?.()
-        if (t) updateTab(id, { title: t })
-      } catch {}
+      let title = ''
+      try { title = wv.getTitle?.() || '' } catch {}
+      if (title) updateTab(id, { title })
+      const u = navRef.current || url
+      if (u && u !== 'about:blank') {
+        let text = ''
+        try { text = await wv.executeJavaScript(TEXT_EXTRACT) } catch {}
+        addHistory({ url: u, title, text: typeof text === 'string' ? text.slice(0, 4000) : '' })
+      }
     }
     const onFail = (e: any) => { if (e.errorCode !== -3) updateTab(id, { loading: false }) }
     const onInPage = (e: any) => {
       if (e.isMainFrame && e.url && e.url !== 'about:blank') {
         navRef.current = e.url
         updateTab(id, { url: e.url })
+        pushTrail(id, { url: e.url, title: '', t: Date.now() })
       }
     }
 
@@ -313,7 +439,7 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
       wv.removeEventListener('did-stop-loading', onStop)
       wv.removeEventListener('did-fail-load', onFail)
     }
-  }, [id, updateTab, addHistory])
+  }, [id, updateTab, addHistory, pushTrail, url])
 
   if (!hasUrl) return null
 
@@ -323,7 +449,7 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
         ref={ref}
         className="wv"
         src={url}
-        partition={`persist:vox`}
+        partition={incognito ? `vox-incognito-${id}` : `persist:vox`}
         allowpopups={'true' as any}
         preload={webviewPreload}
       />

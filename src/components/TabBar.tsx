@@ -83,6 +83,8 @@ export default function TabBar() {
         {tabBarShowIndicator && <div className="tab-indicator" />}
         {tabBarShowFavicon && t.favicon && <img className="tab-favicon" src={t.favicon} alt="" />}
         <span className="tab-title">{t.title || t.url || 'New Tab'}</span>
+        {t.incognito && <span className="tab-badge incognito" title="Incognito">🕶</span>}
+        {t.muted && t.id !== activeId && <span className="tab-badge sleeping" title="Sleeping (muted)">zZ</span>}
         {tabBarShowClose && wsTabs.length > 1 && (
           <button
             className="tab-close"

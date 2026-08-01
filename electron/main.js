@@ -1,11 +1,14 @@
-const { app, BrowserWindow, ipcMain, shell, session, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, shell, session, dialog, clipboard } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { exec } = require('child_process')
 
 let mainWindow = null
+let pipWindow = null
+let dlItems = new Map()
 const DATA_DIR = path.join(app.getPath('userData'), 'vox-data')
 const EXT_DIR = path.join(app.getPath('userData'), 'extensions')
+const SHOTS_DIR = path.join(app.getPath('userData'), 'vox-shots')
 const EXE_PATH = process.execPath
 
 // Spoof user agent so Google doesn't block sign-in
@@ -138,19 +141,22 @@ app.whenReady().then(() => {
       receivedBytes: 0,
       state: 'progressing',
       startTime: Date.now(),
+      savePath: item.getSavePath() || '',
     }
+    dlItems.set(info.id, item)
     if (mainWindow) mainWindow.webContents.send('download:start', info)
 
     item.on('updated', (event, state) => {
-      if (state === 'progressing' && !item.isPaused()) {
-        info.receivedBytes = item.getReceivedBytes()
-        if (mainWindow) mainWindow.webContents.send('download:progress', { id: info.id, receivedBytes: info.receivedBytes })
-      }
+      info.receivedBytes = item.getReceivedBytes()
+      info.state = state
+      if (mainWindow) mainWindow.webContents.send('download:progress', { id: info.id, receivedBytes: info.receivedBytes, state })
     })
     item.once('done', (event, state) => {
       info.state = state
       info.receivedBytes = item.getReceivedBytes()
-      if (mainWindow) mainWindow.webContents.send('download:done', { id: info.id, state, receivedBytes: info.receivedBytes })
+      info.savePath = item.getSavePath()
+      dlItems.delete(info.id)
+      if (mainWindow) mainWindow.webContents.send('download:done', { id: info.id, state, receivedBytes: info.receivedBytes, savePath: info.savePath })
     })
   })
 
@@ -223,4 +229,80 @@ ipcMain.handle('browser:openDefaultApps', async () => {
 
 ipcMain.handle('browser:getPath', () => {
   return EXE_PATH
+})
+
+// ─── Window / fullscreen ──────────────────────────
+ipcMain.on('win:fullscreen', () => {
+  if (!mainWindow) return
+  if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false)
+  else mainWindow.setFullScreen(true)
+})
+
+// ─── Downloads control ────────────────────────────
+ipcMain.on('download:cancel', (_, id) => {
+  const item = dlItems.get(id)
+  if (item) item.cancel()
+})
+ipcMain.on('download:pause', (_, id) => {
+  const item = dlItems.get(id)
+  if (item && !item.isPaused()) item.pause()
+})
+ipcMain.on('download:resume', (_, id) => {
+  const item = dlItems.get(id)
+  if (item && item.isPaused()) item.resume()
+})
+
+// ─── Shell helpers ────────────────────────────────
+ipcMain.handle('shell:openPath', async (_, p) => {
+  const r = await shell.openPath(p)
+  return r || null
+})
+ipcMain.handle('shell:showInFolder', async (_, p) => {
+  shell.showItemInFolder(p)
+})
+
+// ─── Extensions ───────────────────────────────────
+ipcMain.handle('ext:openFolder', () => {
+  ensureDir(EXT_DIR)
+  shell.openPath(EXT_DIR)
+})
+
+// ─── Screenshots ──────────────────────────────────
+ipcMain.handle('shot:save', async (_, buffer, name) => {
+  ensureDir(SHOTS_DIR)
+  const file = path.join(SHOTS_DIR, name)
+  fs.writeFileSync(file, Buffer.from(buffer))
+  return file
+})
+ipcMain.handle('shot:copy', async (_, buffer) => {
+  clipboard.writeImage(require('electron').nativeImage.createFromBuffer(Buffer.from(buffer)))
+})
+
+// ─── Page PiP ─────────────────────────────────────
+ipcMain.handle('pip:open', async (_, url, title) => {
+  if (pipWindow && !pipWindow.isDestroyed()) pipWindow.close()
+  pipWindow = new BrowserWindow({
+    width: 480,
+    height: 320,
+    minWidth: 240,
+    minHeight: 160,
+    frame: false,
+    alwaysOnTop: true,
+    backgroundColor: '#1a1b26',
+    title: title || 'Vox PiP',
+    icon: path.join(__dirname, '../build/icon.png'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+    },
+  })
+  pipWindow.setAlwaysOnTop(true, 'screen-saver')
+  pipWindow.setTitle(title || 'Vox PiP')
+  if (url) pipWindow.loadURL(url)
+  pipWindow.on('closed', () => { pipWindow = null })
+  return true
+})
+ipcMain.on('pip:close', () => {
+  if (pipWindow && !pipWindow.isDestroyed()) pipWindow.close()
 })

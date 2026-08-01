@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vox — Keyboard-Driven Browser</title>
+<title>Vox — браузер, где клавиатура — король</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0f0f1a;
@@ -23,8 +23,10 @@
     --orange: #ff9e64;
     --glass: rgba(15, 15, 26, 0.7);
     --glass-border: 1px solid rgba(255,255,255,0.06);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     font-family: 'Inter', 'Consolas', monospace;
     background: var(--bg);
@@ -34,6 +36,14 @@
   }
   a { color: var(--accent-light); text-decoration: none; transition: color 0.2s; }
   a:hover { color: #c4b5fd; }
+
+  /* ── Reveal on scroll ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s var(--ease-spring);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
 
   /* ── Hero ── */
   .hero {
@@ -78,25 +88,34 @@
     100% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.04; }
   }
   .logo {
-    font-size: 88px;
-    font-weight: 700;
+    font-size: 96px;
+    font-weight: 800;
     letter-spacing: -4px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     background: linear-gradient(135deg, var(--accent-light), var(--accent), var(--purple));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     position: relative;
     z-index: 1;
+    animation: logo-in 0.9s var(--ease-spring);
+  }
+  @keyframes logo-in {
+    from { opacity: 0; transform: translateY(-30px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .tagline {
     font-size: 18px;
     color: var(--fg-dim);
-    margin-bottom: 40px;
-    max-width: 520px;
-    line-height: 1.7;
+    margin-bottom: 44px;
+    max-width: 560px;
+    line-height: 1.8;
     position: relative;
     z-index: 1;
-    font-weight: 400;
+    animation: tagline-in 0.9s var(--ease-spring) 0.15s both;
+  }
+  @keyframes tagline-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .tagline strong { color: var(--fg); font-weight: 600; }
   .hero-buttons {
@@ -106,6 +125,7 @@
     justify-content: center;
     position: relative;
     z-index: 1;
+    animation: tagline-in 0.9s var(--ease-spring) 0.3s both;
   }
   .btn {
     display: inline-flex;
@@ -118,7 +138,7 @@
     font-weight: 600;
     cursor: pointer;
     border: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s var(--ease-spring);
   }
   .btn-primary {
     background: linear-gradient(135deg, var(--accent), #6D28D9);
@@ -126,7 +146,7 @@
     box-shadow: 0 4px 20px rgba(124,58,237,0.3);
   }
   .btn-primary:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 30px rgba(124,58,237,0.4);
     text-decoration: none;
   }
@@ -138,7 +158,7 @@
   }
   .btn-secondary:hover {
     background: rgba(255,255,255,0.08);
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.02);
     text-decoration: none;
   }
   .version {
@@ -147,6 +167,7 @@
     margin-top: 24px;
     position: relative;
     z-index: 1;
+    animation: tagline-in 0.9s var(--ease-spring) 0.45s both;
   }
   .download-count {
     font-size: 13px;
@@ -167,7 +188,10 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 16px 64px rgba(0,0,0,0.4);
+    transform: perspective(1200px) rotateX(4deg);
+    transition: transform 0.5s var(--ease-spring);
   }
+  .preview:hover { transform: perspective(1200px) rotateX(0deg); }
   .preview-bar {
     display: flex;
     align-items: center;
@@ -180,7 +204,7 @@
   .preview-content {
     padding: 24px;
     font-size: 13px;
-    line-height: 2;
+    line-height: 2.1;
     color: var(--fg-dim);
   }
   .preview-content .hl { color: var(--accent-light); }
@@ -189,6 +213,7 @@
   .preview-content .pr { color: var(--purple); }
   .preview-content .cy { color: var(--cyan); }
   .preview-content .or { color: var(--orange); }
+  .preview-content .ch { color: var(--fg); }
 
   /* ── Features ── */
   .features {
@@ -200,7 +225,7 @@
     text-align: center;
     font-size: 32px;
     margin-bottom: 16px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.5px;
   }
   .features-subtitle {
@@ -223,12 +248,12 @@
     border: var(--glass-border);
     border-radius: 16px;
     padding: 28px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s var(--ease-spring);
   }
   .feature-card:hover {
     border-color: rgba(124,58,237,0.3);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.35);
   }
   .feature-icon {
     width: 44px;
@@ -241,8 +266,20 @@
     margin-bottom: 16px;
     font-size: 20px;
   }
-  .feature-card h3 { font-size: 16px; margin-bottom: 8px; font-weight: 600; }
-  .feature-card p { font-size: 13px; color: var(--fg-dim); line-height: 1.6; }
+  .feature-card h3 { font-size: 16px; margin-bottom: 8px; font-weight: 700; }
+  .feature-card p { font-size: 13px; color: var(--fg-dim); line-height: 1.7; }
+  .feature-card .tag {
+    display: inline-block;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--orange);
+    border: 1px solid rgba(255,158,100,0.4);
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .feature-card.new { border-color: rgba(124,58,237,0.35); box-shadow: 0 0 40px rgba(124,58,237,0.08); }
 
   /* ── Themes ── */
   .themes {
@@ -250,13 +287,13 @@
     margin: 0 auto;
     padding: 60px 20px;
   }
-  .themes-title { text-align: center; font-size: 28px; margin-bottom: 32px; font-weight: 700; }
+  .themes-title { text-align: center; font-size: 28px; margin-bottom: 32px; font-weight: 800; }
   .theme-grid { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
   .theme-swatch {
     width: 88px; height: 66px; border-radius: 10px;
     border: 2px solid rgba(255,255,255,0.06); cursor: pointer;
     position: relative; overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s var(--ease-spring);
   }
   .theme-swatch:hover { border-color: var(--fg); transform: scale(1.08); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
   .theme-swatch .swatch-bg { position: absolute; inset: 0; }
@@ -266,6 +303,11 @@
     font-size: 9px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     font-family: 'Inter', sans-serif; font-weight: 500;
   }
+  .theme-swatch.experimental { border-style: dashed; border-color: rgba(255,158,100,0.5); }
+  .theme-swatch .exp-badge {
+    position: absolute; top: 3px; right: 3px; font-size: 8px;
+    color: var(--orange); text-shadow: none;
+  }
 
   /* ── Shortcuts ── */
   .shortcuts {
@@ -273,16 +315,16 @@
     margin: 0 auto;
     padding: 60px 20px;
   }
-  .shortcuts-title { text-align: center; font-size: 28px; margin-bottom: 32px; font-weight: 700; }
+  .shortcuts-title { text-align: center; font-size: 28px; margin-bottom: 32px; font-weight: 800; }
   .shortcut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .shortcut {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 14px; background: var(--glass);
     border: var(--glass-border);
     border-radius: 10px; font-size: 13px;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s var(--ease-spring);
   }
-  .shortcut:hover { border-color: rgba(124,58,237,0.3); }
+  .shortcut:hover { border-color: rgba(124,58,237,0.3); transform: translateX(4px); }
   .shortcut kbd {
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
     padding: 3px 10px; border-radius: 6px;
@@ -299,7 +341,7 @@
   .footer a { color: var(--accent-light); }
 
   @media (max-width: 640px) {
-    .logo { font-size: 56px; }
+    .logo { font-size: 60px; }
     .tagline { font-size: 16px; }
     .features-grid { grid-template-columns: 1fr; }
     .shortcut-grid { grid-template-columns: 1fr; }
@@ -311,23 +353,23 @@
 <div class="hero">
   <div class="logo">Vox</div>
   <div class="tagline">
-    <strong>Keyboard-first</strong> browser with Vim integration.<br>
-    Workspaces. Tab groups. Deep customization.<br>
-    No bloat. No distractions. Just speed.
+    <strong>Браузер на клавиатуре</strong> с интеграцией Vim.<br>
+    Рабочие пространства. Группы вкладок. Дикая кастомизация.<br>
+    Ничего лишнего. Никаких отвлечений. Только скорость.
   </div>
   <div class="hero-buttons">
-    <a class="btn btn-primary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.0.8/Vox.Setup.1.0.8.exe">
-      Download for Windows
+    <a class="btn btn-primary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.0.9/Vox.Setup.1.0.9.exe">
+      ⬇ Скачать для Windows
     </a>
     <a class="btn btn-secondary" href="https://github.com/IlyaSigma111/vox-browser">
-      Source on GitHub
+      Исходники на GitHub
     </a>
   </div>
-  <div class="version">v1.0.8 · Electron · Chromium · ru/en</div>
-  <div class="download-count" id="dl-count">... downloads</div>
+  <div class="version">v1.0.9 · Electron · Chromium · ru/en</div>
+  <div class="download-count" id="dl-count">... загрузок</div>
 </div>
 
-<div class="preview">
+<div class="preview reveal">
   <div class="preview-bar">
     <div class="preview-dot" style="background: var(--red)"></div>
     <div class="preview-dot" style="background: var(--orange)"></div>
@@ -337,135 +379,185 @@
   <div class="preview-content">
     <span class="gr">NORMAL</span> ─ <span class="hl">https://github.com</span><br>
     <br>
-    <span class="cy">WS:1</span> <span class="or">Workspaces</span> — Alt+1-9 to switch<br>
+    <span class="cy">WS:1</span> <span class="or">Рабочие пространства</span> — Alt+1-9 для переключения<br>
+    <span class="pr">f</span> → режим подсказок по ссылкам<br>
+    <span class="pr">j / k</span> → скролл вниз / вверх<br>
+    <span class="pr">gg / G</span> → наверх / вниз страницы<br>
+    <span class="ch">Ctrl+Shift+A</span> → <span class="cy">Tab Exposé</span> — все вкладки на одном экране<br>
+    <span class="ch">Ctrl+Shift+F</span> → <span class="cy">Grep</span> — поиск по всему, что вы читали<br>
+    <span class="ch">Ctrl+Shift+P</span> → страница в <span class="cy">PiP-окне</span> поверх всего<br>
+    <span class="ch">Ctrl+Shift+T</span> → вернуть закрытую вкладку<br>
+    <span class="pr">:</span> → командная палитра<br>
     <br>
-    <span class="pr">:tabnew</span> → open new tab<br>
-    <span class="pr">:bookmarks</span> → open bookmarks sidebar<br>
-    <span class="pr">f</span> → follow links (hint mode)<br>
-    <span class="pr">j / k</span> → scroll down / up<br>
-    <span class="pr">gg / G</span> → top / bottom<br>
-    <span class="pr">Ctrl+D</span> → toggle dark reader<br>
-    <span class="pr">:</span> → command palette<br>
-    <br>
-    <span class="gr">79+ themes</span> · <span class="hl">6 tab shapes</span> · <span class="gr">tab groups</span> · <span class="cy">workspaces</span> · <span class="or">30+ settings</span> · <span class="pr">browser chrome</span>
+    <span class="gr">80+ тем</span> · <span class="hl">6 форм вкладок</span> · <span class="gr">экспериментальные темы</span> · <span class="cy">Aurora</span> · <span class="or">Session Trail</span> · <span class="pr">Site Lenses</span>
   </div>
 </div>
 
 <div class="features">
-  <div class="features-title">Why Vox?</div>
-  <div class="features-subtitle">A browser built for power users who live in the keyboard.</div>
+  <div class="features-title reveal">Зачем Vox?</div>
+  <div class="features-subtitle reveal">Браузер для тех, кто живёт на клавиатуре и любит настраивать всё под себя.</div>
   <div class="features-grid">
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon">⌨</div>
-      <h3>Vim Keybindings</h3>
-      <p>Native hint mode (f), command palette (:), insert mode (i), scroll (j/k). All keys handled inside the page like Vimium.</p>
+      <h3>Vim-клавиши</h3>
+      <p>Режим подсказок (f), командная палитра (:), insert-режим (i), скролл j/k — прямо внутри страницы, как Vimium. Ctrl+W и другие хоткеи работают даже с фокуса на странице.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon">🗂</div>
-      <h3>Workspaces</h3>
-      <p>Hyperland-style workspaces with Alt+1-9 switching. Each workspace has its own tabs, independent and isolated.</p>
+      <h3>Рабочие пространства</h3>
+      <p>В духе hyprland: Alt+1-9 переключает воркспейсы, у каждого свои вкладки — изолированные и независимые.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon">📁</div>
-      <h3>Tab Groups</h3>
-      <p>Group tabs by color and name. Collapse/expand, assign via context menu. Organize your browsing.</p>
+      <h3>Группы вкладок</h3>
+      <p>Группируйте вкладки по цвету и имени. Сворачивание, назначение через контекстное меню.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎨</div>
-      <h3>79+ Themes</h3>
-      <p>24 trapezoid-bottom presets, 10 super-design presets (Neon Aurora, Void Glass, Ember Forge...), 45+ others. Full custom color picker.</p>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">🌌</div>
+      <h3>Aurora — адаптивный акцент</h3>
+      <p>Браузер считывает доминантный цвет открытой страницы и подстраивает под него акцент интерфейса. Сайт становится частью браузера.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">◆</div>
-      <h3>6 Tab Shapes</h3>
-      <p>Square, Rounded, Pill, Trapezoid, Yandex-style, and Wave. Plus height, opacity, and radius controls.</p>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">▦</div>
+      <h3>Tab Exposé</h3>
+      <p>Ctrl+Shift+A — все вкладки сеткой на одном экране. Живой поиск, превью, закрытие и открытие без возврата к мышке.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔧</div>
-      <h3>Deep Customization</h3>
-      <p>Font, bar heights, border radius, animation speed, tab opacity, NTP background color, workspace position. 30+ settings.</p>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">🔎</div>
+      <h3>Grep по истории</h3>
+      <p>Ctrl+Shift+F — полнотекстовый поиск по содержимому всех прочитанных страниц. Находите то, что видели неделю назад, по фразе из статьи.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🌐</div>
-      <h3>Russian + English</h3>
-      <p>Full UI localization. Switch between English and Russian in settings. All labels, sections, and controls translated.</p>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">🖼</div>
+      <h3>Страница в PiP-окне</h3>
+      <p>Ctrl+Shift+P — текущая страница улетает в маленькое всегда-поверх окно. Смотрите видео и читайте одновременно.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔍</div>
-      <h3>Find on Page</h3>
-      <p>Ctrl+F to search within any page. Match counter, next/prev navigation. Glassmorphism overlay.</p>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">🗺</div>
+      <h3>Session Trail</h3>
+      <p>Карта пути по вкладке: каждый переход — точка на маршруте. Возвращайтесь на любой шаг в один клик.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">💤</div>
+      <h3>Спящие вкладки</h3>
+      <p>Фоновые вкладки автоматически замьючиваются и получают значок zZ. Никакого звука с закрытых сайтов.</p>
+    </div>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">👓</div>
+      <h3>Site Lenses</h3>
+      <p>Настройки для конкретных сайтов: свой масштаб, тёмный режим и vim-клавиши на youtube.com и всё, что угодно.</p>
+    </div>
+    <div class="feature-card reveal new">
+      <div class="tag">новое</div>
+      <div class="feature-icon">🕶</div>
+      <h3>Инкогнито + Reopen</h3>
+      <p>Ctrl+Shift+N — приватная вкладка без сохранения. Ctrl+Shift+T — возврат закрытой вкладки, даже после перезапуска.</p>
+    </div>
+    <div class="feature-card reveal">
       <div class="feature-icon">🧭</div>
-      <h3>Browser Chrome Mode</h3>
-      <p>Toggle a full browser toolbar with back/forward/reload, editable URL bar, and page title. Classic browser feel when you need it.</p>
+      <h3>Browser Chrome</h3>
+      <p>Классическая панель с кнопками назад/вперёд, адресной строкой и заголовком — когда хочется «как в обычных браузерах».</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">📌</div>
-      <h3>Tab Pinning</h3>
-      <p>Pin important tabs with right-click. Pinned tabs sort first as compact icon-only tabs. Middle-click to close.</p>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🎨</div>
+      <h3>80+ тем и пресеты</h3>
+      <p>Классика, 10 супер-пресетов (Neon Aurora, Void Glass, Ember Forge...) и новые <strong>экспериментальные темы</strong> — включая вдохновлённую свежим дизайном Firefox Nightly.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🔧</div>
+      <h3>Глубокая кастомизация</h3>
+      <p>Шрифт, высоты панелей, радиус, скорость анимаций, прозрачность вкладок, фон NTP, 30+ настроек. Полностью русский + английский интерфейс.</p>
     </div>
   </div>
 </div>
 
 <div class="themes">
-  <div class="themes-title">Themes</div>
-  <div class="theme-grid">
+  <div class="themes-title reveal">Темы</div>
+  <div class="theme-grid reveal">
     <div class="theme-swatch" title="Tokyo Night"><div class="swatch-bg" style="background: #1a1b26"></div><div class="swatch-accent" style="background: #7aa2f7"></div><span>Tokyo Night</span></div>
     <div class="theme-swatch" title="Dracula"><div class="swatch-bg" style="background: #282a36"></div><div class="swatch-accent" style="background: #bd93f9"></div><span>Dracula</span></div>
     <div class="theme-swatch" title="Monokai"><div class="swatch-bg" style="background: #272822"></div><div class="swatch-accent" style="background: #a6e22e"></div><span>Monokai</span></div>
     <div class="theme-swatch" title="Nord"><div class="swatch-bg" style="background: #2e3440"></div><div class="swatch-accent" style="background: #88c0d0"></div><span>Nord</span></div>
     <div class="theme-swatch" title="Solarized"><div class="swatch-bg" style="background: #002b36"></div><div class="swatch-accent" style="background: #268bd2"></div><span>Solarized</span></div>
-    <div class="theme-swatch" title="Ayu Dark"><div class="swatch-bg" style="background: #0f1419"></div><div class="swatch-accent" style="background: #36a3d9"></div><span>Ayu</span></div>
     <div class="theme-swatch" title="One Dark"><div class="swatch-bg" style="background: #282c34"></div><div class="swatch-accent" style="background: #61afef"></div><span>One Dark</span></div>
     <div class="theme-swatch" title="Gruvbox"><div class="swatch-bg" style="background: #282828"></div><div class="swatch-accent" style="background: #458588"></div><span>Gruvbox</span></div>
-    <div class="theme-swatch" title="Catppuccin Mocha"><div class="swatch-bg" style="background: #1e1e2e"></div><div class="swatch-accent" style="background: #89b4fa"></div><span>Catppuccin</span></div>
+    <div class="theme-swatch" title="Catppuccin"><div class="swatch-bg" style="background: #1e1e2e"></div><div class="swatch-accent" style="background: #89b4fa"></div><span>Catppuccin</span></div>
   </div>
-  <div class="themes-title" style="margin-top:32px;">Light Themes</div>
-  <div class="theme-grid">
+  <div class="themes-title reveal" style="margin-top:32px;">Светлые темы</div>
+  <div class="theme-grid reveal">
     <div class="theme-swatch" title="Tokyo Day"><div class="swatch-bg" style="background: #e1e2e7"></div><div class="swatch-accent" style="background: #2e7de9"></div><span style="color:#333;text-shadow:none">Tokyo Day</span></div>
     <div class="theme-swatch" title="Solarized Light"><div class="swatch-bg" style="background: #fdf6e3"></div><div class="swatch-accent" style="background: #268bd2"></div><span style="color:#333;text-shadow:none">Solarized Lt</span></div>
     <div class="theme-swatch" title="Nord Light"><div class="swatch-bg" style="background: #eceff4"></div><div class="swatch-accent" style="background: #5e81ac"></div><span style="color:#333;text-shadow:none">Nord Light</span></div>
     <div class="theme-swatch" title="GitHub Light"><div class="swatch-bg" style="background: #ffffff"></div><div class="swatch-accent" style="background: #0969da"></div><span style="color:#333;text-shadow:none">GitHub Lt</span></div>
     <div class="theme-swatch" title="Catppuccin Latte"><div class="swatch-bg" style="background: #eff1f5"></div><div class="swatch-accent" style="background: #1e66f5"></div><span style="color:#333;text-shadow:none">Catppuccin Lt</span></div>
   </div>
+  <div class="themes-title reveal" style="margin-top:32px;">Экспериментальные</div>
+  <div class="theme-grid reveal">
+    <div class="theme-swatch experimental" title="Firefox Nova"><div class="swatch-bg" style="background: #2b2826"></div><div class="swatch-accent" style="background: #ff6a3d"></div><span>Firefox Nova</span><span class="exp-badge">🔥</span></div>
+    <div class="theme-swatch experimental" title="Nova Light"><div class="swatch-bg" style="background: #fbf7f0"></div><div class="swatch-accent" style="background: #e2560f"></div><span style="color:#333;text-shadow:none">Nova Light</span><span class="exp-badge">🔥</span></div>
+    <div class="theme-swatch experimental" title="Synthwave"><div class="swatch-bg" style="background: #150b2a"></div><div class="swatch-accent" style="background: #ff2ea6"></div><span>Synthwave '86</span><span class="exp-badge">🔥</span></div>
+    <div class="theme-swatch experimental" title="Forest"><div class="swatch-bg" style="background: #1b2317"></div><div class="swatch-accent" style="background: #8bc34a"></div><span>Forest</span><span class="exp-badge">🔥</span></div>
+  </div>
 </div>
 
 <div class="shortcuts">
-  <div class="shortcuts-title">Keyboard Shortcuts</div>
-  <div class="shortcut-grid">
-    <div class="shortcut"><span>Hint mode</span><kbd>f</kbd></div>
-    <div class="shortcut"><span>Insert mode</span><kbd>i</kbd></div>
-    <div class="shortcut"><span>Command palette</span><kbd>:</kbd></div>
-    <div class="shortcut"><span>New tab</span><kbd>Ctrl+T</kbd></div>
-    <div class="shortcut"><span>Close tab</span><kbd>Ctrl+W</kbd></div>
-    <div class="shortcut"><span>Next tab</span><kbd>Ctrl+Tab</kbd></div>
-    <div class="shortcut"><span>Find on page</span><kbd>Ctrl+F</kbd></div>
-    <div class="shortcut"><span>Dark reader</span><kbd>Ctrl+D</kbd></div>
-    <div class="shortcut"><span>Settings</span><kbd>Ctrl+.</kbd></div>
-    <div class="shortcut"><span>Shortcuts</span><kbd>?</kbd></div>
-    <div class="shortcut"><span>Scroll down</span><kbd>j</kbd></div>
-    <div class="shortcut"><span>Scroll up</span><kbd>k</kbd></div>
-    <div class="shortcut"><span>Go to top</span><kbd>gg</kbd></div>
-    <div class="shortcut"><span>Go to bottom</span><kbd>G</kbd></div>
-    <div class="shortcut"><span>Workspace 1-9</span><kbd>Alt+1-9</kbd></div>
-    <div class="shortcut"><span>Pin tab</span><kbd>Right click</kbd></div>
+  <div class="shortcuts-title reveal">Горячие клавиши</div>
+  <div class="shortcut-grid reveal">
+    <div class="shortcut"><span>Режим подсказок</span><kbd>f</kbd></div>
+    <div class="shortcut"><span>Insert-режим</span><kbd>i</kbd></div>
+    <div class="shortcut"><span>Командная палитра</span><kbd>:</kbd></div>
+    <div class="shortcut"><span>Новая вкладка</span><kbd>Ctrl+T</kbd></div>
+    <div class="shortcut"><span>Вернуть закрытую</span><kbd>Ctrl+Shift+T</kbd></div>
+    <div class="shortcut"><span>Инкогнито</span><kbd>Ctrl+Shift+N</kbd></div>
+    <div class="shortcut"><span>Закрыть вкладку</span><kbd>Ctrl+W</kbd></div>
+    <div class="shortcut"><span>Следующая вкладка</span><kbd>Ctrl+Tab</kbd></div>
+    <div class="shortcut"><span>Tab Exposé</span><kbd>Ctrl+Shift+A</kbd></div>
+    <div class="shortcut"><span>Grep по истории</span><kbd>Ctrl+Shift+F</kbd></div>
+    <div class="shortcut"><span>Страница в PiP</span><kbd>Ctrl+Shift+P</kbd></div>
+    <div class="shortcut"><span>Session Trail</span><kbd>Ctrl+Shift+G</kbd></div>
+    <div class="shortcut"><span>Поиск на странице</span><kbd>Ctrl+F</kbd></div>
+    <div class="shortcut"><span>Тёмный режим</span><kbd>Ctrl+Shift+D</kbd></div>
+    <div class="shortcut"><span>Адресная строка</span><kbd>Ctrl+L</kbd></div>
+    <div class="shortcut"><span>Закладка</span><kbd>Ctrl+D</kbd></div>
+    <div class="shortcut"><span>Воркспейс 1-9</span><kbd>Alt+1-9</kbd></div>
+    <div class="shortcut"><span>Масштаб</span><kbd>Ctrl+±</kbd></div>
+    <div class="shortcut"><span>Скролл вниз / вверх</span><kbd>j / k</kbd></div>
+    <div class="shortcut"><span>Наверх / вниз</span><kbd>gg / G</kbd></div>
   </div>
 </div>
 
 <div class="footer">
-  Vox Browser v1.0.8 · Built with Electron + React + Zustand
+  Vox Browser v1.0.9 · Собрано на Electron + React + Zustand
 </div>
 
 <script>
-fetch('https://api.github.com/repos/IlyaSigma111/vox-browser/releases/latest')
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var count = 0;
-    if (data.assets) data.assets.forEach(function(a) { count += a.download_count || 0; });
-    document.getElementById('dl-count').textContent = count + ' downloads';
-  })
-  .catch(function() {});
+  // Reveal-on-scroll
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(function(el) { io.observe(el); });
+
+  // Download counter
+  fetch('https://api.github.com/repos/IlyaSigma111/vox-browser/releases/latest')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var count = 0;
+      if (data.assets) data.assets.forEach(function(a) { count += a.download_count || 0; });
+      document.getElementById('dl-count').textContent = count + ' загрузок';
+    })
+    .catch(function() {});
 </script>
 
 </body>

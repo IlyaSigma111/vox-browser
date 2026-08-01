@@ -98,6 +98,7 @@ function History() {
 
 function Downloads() {
   const downloads = useStore(s => s.downloads)
+  const removeDownload = useStore(s => s.removeDownload)
   const openExternal = (url: string) => window.onyx?.openExternal?.(url)
   const formatBytes = (b: number) => {
     if (b < 1024) return b + ' B'
@@ -107,7 +108,10 @@ function Downloads() {
   if (!downloads.length) return <div className="sidebar-section">{t('sidebar.noDownloads')}</div>
   return <>
     {downloads.map(d => (
-      <div key={d.id} className="sidebar-item" onClick={() => openExternal(d.url)} title={d.url}>
+      <div key={d.id} className="sidebar-item" onClick={() => {
+        if (d.savePath) window.onyx?.showInFolder?.(d.savePath)
+        else openExternal(d.url)
+      }} title={d.url}>
         <span className="si-icon">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M8 2v8M5 7l3 3 3-3M3 12h10"/>
@@ -118,8 +122,21 @@ function Downloads() {
           <div className="url">
             {d.state === 'completed' ? <span style={{ color: 'var(--green)' }}>✓ {formatBytes(d.totalBytes)}</span>
               : d.state === 'cancelled' || d.state === 'interrupted' ? <span style={{ color: 'var(--red)' }}>✗ {t('download.interrupted')}</span>
+              : d.state === 'paused' ? <span style={{ color: 'var(--orange)' }}>⏸ {formatBytes(d.receivedBytes)} / {formatBytes(d.totalBytes)}</span>
               : <span>{formatBytes(d.receivedBytes)} / {formatBytes(d.totalBytes)}</span>
             }
+          </div>
+          <div className="dl-actions" onClick={e => e.stopPropagation()}>
+            {d.state === 'progressing' && <>
+              <button className="dl-btn" onClick={() => window.onyx?.pauseDownload?.(d.id)}>⏸</button>
+              <button className="dl-btn" onClick={() => window.onyx?.cancelDownload?.(d.id)}>✕</button>
+            </>}
+            {d.state === 'paused' && <button className="dl-btn" onClick={() => window.onyx?.resumeDownload?.(d.id)}>▶</button>}
+            {d.state === 'completed' && d.savePath && <>
+              <button className="dl-btn" title="Show in folder" onClick={() => window.onyx?.showInFolder?.(d.savePath!)}>📁</button>
+              <button className="dl-btn" title="Open file" onClick={() => window.onyx?.openPath?.(d.savePath!)}>↗</button>
+            </>}
+            <button className="dl-btn" title="Remove from list" onClick={() => removeDownload(d.id)}>🗑</button>
           </div>
         </div>
       </div>
@@ -244,6 +261,12 @@ function SettingsPanel() {
               <option value="github-light">GitHub Light</option>
               <option value="catppuccin-latte">Catppuccin Latte</option>
             </optgroup>
+            <optgroup label="✨ Experimental">
+              <option value="firefox-nova">Firefox Nova (Nightly)</option>
+              <option value="nova-light">Nova Light</option>
+              <option value="synthwave">Synthwave '86</option>
+              <option value="forest">Forest</option>
+            </optgroup>
             <option value="custom">{t('theme.custom')}</option>
           </select>
         </StRow>
@@ -268,6 +291,17 @@ function SettingsPanel() {
           <StRow label={t('theme.cyan')}><input type="color" value={c.cyan} onChange={e => setSettings({ customColors: { ...settings.customColors, cyan: e.target.value } })} /></StRow>
           <StRow label={t('theme.purple')}><input type="color" value={c.purple} onChange={e => setSettings({ customColors: { ...settings.customColors, purple: e.target.value } })} /></StRow>
         </>}
+      </Section>
+
+      <Section title="Aurora">
+        <StRow label="Adaptive accent (Aurora)">
+          <Toggle value={settings.aurora} onChange={v => setSettings({ aurora: v })} />
+        </StRow>
+        <div className="st-hint">Собирает доминантный цвет открытой страницы и подстраивает акцентный цвет интерфейса под неё.</div>
+      </Section>
+
+      <Section title="Site Lenses">
+        <SiteLenses />
       </Section>
 
       <Section title={t('tabBar')}>
@@ -385,6 +419,28 @@ function SettingsPanel() {
         <StRow label={t('behavior.vim')}><Toggle value={settings.vimEnabled} onChange={v => setSettings({ vimEnabled: v })} /></StRow>
         <StRow label={t('behavior.darkReader')}><Toggle value={settings.darkReader} onChange={v => setSettings({ darkReader: v })} /></StRow>
         <StRow label={t('behavior.smoothScroll')}><Toggle value={settings.smoothScroll} onChange={v => setSettings({ smoothScroll: v })} /></StRow>
+        <StRow label="Restore tabs on launch"><Toggle value={settings.restoreTabs} onChange={v => setSettings({ restoreTabs: v })} /></StRow>
+        <StRow label="Confirm before closing"><Toggle value={settings.confirmClose} onChange={v => setSettings({ confirmClose: v })} /></StRow>
+      </Section>
+
+      <Section title="Start & zoom">
+        <StRow label="Homepage">
+          <input
+            type="text"
+            value={settings.homepage}
+            onChange={e => setSettings({ homepage: e.target.value })}
+            placeholder="https://example.com"
+            style={{ width: '100%', background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }}
+            spellCheck={false}
+          />
+        </StRow>
+        <StRow label="Default zoom">
+          <div className="st-slider-row">
+            <input type="range" min="0.5" max="2" step="0.1" value={settings.defaultZoom || 1}
+              onChange={e => setSettings({ defaultZoom: Number(e.target.value) })} />
+            <span className="st-val">{Math.round((settings.defaultZoom || 1) * 100)}%</span>
+          </div>
+        </StRow>
       </Section>
 
       <Section title={t('settings.system')}>
@@ -425,6 +481,77 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   return (
     <div className={`toggle${value ? ' on' : ''}`} onClick={() => onChange(!value)}>
       <div className="toggle-knob" />
+    </div>
+  )
+}
+
+function hostOf(url: string) {
+  try { return new URL(url).hostname } catch { return '' }
+}
+
+function SiteLenses() {
+  const lenses = useStore(s => s.settings.lenses)
+  const setSettings = useStore(s => s.setSettings)
+  const tabs = useStore(s => s.tabs)
+  const [editing, setEditing] = useState<string | null>(null)
+  const [domain, setDomain] = useState('')
+  const [zoom, setZoom] = useState(1)
+  const [dark, setDark] = useState(false)
+  const [vim, setVim] = useState(true)
+
+  const saveLens = () => {
+    const d = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+    if (!d) return
+    const others = lenses.filter(l => l.domain !== d)
+    const next = [...others, { domain: d, zoom, darkReader: dark, vimEnabled: vim, enabled: true }]
+    setSettings({ lenses: next })
+    setEditing(null)
+  }
+
+  const startEdit = (l?: { domain: string; zoom?: number; darkReader?: boolean; vimEnabled?: boolean }) => {
+    if (l) { setDomain(l.domain); setZoom(l.zoom || 1); setDark(!!l.darkReader); setVim(l.vimEnabled !== false) }
+    setEditing(l?.domain || '')
+  }
+
+  return (
+    <div className="lens-list">
+      {editing === null && (
+        <button className="st-action-btn" onClick={() => startEdit()}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10"/></svg>
+          + Add lens for current site
+        </button>
+      )}
+      {editing === null && (
+        <div className="lens-current">
+          <span className="lens-current-domain">{hostOf(tabs.find(t => t.id === useStore.getState().activeId)?.url || '') || 'no active page'}</span>
+        </div>
+      )}
+      {editing !== null && (
+        <div className="lens-edit">
+          <input className="lens-domain-input" placeholder="example.com" value={domain} onChange={e => setDomain(e.target.value)} spellCheck={false} />
+          <StRow label="Zoom">
+            <div className="st-slider-row">
+              <input type="range" min="0.5" max="2" step="0.1" value={zoom} onChange={e => setZoom(Number(e.target.value))} />
+              <span className="st-val">{Math.round(zoom * 100)}%</span>
+            </div>
+          </StRow>
+          <StRow label="Dark reader"><Toggle value={dark} onChange={setDark} /></StRow>
+          <StRow label="Vim keys"><Toggle value={vim} onChange={setVim} /></StRow>
+          <div className="st-actions" style={{ marginTop: 8 }}>
+            <button className="st-action-btn" onClick={saveLens}>Save</button>
+            <button className="st-action-btn secondary" onClick={() => setEditing(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {lenses.map(l => (
+        <div className="lens-row" key={l.domain}>
+          <span className="lens-domain">{l.domain}</span>
+          <span className="lens-meta">{Math.round((l.zoom || 1) * 100)}%{l.darkReader ? ' · dark' : ''}{l.vimEnabled === false ? '' : ' · vim'}</span>
+          <button className="sb-btn" onClick={() => startEdit(l)}>✎</button>
+          <button className="sb-btn" onClick={() => setSettings({ lenses: lenses.filter(x => x.domain !== l.domain) })}>×</button>
+        </div>
+      ))}
+      {lenses.length === 0 && editing === null && <div className="st-hint">Одна «линза» = набор настроек для конкретного сайта: масштаб, тёмный режим, vim-клавиши.</div>}
     </div>
   )
 }

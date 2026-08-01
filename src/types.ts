@@ -17,6 +17,24 @@ export interface Tab {
   pinned: boolean
   groupId: string | null
   workspace: number
+  zoom: number
+  incognito: boolean
+  muted: boolean
+}
+
+export interface TrailEntry {
+  url: string
+  title: string
+  t: number
+}
+
+export interface SiteLens {
+  domain: string
+  zoom?: number
+  darkReader?: boolean
+  vimEnabled?: boolean
+  accent?: string
+  enabled: boolean
 }
 
 export interface TabGroup {
@@ -46,6 +64,7 @@ export interface HistoryEntry {
   url: string
   title: string
   visitedAt: number
+  text?: string
 }
 
 export interface Download {
@@ -56,6 +75,7 @@ export interface Download {
   receivedBytes: number
   state: string
   startTime: number
+  savePath?: string
 }
 
 export type VimMode = 'normal' | 'insert' | 'command' | 'hint'
@@ -67,7 +87,7 @@ export interface VimKeyBinding {
   description: string
 }
 
-export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'custom'
+export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'firefox-nova' | 'nova-light' | 'synthwave' | 'forest' | 'custom'
 
 export interface ThemeColors {
   bg: string
@@ -122,6 +142,10 @@ export interface Settings {
 
   browserChrome: boolean
 
+  aurora: boolean
+  lenses: SiteLens[]
+  onboarded: boolean
+
   ntpShowClock: boolean
   ntpShowDate: boolean
   ntpShowSearch: boolean
@@ -139,6 +163,7 @@ export interface Settings {
   restoreTabs: boolean
   confirmClose: boolean
   zenMode: boolean
+  defaultZoom: number
 }
 
 declare global {
@@ -151,10 +176,21 @@ declare global {
       writeData: (f: string, d: any) => Promise<void>
       openDir: () => Promise<string | null>
       openExternal: (u: string) => Promise<void>
+      openPath: (p: string) => Promise<void>
+      showInFolder: (p: string) => Promise<void>
       getWebviewPreload: () => string
       setDefaultBrowser: () => Promise<{ success: boolean; error?: string }>
       openDefaultApps: () => Promise<void>
       getBrowserPath: () => Promise<string>
+      toggleFullscreen: () => void
+      listExtensions: () => Promise<string[]>
+      openExtensionsFolder: () => Promise<void>
+      cancelDownload: (id: string) => void
+      pauseDownload: (id: string) => void
+      resumeDownload: (id: string) => void
+      saveShot: (buf: ArrayBuffer, name: string) => Promise<string>
+      copyImage: (buf: ArrayBuffer) => Promise<void>
+      pipOpen: (url: string, title?: string) => Promise<void>
       onDownloadStart: (cb: (info: any) => void) => void
       onDownloadProgress: (cb: (data: any) => void) => void
       onDownloadDone: (cb: (data: any) => void) => void

@@ -30,6 +30,14 @@ export default function StatusBar({ showWorkspaces }: Props) {
 
   useEffect(() => { if (editing) inputRef.current?.select() }, [editing])
 
+  const focusUrlBar = useStore(s => s.focusUrlBar)
+  useEffect(() => {
+    if (focusUrlBar > 0) {
+      setInput(active?.url === 'about:blank' ? '' : active?.url || '')
+      setEditing(true)
+    }
+  }, [focusUrlBar])
+
   useEffect(() => {
     if (!ctxMenu) return
     const h = () => setCtxMenu(null)

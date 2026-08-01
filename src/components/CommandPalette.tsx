@@ -36,6 +36,7 @@ export default function CommandPalette() {
   const assignGroup = useStore(s => s.assignGroup)
   const switchWorkspace = useStore(s => s.switchWorkspace)
   const workspaces = useStore(s => s.workspaces)
+  const setShowShortcuts = useStore(s => s.setShowShortcuts)
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
 
   const ref = useRef<HTMLInputElement>(null)
@@ -67,6 +68,7 @@ export default function CommandPalette() {
       history: () => setSidebar('history'),
       bookmarks: () => setSidebar('bookmarks'),
       settings: () => setSidebar('settings'),
+      help: () => setShowShortcuts(true),
       newgroup: () => {
         const name = prompt('Group name:')
         if (name) { const gid = addGroup(name); assignGroup(activeId, gid) }
@@ -81,15 +83,21 @@ export default function CommandPalette() {
   }
 
   const results = useMemo(() => {
-    const q = paletteInput.toLowerCase()
+    const q = paletteInput.trim()
     if (!q) return COMMANDS.map(c => ({ type: 'cmd' as const, name: c.name, desc: c.desc, action: () => { runCmd(c.name); setPalette(false) } }))
-    const cmds = COMMANDS.filter(c => c.name.includes(q) || c.alias.some(a => a.includes(q)) || c.desc.toLowerCase().includes(q))
-    const tbs = wsTabs.filter(t => t.title.toLowerCase().includes(q) || t.url.toLowerCase().includes(q)).slice(0, 5)
+    const lq = q.toLowerCase()
+    const cmds = COMMANDS.filter(c => c.name.includes(lq) || c.alias.some(a => a.includes(lq)) || c.desc.toLowerCase().includes(lq))
+    const tbs = wsTabs.filter(t => t.title.toLowerCase().includes(lq) || t.url.toLowerCase().includes(lq)).slice(0, 5)
+    const open = () => { navigateTo(activeId, q); setPalette(false) }
+    const urlRow: Array<{ type: 'url' | 'tab' | 'cmd'; name: string; desc: string; action: () => void }> = [{
+      type: 'url', name: q, desc: /^(https?:|www\.)/i.test(q) ? 'Open URL' : 'Search', action: open,
+    }]
     return [
+      ...urlRow,
       ...tbs.map(t => ({ type: 'tab' as const, name: t.title, desc: t.url, action: () => { activate(t.id); setPalette(false) } })),
       ...cmds.map(c => ({ type: 'cmd' as const, name: c.name, desc: c.desc, action: () => { runCmd(c.name); setPalette(false) } })),
     ]
-  }, [paletteInput, wsTabs])
+  }, [paletteInput, wsTabs, activeId, navigateTo])
 
   useEffect(() => { if (showPalette) { setTimeout(() => ref.current?.focus(), 30); setSel(0) } }, [showPalette])
   useEffect(() => setSel(0), [paletteInput])
@@ -131,7 +139,7 @@ export default function CommandPalette() {
                 onClick={r.action}
                 onMouseEnter={() => setSel(i)}
               >
-                <span className={`pi-type ${r.type}`}>{r.type === 'tab' ? '>' : ':'}</span>
+                <span className={`pi-type ${r.type}`}>{r.type === 'tab' ? '>' : r.type === 'url' ? '→' : ':'}</span>
                 <span className="pi-name">{r.name}</span>
                 <span className="pi-desc">{r.desc}</span>
               </div>
