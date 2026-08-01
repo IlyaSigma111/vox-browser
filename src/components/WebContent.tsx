@@ -51,12 +51,13 @@ const TEXT_EXTRACT = `
   return t;
 })()`
 
-// Sample dominant background color for Aurora adaptive theme
+// Sample a vivid accent color for Aurora adaptive theme.
+// Prefers saturated, readable colors — on dark sites it lifts + saturates instead of returning near-black.
 const AURORA_SAMPLE = `
 (function(){
   try{
-    var colors={},total=0;
-    function push(c,w){ if(c&&c!=='transparent'&&c.indexOf('rgba(0, 0, 0, 0)')!==0){ colors[c]=(colors[c]||0)+w; total+=w; } }
+    var colors={};
+    function push(c,w){ if(c&&c!=='transparent'&&c.indexOf('rgba(0, 0, 0, 0)')!==0){ colors[c]=(colors[c]||0)+w; } }
     var el=document.documentElement;
     push(getComputedStyle(el).backgroundColor, 40);
     push(getComputedStyle(document.body).backgroundColor, 40);
@@ -69,12 +70,42 @@ const AURORA_SAMPLE = `
       }
     };
     walk(document.body,0);
-    var best='',max=0;
-    for(var c in colors){ if(colors[c]>max){max=colors[c];best=c;} }
-    if(!best||!total)return '';
-    var m=best.match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/);
-    if(!m)return '';
-    return m[1]+','+m[2]+','+m[3];
+    function parse(c){
+      var m=c.match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/);
+      if(!m)return null;
+      return {r:+m[1],g:+m[2],b:+m[3]};
+    }
+    var best=null,bestScore=-1,fallback=null,fallbackScore=-1;
+    for(var c in colors){
+      var p=parse(c);
+      if(!p)continue;
+      var mx=Math.max(p.r,p.g,p.b),mn=Math.min(p.r,p.g,p.b);
+      var sat=mx===0?0:(mx-mn)/mx;
+      var lum=(p.r*0.299+p.g*0.587+p.b*0.114)/255;
+      var score=sat*(0.35+lum);
+      if(lum>0.14&&lum<0.9&&sat>0.16){
+        if(score>bestScore){bestScore=score;best=p;}
+      }
+      var fs=sat*0.5+lum*0.5;
+      if(fs>fallbackScore&&lum>0.1&&lum<0.94){fallbackScore=fs;fallback=p;}
+    }
+    var chosen=best||fallback;
+    if(!chosen)return '';
+    var r=chosen.r,g=chosen.g,b=chosen.b;
+    var L=(Math.max(r,g,b)+Math.min(r,g,b))/2;
+    // lift dark sites so the accent is visible on dark UI
+    if(L<120){
+      var f=120/(L||1);
+      r=Math.min(255,Math.round(r*f));g=Math.min(255,Math.round(g*f));b=Math.min(255,Math.round(b*f));
+    }
+    // boost weak saturation a little
+    var gray=Math.round((r+g+b)/3);
+    var d=Math.max(0.3,(120-gray)/255);
+    r=Math.round(r+(r-gray)*d);
+    g=Math.round(g+(g-gray)*d);
+    b=Math.round(b+(b-gray)*d);
+    r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));
+    return r+','+g+','+b;
   }catch(e){return '';}
 })()`
 

@@ -134,6 +134,42 @@ export const THEMES: Record<ThemePreset, ThemeColors> = {
     accent: '#8bc34a', green: '#aed581', red: '#ef5350',
     orange: '#ffab40', cyan: '#80cbc4', purple: '#b39ddb',
   },
+  'rose-pine': {
+    bg: '#191724', bgDim: '#13111e', bgLight: '#26233a',
+    fg: '#e0def4', fgDim: '#6e6a86', border: '#26233a',
+    accent: '#ebbcba', green: '#9ccfd8', red: '#eb6f92',
+    orange: '#f6c177', cyan: '#9ccfd8', purple: '#c4a7e7',
+  },
+  'everforest': {
+    bg: '#2d353b', bgDim: '#272e33', bgLight: '#3d484d',
+    fg: '#d3c6aa', fgDim: '#859289', border: '#3d484d',
+    accent: '#a7c080', green: '#a7c080', red: '#e67e80',
+    orange: '#e69875', cyan: '#83c092', purple: '#d699b6',
+  },
+  'github-dark': {
+    bg: '#0d1117', bgDim: '#010409', bgLight: '#161b22',
+    fg: '#e6edf3', fgDim: '#8d96a0', border: '#30363d',
+    accent: '#58a6ff', green: '#3fb950', red: '#f85149',
+    orange: '#d29922', cyan: '#39c5cf', purple: '#bc8cff',
+  },
+  'midnight': {
+    bg: '#0a0a12', bgDim: '#06060c', bgLight: '#16162a',
+    fg: '#e8e8f0', fgDim: '#6b6b84', border: '#1e1e36',
+    accent: '#a78bfa', green: '#34d399', red: '#f87171',
+    orange: '#fbbf24', cyan: '#22d3ee', purple: '#c084fc',
+  },
+  'outrun': {
+    bg: '#0d0221', bgDim: '#080116', bgLight: '#1c0b3d',
+    fg: '#fff0f5', fgDim: '#8d6fb0', border: '#2e0f5e',
+    accent: '#ff2975', green: '#01fdf6', red: '#ff2e63',
+    orange: '#ffb347', cyan: '#01fdf6', purple: '#a200ff',
+  },
+  'paper': {
+    bg: '#faf6ef', bgDim: '#f1ebe0', bgLight: '#fffdf8',
+    fg: '#43302b', fgDim: '#8d7f74', border: '#e0d6c6',
+    accent: '#d65d3d', green: '#5c7c4a', red: '#c8452f',
+    orange: '#e0762c', cyan: '#2f7d8c', purple: '#8a5a96',
+  },
   'custom': {
     bg: '#1a1b26', bgDim: '#16161e', bgLight: '#24283b',
     fg: '#c0caf5', fgDim: '#565f89', border: '#292e42',
@@ -174,6 +210,7 @@ interface Store {
   customPresets: UIPreset[]
 
   addTab: (url?: string, workspace?: number, incognito?: boolean) => string
+  openSettings: () => void
   closeTab: (id: string) => void
   reopenTab: () => void
   activate: (id: string) => void
@@ -435,6 +472,15 @@ export const useStore = create<Store>((set, get) => {
     set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
     persistNow()
     return t.id
+  },
+
+  openSettings: () => {
+    const s = get()
+    const existing = s.tabs.find(t => t.url === 'vox:settings' && t.workspace === s.activeWorkspace)
+    if (existing) { set({ activeId: existing.id }); return }
+    const t = makeTab({ url: 'vox:settings', title: 'Settings', workspace: s.activeWorkspace })
+    set(st => ({ tabs: [...st.tabs, t], activeId: t.id, showTabSearch: false }))
+    persistNow()
   },
 
   closeTab: (id) => {

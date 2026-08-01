@@ -67,7 +67,7 @@ export default function CommandPalette() {
       },
       history: () => setSidebar('history'),
       bookmarks: () => setSidebar('bookmarks'),
-      settings: () => setSidebar('settings'),
+      settings: () => useStore.getState().openSettings(),
       help: () => setShowShortcuts(true),
       newgroup: () => {
         const name = prompt('Group name:')

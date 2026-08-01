@@ -14,8 +14,9 @@ import FindBar from './components/FindBar'
 import NewTabPage from './components/NewTabPage'
 import TabExpose from './components/TabExpose'
 import GrepOverlay from './components/GrepOverlay'
-import Onboarding from './components/Onboarding'
 import SessionGraph from './components/SessionGraph'
+import Onboarding from './components/Onboarding'
+import SettingsPage from './components/SettingsPage'
 import './App.css'
 
 function WorkspaceBar() {
@@ -240,7 +241,7 @@ export default function App() {
       if (meta && !e.shiftKey && e.key === 'h') { e.preventDefault(); useStore.getState().setSidebar('history') }
       if (meta && !e.shiftKey && e.key === 'e') { e.preventDefault(); useStore.getState().setSidebar('downloads') }
       if (meta && !e.shiftKey && e.key === 'b') { e.preventDefault(); useStore.getState().setSidebar('bookmarks') }
-      if (meta && !e.shiftKey && e.key === ',') { e.preventDefault(); useStore.getState().setSidebar('settings') }
+      if (meta && !e.shiftKey && e.key === ',') { e.preventDefault(); useStore.getState().openSettings() }
       if (meta && !e.shiftKey && e.key === '\\') { e.preventDefault(); s.setSettings({ zenMode: !s.settings.zenMode }) }
 
       // Zoom
@@ -312,7 +313,9 @@ export default function App() {
       {sidePos === 'left' && <Sidebar />}
       <div className="main">
         {tabs.map(t => (
-          <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+          t.url === 'vox:settings'
+            ? <SettingsPage key={t.id} />
+            : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
         ))}
         {isNew && <NewTabPage />}
         <HintOverlay />
@@ -338,7 +341,9 @@ export default function App() {
             {sidePos === 'left' && <Sidebar />}
             <div className="main">
               {tabs.map(t => (
-                <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+                t.url === 'vox:settings'
+                  ? <SettingsPage key={t.id} />
+                  : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
               ))}
               {isNew && <NewTabPage />}
               <HintOverlay />

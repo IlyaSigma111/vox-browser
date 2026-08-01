@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useStore, THEMES } from '../store'
 import type { ThemePreset } from '../types'
 import { t, setLang } from '../lang'
@@ -144,7 +145,7 @@ function Downloads() {
   </>
 }
 
-function SettingsPanel() {
+export function SettingsPanel() {
   const settings = useStore(s => s.settings)
   const setSettings = useStore(s => s.setSettings)
   const c = settings.theme === 'custom' ? settings.customColors : THEMES[settings.theme]
@@ -157,7 +158,7 @@ function SettingsPanel() {
   }
 
   return <div className="settings-panel">
-    {showPresets && <PresetCatalog onClose={() => setShowPresets(false)} />}
+    {showPresets && createPortal(<PresetCatalog onClose={() => setShowPresets(false)} />, document.body)}
     <div className="settings-tabs">
       <button className={`settings-tab${tab === 'general' ? ' active' : ''}`} onClick={() => setTab('general')}>{t('settings.general')}</button>
       <button className={`settings-tab${tab === 'appearance' ? ' active' : ''}`} onClick={() => setTab('appearance')}>{t('settings.appearance')}</button>
@@ -241,6 +242,31 @@ function SettingsPanel() {
       </Section>
 
       <Section title={t('theme')}>
+        {settings.theme !== 'custom' && (
+          <div className="theme-live">
+            <div className="tl-win" style={{ background: c.bg, borderColor: c.border }}>
+              <div className="tl-bar" style={{ background: c.bgDim, borderColor: c.border }}>
+                <i className="tl-dot" style={{ background: c.red }} />
+                <i className="tl-dot" style={{ background: c.orange }} />
+                <i className="tl-dot" style={{ background: c.green }} />
+                <span className="tl-addr" style={{ background: c.bgLight, color: c.fgDim }}>site.example</span>
+              </div>
+              <div className="tl-body">
+                <div className="tl-tabline">
+                  <span className="tl-tab" style={{ background: c.bgLight, color: c.fgDim }}>Вкладка</span>
+                  <span className="tl-tab act" style={{ background: c.bg, color: c.accent, boxShadow: `inset 0 -2px 0 ${c.accent}` }}>Активная</span>
+                </div>
+                <span className="tl-line" style={{ background: c.accent, opacity: .55 }} />
+                <span className="tl-line" style={{ background: c.fgDim, opacity: .35 }} />
+                <span className="tl-line short" style={{ background: c.fgDim, opacity: .2 }} />
+                <span className="tl-btn" style={{ background: c.accent }} />
+              </div>
+              <div className="tl-status" style={{ background: c.bgDim, borderColor: c.border, color: c.fgDim }}>
+                <i style={{ background: c.green }} /> готово · <b style={{ color: c.accent }}>{settings.theme}</b>
+              </div>
+            </div>
+          </div>
+        )}
         <StRow label={t('theme.preset')}>
           <select value={settings.theme} onChange={e => setSettings({ theme: e.target.value as ThemePreset })}>
             <optgroup label={t('theme.dark')}>
@@ -265,16 +291,38 @@ function SettingsPanel() {
               <option value="firefox-nova">Firefox Nova (Nightly)</option>
               <option value="nova-light">Nova Light</option>
               <option value="synthwave">Synthwave '86</option>
+              <option value="outrun">Outrun</option>
               <option value="forest">Forest</option>
+              <option value="everforest">Everforest</option>
+              <option value="rose-pine">Rosé Pine</option>
+              <option value="github-dark">GitHub Dark</option>
+              <option value="midnight">Midnight</option>
+              <option value="paper">Paper</option>
             </optgroup>
             <option value="custom">{t('theme.custom')}</option>
           </select>
         </StRow>
         {settings.theme !== 'custom' && (
-          <div className="theme-preview">
-            {Object.entries(c).map(([k, v]) => (
-              <div key={k} className="theme-dot" style={{ background: v }} title={`${k}: ${v}`} />
-            ))}
+          <div className="theme-grid">
+            {Object.keys(THEMES).filter(k => k !== 'custom').map(k => {
+              const tc = THEMES[k as ThemePreset]
+              return (
+                <button
+                  key={k}
+                  className={`theme-chip${settings.theme === k ? ' sel' : ''}`}
+                  title={k}
+                  onClick={() => setSettings({ theme: k as ThemePreset })}
+                >
+                  <span
+                    className="theme-chip-bar"
+                    style={{ background: `linear-gradient(90deg, ${tc.bg}, ${tc.bgLight} 55%, ${tc.accent})` }}
+                  >
+                    <i style={{ background: tc.accent }} />
+                  </span>
+                  <span className="theme-chip-name">{k}</span>
+                </button>
+              )
+            })}
           </div>
         )}
         {settings.theme === 'custom' && <>

@@ -77,7 +77,7 @@ export default function TabExpose() {
         </div>
         <div className="expose-footer">
           <button className="btn" onClick={() => { setSidebar('history'); setTabSearch(false) }}>History</button>
-          <button className="btn" onClick={() => { setSidebar('settings'); setTabSearch(false) }}>Settings</button>
+          <button className="btn" onClick={() => { useStore.getState().openSettings(); setTabSearch(false) }}>Settings</button>
         </div>
       </div>
     </div>

@@ -30,7 +30,7 @@ const shortcuts = [
     ['Ctrl+H', 'History sidebar'],
     ['Ctrl+E', 'Downloads sidebar'],
     ['Ctrl+B', 'Bookmarks sidebar'],
-    ['Ctrl+,', 'Settings'],
+    ['Ctrl+,', 'Settings (new tab)'],
     ['Ctrl+\\', 'Zen mode'],
     ['?', 'Show this overlay'],
   ]},

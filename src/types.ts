@@ -87,7 +87,7 @@ export interface VimKeyBinding {
   description: string
 }
 
-export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'firefox-nova' | 'nova-light' | 'synthwave' | 'forest' | 'custom'
+export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'firefox-nova' | 'nova-light' | 'synthwave' | 'forest' | 'rose-pine' | 'everforest' | 'github-dark' | 'midnight' | 'outrun' | 'paper' | 'custom'
 
 export interface ThemeColors {
   bg: string
