@@ -328,13 +328,14 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
   const nightShift = useStore(s => s.settings.nightShift)
   const aurora = useStore(s => s.settings.aurora)
   const setAuroraColor = useStore(s => s.setAuroraColor)
+  const lensOn = useStore(s => s.settings.lens)
   const lenses = useStore(s => s.settings.lenses)
   const tab = useStore(s => s.tabs.find(t => t.id === id))
 
   let host = ''
   try { host = new URL(url).hostname } catch {}
 
-  const lens = lenses.find(l => l.enabled !== false && l.domain === host)
+  const lens = lensOn ? lenses.find(l => l.enabled !== false && l.domain === host) : undefined
   const zoom = (lens?.zoom) || (tab?.zoom ?? 1)
   const muted = tab?.muted ?? false
   const incognito = tab?.incognito ?? false

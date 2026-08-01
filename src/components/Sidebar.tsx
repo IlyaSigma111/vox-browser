@@ -4,6 +4,7 @@ import { useStore, THEMES } from '../store'
 import type { ThemePreset } from '../types'
 import { t, setLang } from '../lang'
 import PresetCatalog from './PresetCatalog'
+import { featureOn } from '../features'
 
 const ICONS = {
   bookmark: (
@@ -404,9 +405,11 @@ export function SettingsPanel() {
         <div className="st-hint">Собирает доминантный цвет открытой страницы и подстраивает акцентный цвет интерфейса под неё.</div>
       </Section>
 
-      <Section title="Site Lenses">
-        <SiteLenses />
-      </Section>
+      {featureOn(settings, 'lens') && (
+        <Section title="Site Lenses">
+          <SiteLenses />
+        </Section>
+      )}
 
       <Section title={t('tabBar')}>
         <StRow label={t('tabBar.shape')}>

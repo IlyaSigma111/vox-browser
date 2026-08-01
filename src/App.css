@@ -2685,6 +2685,7 @@ html, body, #root {
 .onb-shortcuts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 6px; }
 .onb-shortcut { display: flex; align-items: center; gap: 8px; background: color-mix(in srgb, var(--bg) 60%, transparent); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; font-size: 12px; color: var(--fg-dim); }
 .onb-shortcut kbd { background: var(--bg-light); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; font-size: 11px; font-family: inherit; color: var(--accent); }
+.onb-more { flex-basis: 100%; margin-top: 6px; justify-content: center; padding: 8px 14px; font-size: 12px; }
 .onboarding-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; gap: 12px; }
 .onb-next { padding: 10px 22px; font-size: 14px; border-radius: 12px; }
 .onboarding-dots { display: flex; gap: 8px; }

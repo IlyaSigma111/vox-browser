@@ -145,6 +145,9 @@ export default function Onboarding() {
                 <span>{d}</span>
               </div>
             ))}
+            <button className="btn ghost onb-more" onClick={() => { done(); useStore.getState().openStore() }}>
+              🛍 Хочешь больше фич? Открой Магазин
+            </button>
           </div>
         )}
 
