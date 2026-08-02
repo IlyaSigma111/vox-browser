@@ -5,6 +5,7 @@ import type { ThemePreset } from '../types'
 import { t, setLang } from '../lang'
 import PresetCatalog from './PresetCatalog'
 import { featureOn, FEATURES } from '../features'
+import { Icon } from './icons'
 
 const ICONS = {
   bookmark: (
@@ -25,6 +26,23 @@ const ICONS = {
   ),
 }
 
+const THEME_ORDER: ThemePreset[] = [
+  'tokyo-night', 'dracula', 'monokai', 'nord', 'solarized', 'ayu', 'one-dark', 'gruvbox', 'catppuccin',
+  'tokyo-day', 'solarized-light', 'nord-light', 'github-light', 'catppuccin-latte',
+  'firefox-nova', 'nova-light', 'synthwave', 'outrun', 'forest', 'everforest', 'rose-pine', 'github-dark', 'midnight', 'paper',
+  'custom',
+]
+
+const THEME_LABELS: Record<string, string> = {
+  'tokyo-night': 'Tokyo Night', 'dracula': 'Dracula', 'monokai': 'Monokai', 'nord': 'Nord',
+  'solarized': 'Solarized', 'ayu': 'Ayu Dark', 'one-dark': 'One Dark', 'gruvbox': 'Gruvbox',
+  'catppuccin': 'Catppuccin Mocha', 'tokyo-day': 'Tokyo Day', 'solarized-light': 'Solarized Light',
+  'nord-light': 'Nord Light', 'github-light': 'GitHub Light', 'catppuccin-latte': 'Catppuccin Latte',
+  'firefox-nova': 'Firefox Nova', 'nova-light': 'Nova Light', 'synthwave': "Synthwave '86",
+  'outrun': 'Outrun', 'forest': 'Forest', 'everforest': 'Everforest', 'rose-pine': 'Rosé Pine',
+  'github-dark': 'GitHub Dark', 'midnight': 'Midnight', 'paper': 'Paper',
+}
+
 export default function Sidebar() {
   const sidebarTab = useStore(s => s.sidebarTab)
   const setSidebar = useStore(s => s.setSidebar)
@@ -34,7 +52,7 @@ export default function Sidebar() {
   return (
     <div className={`sidebar${sidePos === 'right' ? ' sidebar-right' : ''}`}>
       <div className="sidebar-header">
-        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : sidebarTab === 'reading' ? '📚 Список чтения' : sidebarTab === 'extensions' ? '🧩 Расширения' : sidebarTab === 'notes' ? '📝 Заметки' : t('sidebar.settings')}</h3>
+        <h3>{sidebarTab === 'bookmarks' ? t('sidebar.bookmarks') : sidebarTab === 'history' ? t('sidebar.history') : sidebarTab === 'downloads' ? t('sidebar.downloads') : sidebarTab === 'reading' ? 'Список чтения' : sidebarTab === 'extensions' ? 'Расширения' : sidebarTab === 'notes' ? 'Заметки' : t('sidebar.settings')}</h3>
         <button className="sidebar-close" onClick={() => setSidebar(null)}>×</button>
       </div>
       <div className="sidebar-body">
@@ -112,14 +130,14 @@ function ExtensionsPanel() {
     <div className="ext-panel">
       <div className="st-hint" style={{ padding: '6px 14px' }}>Unpacked extensions (.crx распакованные) кладутся в папку <code>extensions</code> в userData. Vox загружает их при запуске.</div>
       <div className="st-actions" style={{ padding: '2px 14px 8px' }}>
-        <button className="st-action-btn" onClick={() => window.onyx?.openExtensionsFolder?.()}>📂 Открыть папку расширений</button>
+        <button className="st-action-btn" onClick={() => window.onyx?.openExtensionsFolder?.()}><Icon name="folder" size={13} /> Открыть папку расширений</button>
       </div>
       <div className="st-section">
         <div className="st-section-title">Загруженные</div>
         <div className="ext-list">
           {exts === null && <div className="st-hint" style={{ padding: '4px 14px' }}>Проверяю…</div>}
-          {exts !== null && exts.length === 0 && <div className="st-hint" style={{ padding: '4px 14px' }}>Пока пусто. Расширения работают вместе с Магазином: файлы — вручную, флаги — в 🛍 Магазине.</div>}
-          {exts?.map(d => <div key={d} className="ext-row">🧩 {d}</div>)}
+          {exts !== null && exts.length === 0 && <div className="st-hint" style={{ padding: '4px 14px' }}>Пока пусто. Расширения работают вместе с Магазином: файлы — вручную, флаги — в Магазине.</div>}
+          {exts?.map(d => <div key={d} className="ext-row"><Icon name="puzzle" size={13} /> {d}</div>)}
         </div>
       </div>
     </div>
@@ -132,11 +150,11 @@ function ReadingList() {
   const navigateTo = useStore(s => s.navigateTo)
   const activeId = useStore(s => s.activeId)
   const setSidebar = useStore(s => s.setSidebar)
-  if (!readList.length) return <div className="sidebar-section">Пока пусто. Сохраняй статьи на потом по Ctrl+Shift+R или через кнопку 📚 в статусбаре.</div>
+  if (!readList.length) return <div className="sidebar-section">Пока пусто. Сохраняй статьи на потом по Ctrl+Shift+R или через кнопку чтения в статусбаре.</div>
   return <>
     {readList.map(r => (
       <div key={r.url} className="sidebar-item" onClick={() => { navigateTo(activeId, r.url); setSidebar(null) }}>
-        <span className="si-icon">📄</span>
+        <span className="si-icon"><Icon name="file" size={14} /></span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="title">{r.title}</div>
           <div className="url">{new Date(r.addedAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</div>
@@ -211,21 +229,21 @@ function Downloads() {
           <div className="url">
             {d.state === 'completed' ? <span style={{ color: 'var(--green)' }}>✓ {formatBytes(d.totalBytes)}</span>
               : d.state === 'cancelled' || d.state === 'interrupted' ? <span style={{ color: 'var(--red)' }}>✗ {t('download.interrupted')}</span>
-              : d.state === 'paused' ? <span style={{ color: 'var(--orange)' }}>⏸ {formatBytes(d.receivedBytes)} / {formatBytes(d.totalBytes)}</span>
+              : d.state === 'paused' ? <span style={{ color: 'var(--orange)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="pause" size={11} /> {formatBytes(d.receivedBytes)} / {formatBytes(d.totalBytes)}</span>
               : <span>{formatBytes(d.receivedBytes)} / {formatBytes(d.totalBytes)}</span>
             }
           </div>
           <div className="dl-actions" onClick={e => e.stopPropagation()}>
             {d.state === 'progressing' && <>
-              <button className="dl-btn" onClick={() => window.onyx?.pauseDownload?.(d.id)}>⏸</button>
-              <button className="dl-btn" onClick={() => window.onyx?.cancelDownload?.(d.id)}>✕</button>
+              <button className="dl-btn" title="Pause" onClick={() => window.onyx?.pauseDownload?.(d.id)}><Icon name="pause" size={12} /></button>
+              <button className="dl-btn" title="Cancel" onClick={() => window.onyx?.cancelDownload?.(d.id)}><Icon name="x" size={12} /></button>
             </>}
-            {d.state === 'paused' && <button className="dl-btn" onClick={() => window.onyx?.resumeDownload?.(d.id)}>▶</button>}
+            {d.state === 'paused' && <button className="dl-btn" title="Resume" onClick={() => window.onyx?.resumeDownload?.(d.id)}><Icon name="play" size={12} /></button>}
             {d.state === 'completed' && d.savePath && <>
-              <button className="dl-btn" title="Show in folder" onClick={() => window.onyx?.showInFolder?.(d.savePath!)}>📁</button>
-              <button className="dl-btn" title="Open file" onClick={() => window.onyx?.openPath?.(d.savePath!)}>↗</button>
+              <button className="dl-btn" title="Show in folder" onClick={() => window.onyx?.showInFolder?.(d.savePath!)}><Icon name="folder" size={12} /></button>
+              <button className="dl-btn" title="Open file" onClick={() => window.onyx?.openPath?.(d.savePath!)}><Icon name="external" size={12} /></button>
             </>}
-            <button className="dl-btn" title="Remove from list" onClick={() => removeDownload(d.id)}>🗑</button>
+            <button className="dl-btn" title="Remove from list" onClick={() => removeDownload(d.id)}><Icon name="trash" size={12} /></button>
           </div>
         </div>
       </div>
@@ -255,7 +273,7 @@ export function SettingsPanel() {
 
     {tab === 'general' && <div className="settings-sections">
       <div className="store-cta" onClick={() => useStore.getState().openStore()}>
-        <span className="store-cta-icon">🛍</span>
+        <span className="store-cta-icon"><Icon name="store" size={16} /></span>
         <span className="store-cta-text">
           <b>Магазин Vox</b>
           <span>{FEATURES.length} дополнений — включай одним кликом</span>
@@ -363,64 +381,8 @@ export function SettingsPanel() {
             </div>
           </div>
         )}
-        <StRow label={t('theme.preset')}>
-          <select value={settings.theme} onChange={e => setSettings({ theme: e.target.value as ThemePreset })}>
-            <optgroup label={t('theme.dark')}>
-              <option value="tokyo-night">Tokyo Night</option>
-              <option value="dracula">Dracula</option>
-              <option value="monokai">Monokai</option>
-              <option value="nord">Nord</option>
-              <option value="solarized">Solarized</option>
-              <option value="ayu">Ayu Dark</option>
-              <option value="one-dark">One Dark</option>
-              <option value="gruvbox">Gruvbox</option>
-              <option value="catppuccin">Catppuccin Mocha</option>
-            </optgroup>
-            <optgroup label={t('theme.light')}>
-              <option value="tokyo-day">Tokyo Day</option>
-              <option value="solarized-light">Solarized Light</option>
-              <option value="nord-light">Nord Light</option>
-              <option value="github-light">GitHub Light</option>
-              <option value="catppuccin-latte">Catppuccin Latte</option>
-            </optgroup>
-            <optgroup label="✨ Experimental">
-              <option value="firefox-nova">Firefox Nova (Nightly)</option>
-              <option value="nova-light">Nova Light</option>
-              <option value="synthwave">Synthwave '86</option>
-              <option value="outrun">Outrun</option>
-              <option value="forest">Forest</option>
-              <option value="everforest">Everforest</option>
-              <option value="rose-pine">Rosé Pine</option>
-              <option value="github-dark">GitHub Dark</option>
-              <option value="midnight">Midnight</option>
-              <option value="paper">Paper</option>
-            </optgroup>
-            <option value="custom">{t('theme.custom')}</option>
-          </select>
-        </StRow>
-        {settings.theme !== 'custom' && (
-          <div className="theme-grid">
-            {Object.keys(THEMES).filter(k => k !== 'custom').map(k => {
-              const tc = THEMES[k as ThemePreset]
-              return (
-                <button
-                  key={k}
-                  className={`theme-chip${settings.theme === k ? ' sel' : ''}`}
-                  title={k}
-                  onClick={() => setSettings({ theme: k as ThemePreset })}
-                >
-                  <span
-                    className="theme-chip-bar"
-                    style={{ background: `linear-gradient(90deg, ${tc.bg}, ${tc.bgLight} 55%, ${tc.accent})` }}
-                  >
-                    <i style={{ background: tc.accent }} />
-                  </span>
-                  <span className="theme-chip-name">{k}</span>
-                </button>
-              )
-            })}
-          </div>
-        )}
+        <div className="theme-picker-label">{t('theme.preset')}</div>
+        <ThemeCarousel />
         {settings.theme === 'custom' && <>
           <StRow label={t('theme.background')}><input type="color" value={c.bg} onChange={e => setSettings({ customColors: { ...settings.customColors, bg: e.target.value } })} /></StRow>
           <StRow label={t('theme.bgDim')}><input type="color" value={c.bgDim} onChange={e => setSettings({ customColors: { ...settings.customColors, bgDim: e.target.value } })} /></StRow>
@@ -587,7 +549,7 @@ export function SettingsPanel() {
             <span className="st-val">{Math.round((settings.defaultZoom || 1) * 100)}%</span>
           </div>
         </StRow>
-        <StRow label="Timer (minutes, ⏲ in statusbar)">
+        <StRow label="Timer (minutes, in statusbar)">
           <input type="number" min="1" max="120" value={settings.timerMinutes || 15}
             onChange={e => setSettings({ timerMinutes: Math.max(1, Math.min(120, Number(e.target.value)) || 15) })}
             style={{ width: 70, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }} />
@@ -595,7 +557,7 @@ export function SettingsPanel() {
       </Section>
 
       {featureOn(settings, 'nightauto') && (
-        <Section title="🌙 Ночной режим">
+        <Section title="Ночной режим">
           <StRow label="Включить в (час)">
             <input type="number" min="0" max="23" value={settings.nightAutoStart ?? 22}
               onChange={e => setSettings({ nightAutoStart: Number(e.target.value) })}
@@ -611,7 +573,7 @@ export function SettingsPanel() {
       )}
 
       {featureOn(settings, 'webfont') && (
-        <Section title="🔤 Шрифт страниц">
+        <Section title="Шрифт страниц">
           <StRow label="Web font">
             <select value={settings.webFont || ''} onChange={e => setSettings({ webFont: e.target.value })}>
               <option value="">Системный</option>
@@ -627,19 +589,19 @@ export function SettingsPanel() {
       )}
 
       {featureOn(settings, 'siteblock') && (
-        <Section title="🚫 Заблокированные сайты">
+        <Section title="Заблокированные сайты">
           <BlockedSites />
         </Section>
       )}
 
       {featureOn(settings, 'snap') && (
-        <Section title="📸 Снимки окон (snapshots)">
+        <Section title="Снимки окон (snapshots)">
           <SnapshotsList />
         </Section>
       )}
 
       {featureOn(settings, 'cookieview') && (
-        <Section title="🍪 Куки текущего сайта">
+        <Section title="Куки текущего сайта">
           <CookiesView />
         </Section>
       )}
@@ -686,6 +648,65 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   )
 }
 
+const CARD_W = 110
+const CARD_GAP = 12
+const CARD_STEP = CARD_W + CARD_GAP
+const VIEW_W = 232
+
+function hexLum(hex: string): number {
+  const m = hex.replace('#', '')
+  const r = parseInt(m.slice(0, 2), 16), g = parseInt(m.slice(2, 4), 16), b = parseInt(m.slice(4, 6), 16)
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+}
+
+function ThemeCarousel() {
+  const settings = useStore(s => s.settings)
+  const setSettings = useStore(s => s.setSettings)
+  const hold = useRef<number | null>(null)
+  const idx = Math.max(0, THEME_ORDER.indexOf(settings.theme))
+
+  const step = (d: number) => {
+    const n = (idx + d + THEME_ORDER.length) % THEME_ORDER.length
+    setSettings({ theme: THEME_ORDER[n] })
+  }
+  const press = (d: number) => (e: React.PointerEvent) => {
+    e.preventDefault()
+    step(d)
+    if (hold.current) window.clearInterval(hold.current)
+    hold.current = window.setInterval(() => step(d), 170)
+  }
+  const release = () => {
+    if (hold.current) { window.clearInterval(hold.current); hold.current = null }
+  }
+  useEffect(() => () => { if (hold.current) window.clearInterval(hold.current) }, [])
+
+  return (
+    <div className="theme-carousel">
+      <button className="tc-arrow" onPointerDown={press(-1)} onPointerUp={release} onPointerLeave={release} onPointerCancel={release} aria-label="Предыдущая тема">‹</button>
+      <div className="tc-viewport">
+        <div className="tc-track" style={{ transform: `translateX(${(VIEW_W - CARD_W) / 2 - idx * CARD_STEP}px)` }}>
+          {THEME_ORDER.map((k, i) => {
+            const tc = k === 'custom' ? settings.customColors : THEMES[k]
+            const dark = hexLum(tc.bg) > 0.55
+            return (
+              <div
+                key={k}
+                className={`tc-card${i === idx ? ' active' : ''}`}
+                style={{ background: `linear-gradient(135deg, ${tc.bg}, ${tc.bgLight} 60%, ${tc.accent})` }}
+                onClick={() => setSettings({ theme: k })}
+              >
+                <i className="tc-dot" style={{ background: tc.accent }} />
+                <span className={`tc-name${dark ? ' dark' : ''}`}>{k === 'custom' ? t('theme.custom') : THEME_LABELS[k]}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      <button className="tc-arrow" onPointerDown={press(1)} onPointerUp={release} onPointerLeave={release} onPointerCancel={release} aria-label="Следующая тема">›</button>
+    </div>
+  )
+}
+
 function BlockedSites() {
   const blockedSites = useStore(s => s.settings.blockedSites)
   const unblockSite = useStore(s => s.unblockSite)
@@ -698,7 +719,7 @@ function BlockedSites() {
   return <>
     {blockedSites.map(d => (
       <div key={d} className="lens-row">
-        <span className="lens-domain">🚫 {d}</span>
+        <span className="lens-domain"><Icon name="ban" size={13} /> {d}</span>
         <button className="sb-btn" onClick={() => unblockSite(d)}>unblock</button>
       </div>
     ))}
@@ -738,13 +759,13 @@ function SnapshotsList() {
         style={{ flex: 1, background: 'var(--bg-light)', border: '1px solid var(--border)', color: 'var(--fg)', fontFamily: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 'var(--radius)', outline: 'none' }}
         spellCheck={false}
       />
-      <button className="st-action-btn" onClick={() => { saveSnapshot(name); setName('') }}>💾</button>
+      <button className="st-action-btn" onClick={() => { saveSnapshot(name); setName('') }}><Icon name="save" size={13} /></button>
     </div>
     {snapshots.map(s => (
       <div key={s.id} className="lens-row">
         <span className="lens-domain">{s.name}</span>
         <span className="lens-meta">{s.tabs.length} вкладок</span>
-        <button className="sb-btn" title="Restore" onClick={() => restoreSnapshot(s.id)}>↩</button>
+        <button className="sb-btn" title="Restore" onClick={() => restoreSnapshot(s.id)}><Icon name="undo" size={13} /></button>
         <button className="sb-btn" title="Delete" onClick={() => removeSnapshot(s.id)}>×</button>
       </div>
     ))}
@@ -775,7 +796,7 @@ function CookiesView() {
     <>
       <div className="st-actions" style={{ padding: '2px 12px 8px' }}>
         <button className="st-action-btn" onClick={refresh}>↻ Обновить</button>
-        <button className="st-action-btn secondary" onClick={clear}>🧹 Очистить</button>
+        <button className="st-action-btn secondary" onClick={clear}><Icon name="trash" size={13} /> Очистить</button>
       </div>
       <div className="st-hint" style={{ padding: '0 14px 8px' }}>Куки сайта {host || '…'} ({cookies.length})</div>
       {cookies.slice(0, 20).map(c => (
@@ -850,7 +871,7 @@ function SiteLenses() {
         <div className="lens-row" key={l.domain}>
           <span className="lens-domain">{l.domain}</span>
           <span className="lens-meta">{Math.round((l.zoom || 1) * 100)}%{l.darkReader ? ' · dark' : ''}{l.vimEnabled === false ? '' : ' · vim'}</span>
-          <button className="sb-btn" onClick={() => startEdit(l)}>✎</button>
+          <button className="sb-btn" onClick={() => startEdit(l)}><Icon name="pencil" size={13} /></button>
           <button className="sb-btn" onClick={() => setSettings({ lenses: lenses.filter(x => x.domain !== l.domain) })}>×</button>
         </div>
       ))}

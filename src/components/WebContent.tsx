@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useStore } from '../store'
 import { enabledPageMods, buildApplyScript } from '../pageMods'
+import { isAndroid, getFakeWv } from '../android/shim'
 
 const DARK_READER_CSS = `
 (function() {
@@ -317,7 +318,7 @@ const VIM_ENGINE = `(function(){
 })();`
 
 export default function WebContent({ id, url, active, visible = true }: { id: string; url: string; active: boolean; visible?: boolean }) {
-  const ref = useRef<HTMLWebViewElement>(null)
+  const ref = useRef<any>(null)
   const navRef = useRef('')
   const registerWv = useStore(s => s.registerWv)
   const unregisterWv = useStore(s => s.unregisterWv)
@@ -361,8 +362,16 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
     const wv = ref.current
     if (!wv) return
     registerWv(id, wv)
-    return () => unregisterWv(id)
-  }, [id, registerWv, unregisterWv])
+    if (isAndroid) {
+      try { (window as any).AndroidVox?.createTab?.(id, url) } catch {}
+    }
+    return () => {
+      unregisterWv(id)
+      if (isAndroid) {
+        try { (window as any).AndroidVox?.destroyTab?.(id) } catch {}
+      }
+    }
+  }, [id, url, registerWv, unregisterWv])
 
   // Focus webview when it becomes active
   useEffect(() => {
@@ -623,6 +632,33 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
   }, [id, updateTab, addHistory, pushTrail, url])
 
   if (!hasUrl) return null
+
+  // Android: there is no <webview> element. Render a transparent placeholder whose
+  // ref becomes the FakeWv bridge — all injection/event/history logic above is reused.
+  if (isAndroid) {
+    return (
+      <div
+        className={`webview-container${active ? ' active' : ''}`}
+        style={visible ? undefined : { display: 'none' }}
+        ref={(el) => {
+          if (el) {
+            if (!ref.current?.isFake) {
+              ref.current = getFakeWv(id, url)
+              if (active) {
+                const fw: any = (window as any).AndroidVox
+                try { fw?.setActiveTab?.(id) } catch {}
+              }
+            }
+          } else {
+            ref.current = null
+          }
+        }}
+        data-tabid={id}
+      >
+        <div className="wv-native" />
+      </div>
+    )
+  }
 
   return (
     <div className={`webview-container${active ? ' active' : ''}`} style={visible ? undefined : { position: 'absolute', left: '-9999px', top: 0, width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none' as const }}>

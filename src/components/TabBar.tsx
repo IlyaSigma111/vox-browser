@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useStore } from '../store'
 import { GROUP_COLORS } from '../types'
+import { Icon } from './icons'
 
 export default function TabBar() {
   const tabs = useStore(s => s.tabs)
@@ -103,14 +104,14 @@ export default function TabBar() {
         onClick={() => activate(t.id)}
         onContextMenu={handleCtx(t.id)}
         onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); closeTab(t.id) } }}
-        title={t.pinned ? `📌 ${t.title || t.url}` : undefined}
+        title={t.pinned ? `Pinned: ${t.title || t.url}` : undefined}
       >
         {tabBarShowIndicator && <div className="tab-indicator" />}
         {tabBarShowFavicon && t.favicon && <img className="tab-favicon" src={t.favicon} alt="" />}
         <span className="tab-title">{t.title || t.url || 'New Tab'}</span>
         {unreaddot && t.unread && t.id !== activeId && <span className="tab-badge unread" title="Unread">●</span>}
         {tabage && t.createdAt && t.id !== activeId && <span className="tab-badge age" title={`Opened ${new Date(t.createdAt).toLocaleString()}`}>{ageLabel(t.createdAt)}</span>}
-        {t.incognito && <span className="tab-badge incognito" title="Incognito">🕶</span>}
+        {t.incognito && <span className="tab-badge incognito" title="Incognito"><Icon name="hide" size={10} /></span>}
         {t.muted && t.id !== activeId && <span className="tab-badge sleeping" title="Sleeping (muted)">zZ</span>}
         {tabBarShowClose && wsTabs.length > 1 && (
           <button

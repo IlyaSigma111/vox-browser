@@ -342,6 +342,7 @@ export interface Settings {
 declare global {
   interface Window {
     onyx: {
+      isAndroid?: boolean
       minimize: () => void
       maximize: () => void
       close: () => void

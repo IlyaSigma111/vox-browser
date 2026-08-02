@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useStore, THEMES } from './store'
 import { setLang } from './lang'
 import BrowserToolbar from './components/BrowserToolbar'
@@ -19,6 +19,8 @@ import Onboarding from './components/Onboarding'
 import SettingsPage from './components/SettingsPage'
 import StorePage from './components/StorePage'
 import { LATEST_FEATURE_VERSION } from './features'
+import { Icon } from './components/icons'
+import { isAndroid } from './android/shim'
 import './App.css'
 
 function WorkspaceBar() {
@@ -93,6 +95,33 @@ export default function App() {
   const auroraColor = useStore(s => s.auroraColor)
   const [showFind, setShowFind] = useState(false)
   const [showWarmup, setShowWarmup] = useState(false)
+  const mainRef = useRef<HTMLDivElement>(null)
+
+  // Android: keep native webview overlay aligned with `.main` and pass theme bg
+  useEffect(() => {
+    if (!isAndroid) return
+    const report = () => {
+      const el = mainRef.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      try {
+        ;(window as any).AndroidVox?.setMainRect?.(Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height))
+      } catch {}
+    }
+    report()
+    const ro = new ResizeObserver(() => report())
+    if (mainRef.current) ro.observe(mainRef.current)
+    const iv = setInterval(report, 600)
+    return () => { ro.disconnect(); clearInterval(iv) }
+  }, [settings.sidebarPosition, settings.sidebarWidth, settings.zenMode, settings.workspacePosition, settings.showStatusBar, settings.statusBarPosition, settings.showTabBar, settings.tabBarPosition])
+
+  useEffect(() => {
+    if (!isAndroid) return
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+    if (bg) {
+      try { (window as any).AndroidVox?.setThemeBg?.(bg) } catch {}
+    }
+  }, [settings.theme, settings.customColors, auroraColor])
 
   const wsTabs = tabs.filter(t => t.workspace === activeWorkspace)
 
@@ -128,7 +157,7 @@ export default function App() {
   useEffect(() => {
     if (!settings.cookiekill) return
     window.onyx?.clearAllCookies?.().then(() => {
-      useStore.getState().pushToast('🍪 Все куки удалены')
+      useStore.getState().pushToast('Все куки удалены')
     }).catch(() => {})
   }, [settings.cookiekill])
 
@@ -192,6 +221,13 @@ export default function App() {
     setLang(settings.language)
   }, [])
 
+  // Android body class
+  useEffect(() => {
+    if (!isAndroid) return
+    document.body.classList.add('vox-android')
+    return () => document.body.classList.remove('vox-android')
+  }, [])
+
   // Download listeners
   useEffect(() => {
     const addDownload = useStore.getState().addDownload
@@ -205,7 +241,9 @@ export default function App() {
   useEffect(() => {
     const colors = THEMES[settings.theme] || THEMES['tokyo-night']
     const c = settings.theme === 'custom' ? settings.customColors : colors
-    const accent = settings.aurora && auroraColor ? `rgb(${auroraColor})` : c.accent
+    const auroraRgb = settings.aurora && auroraColor ? auroraColor.split(',').map(n => Math.max(0, Math.min(255, Number(n.trim()) || 0)) / 255) : null
+    const auroraLum = auroraRgb ? 0.2126 * auroraRgb[0] + 0.7152 * auroraRgb[1] + 0.0722 * auroraRgb[2] : 1
+    const accent = settings.aurora && auroraRgb && auroraLum < 0.55 ? `rgb(${auroraColor})` : c.accent
     const root = document.documentElement
     root.style.setProperty('--bg', c.bg)
     root.style.setProperty('--bg-dim', c.bgDim)
@@ -473,7 +511,11 @@ export default function App() {
         {statusPos === 'top' && settings.showStatusBar && (
           <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
         )}
-        {settings.browserChrome ? (
+        {isAndroid ? (
+          statusPos === 'top' && settings.showStatusBar && (
+            <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
+          )
+        ) : settings.browserChrome ? (
           <BrowserToolbar />
         ) : (
           <div className="titlebar" style={{ height: settings.titlebarHeight }} />
@@ -484,16 +526,18 @@ export default function App() {
       <div className="content">
         {zen && <ZenSidebar />}
         {sidePos === 'left' && <Sidebar />}
-        <div className="main">
-          {tabs.map(t => (
-            t.url === 'vox:settings'
-              ? <SettingsPage key={t.id} />
-              : t.url === 'vox:store'
-                ? <StorePage key={t.id} />
-                : t.url.startsWith('vox:blocked')
-                  ? <BlockedPage key={t.id} tabId={t.id} />
-                  : <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
-          ))}
+        <div className="main" ref={mainRef}>
+          {tabs.map(t => {
+            const specialActive = t.id === activeId && t.workspace === activeWorkspace
+            const cls = `special-page${specialActive ? ' active' : ''}`
+            if (t.url === 'vox:settings')
+              return <div key={t.id} className={cls}><SettingsPage /></div>
+            if (t.url === 'vox:store')
+              return <div key={t.id} className={cls}><StorePage /></div>
+            if (t.url.startsWith('vox:blocked'))
+              return <div key={t.id} className={cls}><BlockedPage tabId={t.id} /></div>
+            return <WebContent key={t.id} id={t.id} url={t.url} active={t.id === activeId} visible={t.workspace === activeWorkspace} />
+          })}
           {isNew && !isBlocked && <NewTabPage />}
           <HintOverlay />
         </div>
@@ -506,7 +550,7 @@ export default function App() {
           <StatusBar showWorkspaces={wsPos === 'bottom' && settings.workspaceShow} />
         )}
       </div>
-      {!settings.browserChrome && (!settings.showStatusBar || statusPos === 'bottom') && (
+      {!isAndroid && !settings.browserChrome && (!settings.showStatusBar || statusPos === 'bottom') && (
         <div className="floating-win-controls">
           <button className="fwc-btn" onClick={() => window.onyx?.minimize()} title="Minimize">─</button>
           <button className="fwc-btn" onClick={() => window.onyx?.maximize()} title="Maximize">□</button>
@@ -527,7 +571,7 @@ export default function App() {
       </div>
       {showWarmup && (
         <div className="warmup-toast">
-          <span>🛍 В магазине появились новые расширения</span>
+          <span>В магазине появились новые расширения</span>
           <button
             onClick={() => {
               useStore.getState().openStore()
@@ -557,7 +601,7 @@ function BlockedPage({ tabId }: { tabId: string }) {
   }
   return (
     <div className="blocked-page">
-      <div className="bp-shield">🚫</div>
+      <div className="bp-shield"><Icon name="shield" size={56} /></div>
       <h1>Сайт заблокирован</h1>
       <p>Сайт <code>{host || '…'}</code> добавлен в список заблокированных в настройках конфиденциальности.</p>
       <div className="bp-actions">

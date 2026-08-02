@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && copy electron\\webview-preload.js dist-electron\\",
+    "build:android": "vite build --config vite.android.config.ts && node android/copy-assets.js",
     "start": "vite build && copy electron\\webview-preload.js dist-electron\\ && electron .",
     "dist": "vite build && electron-builder --win --x64",
     "pack": "vite build && electron-builder --dir"
@@ -37,7 +38,8 @@
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "build/icon.png"
     ],
     "win": {
       "target": [

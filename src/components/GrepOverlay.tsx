@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../store'
+import { Icon } from './icons'
 
 function strip(t: string) {
   return (t || '').replace(/\s+/g, ' ').trim()
@@ -77,7 +78,7 @@ export default function GrepOverlay() {
     <div className="grep-overlay" onClick={() => setOpen(false)}>
       <div className="grep-inner" onClick={e => e.stopPropagation()}>
         <div className="grep-search-row">
-          <span className="grep-icon">🔎</span>
+          <span className="grep-icon"><Icon name="search" size={15} /></span>
           <input
             ref={inputRef}
             className="grep-search"

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useStore } from '../store'
+import { Icon } from './icons'
 
 export default function BrowserToolbar() {
   const tabs = useStore(s => s.tabs)
@@ -53,9 +54,9 @@ export default function BrowserToolbar() {
   return (
     <div className="browser-toolbar">
       <div className="bt-nav">
-        <button className="bt-btn" onClick={goBack} title="Back">←</button>
-        <button className="bt-btn" onClick={goForward} title="Forward">→</button>
-        <button className="bt-btn" onClick={reload} title="Reload">↻</button>
+        <button className="bt-btn" onClick={goBack} title="Back"><Icon name="back" /></button>
+        <button className="bt-btn" onClick={goForward} title="Forward"><Icon name="forward" /></button>
+        <button className="bt-btn" onClick={reload} title="Reload"><Icon name="reload" /></button>
       </div>
 
       <div className="bt-url" onClick={() => { setInput(displayUrl); setEditing(true) }}>
@@ -75,14 +76,14 @@ export default function BrowserToolbar() {
         )}
       </div>
 
-      <div className="bt-title">{isNtp ? 'New Tab' : isSettings ? '⚙ Settings' : active?.title || ''}</div>
+      <div className="bt-title">{isNtp ? 'New Tab' : isSettings ? 'Settings' : active?.title || ''}</div>
 
       <div className="bt-actions">
         <button className="bt-btn" onClick={() => setZoom(activeId, (active?.zoom || 1) - 0.1)} title="Zoom out">−</button>
         <span className="bt-zoom">{Math.round((active?.zoom || 1) * 100)}%</span>
         <button className="bt-btn" onClick={() => setZoom(activeId, (active?.zoom || 1) + 0.1)} title="Zoom in">+</button>
-        <button className="bt-btn" onClick={() => setSessionGraph(!useStore.getState().showSessionGraph)} title="Session trail">🌐</button>
-        <button className="bt-btn" onClick={() => setTabSearch(!useStore.getState().showTabSearch)} title="Tab Exposé (Ctrl+Shift+A)">▦</button>
+        <button className="bt-btn" onClick={() => setSessionGraph(!useStore.getState().showSessionGraph)} title="Session trail"><Icon name="graph" /></button>
+        <button className="bt-btn" onClick={() => setTabSearch(!useStore.getState().showTabSearch)} title="Tab Exposé (Ctrl+Shift+A)"><Icon name="grid" /></button>
         <button
           className="bt-btn"
           title="Save screenshot (Ctrl+Shift+S)"
@@ -96,8 +97,8 @@ export default function BrowserToolbar() {
               window.onyx?.saveShot?.(img.toPNG(), `vox-shot-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`)
             } catch {}
           }}
-        >📷</button>
-        <button className="bt-btn" onClick={() => setSidebar('bookmarks')} title="Bookmarks">★</button>
+        ><Icon name="camera" /></button>
+        <button className="bt-btn" onClick={() => setSidebar('bookmarks')} title="Bookmarks"><Icon name="star" /></button>
         <button className="bt-btn" onClick={() => setSidebar('history')} title="History">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <circle cx="8" cy="8" r="6.5"/>

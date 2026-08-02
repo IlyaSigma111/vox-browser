@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useStore } from '../store'
 import { t } from '../lang'
+import { Icon } from './icons'
 
 interface Props {
   showWorkspaces?: boolean
@@ -24,7 +25,7 @@ function PomodoroBtn() {
     return () => clearInterval(iv)
   }, [mode])
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-  const label = mode === 'idle' ? '🍅' : mode === 'work' ? `🍅 ${fmt(left)}` : `☕ ${fmt(left)}`
+  const label = mode === 'idle' ? <Icon name="timer" /> : <><Icon name="timer" size={12} /> {fmt(left)}</>
   return (
     <button
       className={`sb-btn sb-icon pomodoro${mode === 'work' ? ' work' : mode === 'break' ? ' break' : ''}`}
@@ -60,7 +61,7 @@ function TimerBtn() {
       className={`sb-btn sb-icon${left > 0 ? ' timer-running' : ''}`}
       title={`Timer ${minutes} min — click to start, click again to reset`}
       onClick={() => setLeft(left > 0 ? 0 : minutes * 60)}
-    >{left > 0 ? `⏲ ${fmt(left)}` : '⏲'}</button>
+    >{left > 0 ? <><Icon name="timer" size={12} /> {fmt(left)}</> : <Icon name="timer" />}</button>
   )
 }
 
@@ -73,9 +74,9 @@ function SessionTime() {
     const iv = setInterval(tick, 30000)
     return () => clearInterval(iv)
   }, [start])
-  if (min < 1) return <span className="sb-btn sb-clock">🕘 0 мин</span>
+  if (min < 1) return <span className="sb-btn sb-clock"><Icon name="clock" size={12} /> 0 мин</span>
   const h = Math.floor(min / 60)
-  return <span className="sb-btn sb-clock" title="Session time">{h > 0 ? `🕘 ${h} ч ${min % 60} мин` : `🕘 ${min} мин`}</span>
+  return <span className="sb-btn sb-clock" title="Session time"><Icon name="clock" size={12} /> {h > 0 ? `${h} ч ${min % 60} мин` : `${min} мин`}</span>
 }
 
 function QrButton() {
@@ -86,7 +87,7 @@ function QrButton() {
   const url = active && active.url !== 'about:blank' ? active.url : ''
   return (
     <>
-      <button className="sb-btn sb-icon" title="QR of current page" onClick={() => setOpen(o => !o)}>▦</button>
+      <button className="sb-btn sb-icon" title="QR of current page" onClick={() => setOpen(o => !o)}><Icon name="qr" /></button>
       {open && (
         <div className="qr-modal" onClick={() => setOpen(false)}>
           <div className="qr-card" onClick={e => e.stopPropagation()}>
@@ -180,7 +181,7 @@ export default function StatusBar({ showWorkspaces }: Props) {
             <button
               key={w.id}
               className={`sb-ws-btn${w.id === activeWorkspace ? ' active' : ''}`}
-              style={w.id === activeWorkspace ? { background: w.color, color: '#fff', boxShadow: `0 0 12px ${w.color}60` } : undefined}
+              style={w.id === activeWorkspace ? { background: `${w.color}30`, color: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55` } : undefined}
               onClick={() => useStore.getState().switchWorkspace(w.id)}
               onContextMenu={(e) => {
                 e.preventDefault()
@@ -217,7 +218,7 @@ export default function StatusBar({ showWorkspaces }: Props) {
               autoFocus
             />
           ) : (
-            <span>{active?.url === 'about:blank' ? '' : active?.url === 'vox:settings' ? '⚙ Settings' : active?.url === 'vox:store' ? '🛍 Store' : active?.url || ''}</span>
+            <span>{active?.url === 'about:blank' ? '' : active?.url === 'vox:settings' ? 'Settings' : active?.url === 'vox:store' ? 'Store' : active?.url || ''}</span>
           )}
         </div>
       )}
@@ -227,20 +228,20 @@ export default function StatusBar({ showWorkspaces }: Props) {
       {settings.clock && <ClockBtn />}
       {settings.timer && <TimerBtn />}
       {settings.sessiontime && <SessionTime />}
-      {settings.copyurl && <button className="sb-btn sb-icon" onClick={() => { if (active) useStore.getState().copyText(active.url) }} title="Copy URL (Ctrl+Shift+Y)">🔗</button>}
-      {settings.muteall && <button className="sb-btn sb-icon" onClick={() => useStore.getState().muteAllTabs()} title="Mute all tabs">🔇</button>}
-      {settings.mediactl && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleMedia()} title="Play / pause media">▶️</button>}
+      {settings.copyurl && <button className="sb-btn sb-icon" onClick={() => { if (active) useStore.getState().copyText(active.url) }} title="Copy URL (Ctrl+Shift+Y)"><Icon name="link" /></button>}
+      {settings.muteall && <button className="sb-btn sb-icon" onClick={() => useStore.getState().muteAllTabs()} title="Mute all tabs"><Icon name="volume" /></button>}
+      {settings.mediactl && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleMedia()} title="Play / pause media"><Icon name="play" /></button>}
       {settings.tts && <button className="sb-btn sb-icon" onClick={() => {
         const wv = useStore.getState().webviews.get(activeId)
         if (wv) wv.executeJavaScript('window.__voxTTS?window.__voxTTS():false').then((r: boolean) => { if (!r) useStore.getState().pushToast('Nothing to read aloud') }).catch(() => {})
-      }} title="Read page aloud">🗣</button>}
+      }} title="Read page aloud"><Icon name="sound" /></button>}
       {settings.qrcode && <QrButton />}
-      {settings.reader && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleReader()} title="Reader mode">📖</button>}
-      {settings.focus && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleFocus()} title="Focus mode">🎯</button>}
-      {settings.translator && <button className="sb-btn sb-icon" onClick={() => useStore.getState().translatePage()} title="Translate page">🌐</button>}
+      {settings.reader && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleReader()} title="Reader mode"><Icon name="reader" /></button>}
+      {settings.focus && <button className="sb-btn sb-icon" onClick={() => useStore.getState().toggleFocus()} title="Focus mode"><Icon name="focus" /></button>}
+      {settings.translator && <button className="sb-btn sb-icon" onClick={() => useStore.getState().translatePage()} title="Translate page"><Icon name="globe" /></button>}
       {settings.pomodoro && <PomodoroBtn />}
-      {readlist && <button className="sb-btn sb-icon" onClick={() => setSidebar('reading')} title="Reading list">📚</button>}
-      <button className="sb-btn sb-icon" onClick={() => setSidebar('bookmarks')} title="Bookmarks">★</button>
+      {readlist && <button className="sb-btn sb-icon" onClick={() => setSidebar('reading')} title="Reading list"><Icon name="reader" /></button>}
+      <button className="sb-btn sb-icon" onClick={() => setSidebar('bookmarks')} title="Bookmarks"><Icon name="star" /></button>
       <button className="sb-btn sb-icon" onClick={() => setSidebar('history')} title="History">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="8" cy="8" r="6.5"/>
@@ -258,8 +259,8 @@ export default function StatusBar({ showWorkspaces }: Props) {
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
-      <button className="sb-btn sb-icon store" onClick={() => useStore.getState().openStore()} title="Store (Ctrl+Shift+O)">🛍</button>
-      <button className="sb-btn sb-icon" onClick={() => setSidebar('extensions')} title="Extensions">🧩</button>
+      <button className="sb-btn sb-icon store" onClick={() => useStore.getState().openStore()} title="Store (Ctrl+Shift+O)"><Icon name="store" /></button>
+      <button className="sb-btn sb-icon" onClick={() => setSidebar('extensions')} title="Extensions"><Icon name="puzzle" /></button>
       {showCount && <span className="sb-count">{wsTabs.length}</span>}
       {window.onyx && (
         <div className="sb-win">

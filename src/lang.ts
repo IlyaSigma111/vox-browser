@@ -5,10 +5,10 @@ type Lang = 'en' | 'ru'
 const strings: Record<Lang, Record<string, string>> = {
   en: {
     // Sidebar
-    'sidebar.bookmarks': '★ Bookmarks',
-    'sidebar.history': '⏱ History',
-    'sidebar.downloads': '⬇ Downloads',
-    'sidebar.settings': '⚙ Settings',
+    'sidebar.bookmarks': 'Bookmarks',
+    'sidebar.history': 'History',
+    'sidebar.downloads': 'Downloads',
+    'sidebar.settings': 'Settings',
     'sidebar.noBookmarks': 'No bookmarks yet',
     'sidebar.noHistory': 'No history yet',
     'sidebar.noDownloads': 'No downloads yet',
@@ -154,11 +154,10 @@ const strings: Record<Lang, Record<string, string>> = {
   },
 
   ru: {
-    'sidebar.bookmarks': '★ Закладки',
-    'sidebar.history': '⏱ История',
-    'sidebar.downloads': '⬇ Загрузки',
-    'sidebar.settings': '⚙ Настройки',
-    'sidebar.noBookmarks': 'Нет закладок',
+    'sidebar.bookmarks': 'Закладки',
+    'sidebar.history': 'История',
+    'sidebar.downloads': 'Загрузки',
+    'sidebar.settings': 'Настройки',    'sidebar.noBookmarks': 'Нет закладок',
     'sidebar.noHistory': 'Нет истории',
     'sidebar.noDownloads': 'Нет загрузок',
     'sidebar.clearHistory': 'Очистить историю',
