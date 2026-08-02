@@ -6,9 +6,21 @@ const { exec } = require('child_process')
 let mainWindow = null
 let pipWindow = null
 let dlItems = new Map()
-const DATA_DIR = path.join(app.getPath('userData'), 'vox-data')
-const EXT_DIR = path.join(app.getPath('userData'), 'extensions')
-const SHOTS_DIR = path.join(app.getPath('userData'), 'vox-shots')
+
+// Portable build (Vox <version>.exe): keep everything inside a `vox-data`
+// folder next to the executable so the browser works from a USB stick
+// without writing to the host machine's AppData.
+const PORTABLE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || null
+if (PORTABLE_DIR) app.setPath('userData', path.join(PORTABLE_DIR, 'vox-data'))
+const DATA_DIR = PORTABLE_DIR
+  ? path.join(PORTABLE_DIR, 'vox-data')
+  : path.join(app.getPath('userData'), 'vox-data')
+const EXT_DIR = PORTABLE_DIR
+  ? path.join(PORTABLE_DIR, 'vox-data', 'extensions')
+  : path.join(app.getPath('userData'), 'extensions')
+const SHOTS_DIR = PORTABLE_DIR
+  ? path.join(PORTABLE_DIR, 'vox-data', 'vox-shots')
+  : path.join(app.getPath('userData'), 'vox-shots')
 const EXE_PATH = process.execPath
 
 // Spoof user agent so Google doesn't block sign-in
