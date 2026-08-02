@@ -2773,8 +2773,8 @@ html, body, #root {
 
 /* ─── v1.3.0 — toasts, blocked page, notes, QR, tab badges ─── */
 .toasts { position: fixed; bottom: 56px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 100000; pointer-events: none; }
-.toast { background: var(--bg-light); color: var(--fg); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 8px 16px; border-radius: 10px; font-size: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.4); animation: toast-in .18s ease; max-width: 60vw; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.toast { background: var(--bg-light); color: var(--fg); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 8px 16px; border-radius: 10px; font-size: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.4); animation: toast-in .3s var(--ease-spring); max-width: 60vw; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 .sb-clock { font-variant-numeric: tabular-nums; }
 .sb-btn.timer-running { color: var(--orange); }
@@ -3065,3 +3065,82 @@ body:not(.zen-layout) .sidebar { border: var(--glass-border); box-shadow: inset 
 /* Tabs are the hottest interactive element — transition only paint-safe
    properties, not layout. */
 .tab { transition-property: background-color, color, box-shadow, opacity; }
+
+/* ═══════════ v3 wow — living aurora, entrance, greeting ═══════════ */
+
+/* Living ambient behind the floating glass. Static by design: the shells'
+   backdrop-filter samples it for free, and animation stays on the NTP layer
+   so steady-state stays compositor-only. */
+.browser { position: relative; }
+.browser::before {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 44% at 22% 6%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 68%),
+    radial-gradient(38% 38% at 86% 112%, color-mix(in srgb, var(--purple) 12%, transparent), transparent 68%),
+    radial-gradient(30% 30% at 72% -8%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 68%);
+}
+.chrome-top, .chrome-bottom, .content { position: relative; z-index: 1; }
+
+/* Living aurora on the new tab page — a single transform-composited layer
+   drifting behind the clock. Respects prefers-reduced-motion globally. */
+.ntp::before {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 34% at 26% 26%, color-mix(in srgb, var(--accent) 34%, transparent) 0%, transparent 70%),
+    radial-gradient(30% 30% at 76% 56%, color-mix(in srgb, var(--purple) 28%, transparent) 0%, transparent 70%),
+    radial-gradient(44% 40% at 54% 96%, color-mix(in srgb, var(--cyan) 20%, transparent) 0%, transparent 72%),
+    radial-gradient(24% 26% at 10% 90%, color-mix(in srgb, var(--orange) 13%, transparent) 0%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: .8;
+  animation: vox-aurora 52s ease-in-out infinite alternate;
+  will-change: transform;
+}
+body.vox-light .ntp::before { mix-blend-mode: multiply; opacity: .45; }
+
+@keyframes vox-aurora {
+  0%   { transform: translate3d(-4%, -3%, 0) scale(1); }
+  50%  { transform: translate3d(3%, 2%, 0) scale(1.08); }
+  100% { transform: translate3d(-2%, 4%, 0) scale(.96); }
+}
+
+/* Keep NTP content above the aurora (position: relative makes z-index apply;
+   the inline-fixed quick-links editor keeps its fixed positioning). */
+.ntp > * { position: relative; z-index: 1; }
+
+/* Entrance — the morning moment on launch. */
+.chrome-top, .chrome-bottom { animation-duration: .55s; animation-timing-function: var(--ease-spring); animation-fill-mode: both; }
+.chrome-top    { animation-name: vox-chrome-top-in; }
+.chrome-bottom { animation-name: vox-chrome-bottom-in; }
+@keyframes vox-chrome-top-in    { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes vox-chrome-bottom-in { from { opacity: 0; transform: translateY(14px); }  to { opacity: 1; transform: none; } }
+
+.sidebar, .zen-sidebar { animation: vox-rise-in .5s ease both; }
+
+.ntp-greet       { animation: vox-rise-in .7s ease .04s both; }
+.ntp-clock       { animation: vox-clock-in .8s var(--ease-spring) .12s both; }
+.ntp-date        { animation: vox-rise-in .7s ease .2s both; }
+.ntp-search      { animation: vox-rise-in .6s ease .28s both; }
+.ntp-quote       { animation: vox-rise-in .6s ease .34s both; }
+.ntp-links-wrap,
+.ntp-bm,
+.ntp-footer      { animation: vox-rise-in .6s ease .4s both; }
+
+@keyframes vox-clock-in { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes vox-rise-in  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Greeting line above the clock. */
+.ntp-greet {
+  font-size: 13px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fg-dim) 85%, var(--accent));
+  opacity: .85;
+}
