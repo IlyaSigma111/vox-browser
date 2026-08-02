@@ -2,6 +2,20 @@ import { useState, useEffect } from 'react'
 import { useStore } from '../store'
 import { t } from '../lang'
 
+function greetText(d: Date, ru: boolean): string {
+  const h = d.getHours()
+  if (ru) {
+    if (h >= 5 && h < 12) return 'Доброе утро'
+    if (h >= 12 && h < 18) return 'Добрый день'
+    if (h >= 18 && h < 23) return 'Добрый вечер'
+    return 'Доброй ночи'
+  }
+  if (h >= 5 && h < 12) return 'Good morning'
+  if (h >= 12 && h < 18) return 'Good afternoon'
+  if (h >= 18 && h < 23) return 'Good evening'
+  return 'Good night'
+}
+
 export default function NewTabPage() {
   const bookmarks = useStore(s => s.bookmarks)
   const settings = useStore(s => s.settings)
@@ -41,6 +55,10 @@ export default function NewTabPage() {
 
   const layout = settings.ntpLayout || 'default'
   const locale = settings.language === 'ru' ? 'ru-RU' : 'en-US'
+
+  const greeting = settings.ntpShowClock && (
+    <div className="ntp-greet">{greetText(time, settings.language === 'ru')}</div>
+  )
 
   const clock = settings.ntpShowClock && (
     <div className="ntp-clock">
@@ -152,6 +170,7 @@ export default function NewTabPage() {
     return (
       <div className="ntp ntp-centered">
         <div className="ntp-centered-wrap">
+          {greeting}
           {clock}
           {date}
           {search}
@@ -177,6 +196,7 @@ export default function NewTabPage() {
     return (
       <div className="ntp ntp-gradient">
         <div className="ntp-gradient-wrap">
+          {greeting}
           {clock}
           {date}
           {search}
@@ -192,6 +212,7 @@ export default function NewTabPage() {
   // default
   return (
     <div className="ntp">
+      {greeting}
       {clock}
       {date}
       {search}

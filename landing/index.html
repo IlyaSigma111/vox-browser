@@ -215,6 +215,81 @@
   .preview-content .or { color: var(--orange); }
   .preview-content .ch { color: var(--fg); }
 
+  /* ── Living Aurora demo (v1.4) ── */
+  .aurora-demo {
+    max-width: 720px;
+    margin: 0 auto 80px;
+  }
+  .aurora-demo-stage {
+    position: relative;
+    height: 440px;
+    border-radius: 20px;
+    background: #12121c;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: var(--glass-border);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .aurora-demo-stage::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background:
+      radial-gradient(38% 34% at 26% 26%, rgba(122,162,247,0.5) 0%, transparent 70%),
+      radial-gradient(30% 30% at 76% 56%, rgba(187,154,247,0.42) 0%, transparent 70%),
+      radial-gradient(44% 40% at 54% 96%, rgba(125,207,255,0.30) 0%, transparent 72%),
+      radial-gradient(24% 26% at 10% 90%, rgba(255,158,100,0.20) 0%, transparent 70%);
+    animation: landing-aurora 40s ease-in-out infinite alternate;
+  }
+  @keyframes landing-aurora {
+    0%   { transform: translate3d(-4%, -3%, 0) scale(1); }
+    50%  { transform: translate3d(3%, 2%, 0) scale(1.08); }
+    100% { transform: translate3d(-2%, 4%, 0) scale(0.96); }
+  }
+  .aurora-demo-greet {
+    position: relative;
+    font-size: 12px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: rgba(139,186,250,0.9);
+    animation: aurora-in 0.8s ease 0.1s both;
+  }
+  .aurora-demo-clock {
+    position: relative;
+    font-size: 68px;
+    font-weight: 200;
+    letter-spacing: 6px;
+    color: #c0caf5;
+    font-variant-numeric: tabular-nums;
+    animation: aurora-clock 0.8s var(--ease-spring) 0.15s both;
+  }
+  .aurora-demo-date {
+    position: relative;
+    font-size: 14px;
+    color: rgba(86,95,137,0.95);
+    animation: aurora-in 0.8s ease 0.25s both;
+  }
+  @keyframes aurora-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes aurora-clock { from { opacity: 0; transform: translateY(22px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .aurora-demo-caption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--fg-dim);
+    margin-top: 18px;
+    line-height: 1.8;
+  }
+  .aurora-demo-caption .hl { color: var(--accent-light); }
+  @media (max-width: 640px) {
+    .aurora-demo-clock { font-size: 48px; }
+    .aurora-demo-stage { height: 340px; }
+  }
+
   /* ── Features ── */
   .features {
     max-width: 1040px;
@@ -358,17 +433,17 @@
     Ничего лишнего. Никаких отвлечений. Только скорость.
   </div>
   <div class="hero-buttons">
-    <a class="btn btn-primary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.3.0/Vox.Setup.1.3.0.exe">
+    <a class="btn btn-primary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.4.0/Vox.Setup.1.4.0.exe">
       ⬇ Скачать для Windows
     </a>
-    <a class="btn btn-secondary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.3.0/Vox.1.3.0.exe">
+    <a class="btn btn-secondary" href="https://github.com/IlyaSigma111/vox-browser/releases/download/v1.4.0/Vox.1.4.0.exe">
       💾 Портативная версия
     </a>
     <a class="btn btn-secondary" href="https://github.com/IlyaSigma111/vox-browser">
       Исходники на GitHub
     </a>
   </div>
-  <div class="version">v1.3.0 · Магазин расширений (130) · Electron · Chromium · ru/en</div>
+  <div class="version">v1.4.0 · Живая аурора · Стеклянный интерфейс · Магазин расширений (130) · Electron · Chromium · ru/en</div>
   <div class="download-count" id="dl-count">... загрузок</div>
 </div>
 
@@ -393,6 +468,18 @@
     <span class="pr">:</span> → командная палитра<br>
     <br>
     <span class="gr">80+ тем</span> · <span class="hl">6 форм вкладок</span> · <span class="gr">экспериментальные темы</span> · <span class="cy">Aurora</span> · <span class="or">Session Trail</span> · <span class="pr">Site Lenses</span>
+  </div>
+</div>
+
+<div class="aurora-demo reveal">
+  <div class="aurora-demo-stage">
+    <div class="aurora-demo-greet" id="demo-greet">Доброе утро</div>
+    <div class="aurora-demo-clock" id="demo-clock">07:30</div>
+    <div class="aurora-demo-date" id="demo-date">воскресенье, 2 августа</div>
+  </div>
+  <div class="aurora-demo-caption">
+    Так выглядит <span class="hl">стартовая страница Vox v1.4</span>.<br>
+    Живая аурора дрейфует за стеклом, часы и дата приветствуют по времени суток, панели парят в стеклянных оболочках. Анимация ниже — настоящая, на CSS.
   </div>
 </div>
 
@@ -479,6 +566,24 @@
     <p>Шрифт, высоты панелей, радиус, скорость анимаций, прозрачность вкладок, фон NTP, 30+ настроек. Полностью русский + английский интерфейс.</p>
   </div>
     <div class="feature-card reveal new">
+      <div class="tag">новое в v1.4</div>
+      <div class="feature-icon">🌌</div>
+      <h3>Живая аурора</h3>
+      <p>Стартовая страница дышит: мягкие акцентные пятна медленно дрейфуют за часами. Входные анимации встречают при запуске, приветствие — по времени суток. Только один анимированный слой — интерфейс остаётся быстрым.</p>
+    </div>
+    <div class="feature-card reveal new">
+      <div class="tag">новое в v1.4</div>
+      <div class="feature-icon">🪟</div>
+      <h3>Парящее стекло</h3>
+      <p>Панели вкладок, статус-бар и сайдбары парят как стеклянные карточки с общим слоем блюра. Никаких двойных размытий: один blur на оболочку — красота без потери FPS.</p>
+    </div>
+    <div class="feature-card reveal new">
+      <div class="tag">новое в v1.4</div>
+      <div class="feature-icon">👋</div>
+      <h3>Приветствие по времени суток</h3>
+      <p>«Доброе утро», «Good evening» — стартовая страница здоровается с тобой на твоём языке, когда ты открываешь браузер. Идеальный утренний момент.</p>
+    </div>
+    <div class="feature-card reveal new">
       <div class="tag">новое в v1.3</div>
       <div class="feature-icon">🛍</div>
       <h3>Магазин расширений: 130 дополнений</h3>
@@ -552,8 +657,30 @@
 </div>
 
 <div class="footer">
-  Vox Browser v1.3.0 · Собрано на Electron + React + Zustand
+  Vox Browser v1.4.0 · Собрано на Electron + React + Zustand
 </div>
+
+<script>
+  // Live clock + greeting for the aurora demo
+  function tick() {
+    var d = new Date();
+    var h = d.getHours();
+    var m = d.getMinutes().toString().padStart(2, '0');
+    var el = document.getElementById('demo-clock');
+    if (el) el.textContent = h.toString().padStart(2, '0') + ':' + m;
+    var g = document.getElementById('demo-greet');
+    if (g) {
+      g.textContent = h >= 5 && h < 12 ? 'Доброе утро'
+        : h >= 12 && h < 18 ? 'Добрый день'
+        : h >= 18 && h < 23 ? 'Добрый вечер'
+        : 'Доброй ночи';
+    }
+    var dt = document.getElementById('demo-date');
+    if (dt) dt.textContent = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
 
 <script>
   // Reveal-on-scroll
