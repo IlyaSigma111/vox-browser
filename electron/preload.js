@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('onyx', {
   maximize: () => ipcRenderer.send('win:maximize'),
   close: () => ipcRenderer.send('win:close'),
   toggleFullscreen: () => ipcRenderer.send('win:fullscreen'),
+  pickerDone: () => ipcRenderer.send('win:picker-done'),
   readData: (f, fb) => ipcRenderer.invoke('data:read', f, fb),
   writeData: (f, d) => ipcRenderer.invoke('data:write', f, d),
   openDir: () => ipcRenderer.invoke('dialog:dir'),

@@ -409,6 +409,15 @@ export default function WebContent({ id, url, active, visible = true }: { id: st
     if (active && tab?.muted) updateTab(id, { muted: false })
   }, [active]) // eslint-disable-line
 
+  // Gaming mode: aggressively sleep inactive tabs (re-assert mute every 2s)
+  useEffect(() => {
+    if (settings.uiMode !== 'gaming') return
+    const iv = setInterval(() => {
+      if (!active && tab && !tab.muted) updateTab(id, { muted: true })
+    }, 2000)
+    return () => clearInterval(iv)
+  }, [settings.uiMode, active, id, tab, updateTab])
+
   // Inject vim engine + dark reader + smooth scroll on page load
   useEffect(() => {
     const wv = ref.current as any

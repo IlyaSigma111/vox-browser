@@ -5,6 +5,7 @@ import type { ThemePreset } from '../types'
 import { t, setLang } from '../lang'
 import PresetCatalog from './PresetCatalog'
 import { featureOn, FEATURES } from '../features'
+import { MODES, modeSettings } from '../modes'
 import { Icon } from './icons'
 
 const ICONS = {
@@ -30,6 +31,7 @@ const THEME_ORDER: ThemePreset[] = [
   'tokyo-night', 'dracula', 'monokai', 'nord', 'solarized', 'ayu', 'one-dark', 'gruvbox', 'catppuccin',
   'tokyo-day', 'solarized-light', 'nord-light', 'github-light', 'catppuccin-latte',
   'firefox-nova', 'nova-light', 'synthwave', 'outrun', 'forest', 'everforest', 'rose-pine', 'github-dark', 'midnight', 'paper',
+  'gx', 'gx-neon', 'gx-magma', 'gx-royal', 'gx-teal', 'gx-gold', 'gx-ice',
   'custom',
 ]
 
@@ -41,6 +43,8 @@ const THEME_LABELS: Record<string, string> = {
   'firefox-nova': 'Firefox Nova', 'nova-light': 'Nova Light', 'synthwave': "Synthwave '86",
   'outrun': 'Outrun', 'forest': 'Forest', 'everforest': 'Everforest', 'rose-pine': 'Rosé Pine',
   'github-dark': 'GitHub Dark', 'midnight': 'Midnight', 'paper': 'Paper',
+  'gx': 'Opera GX', 'gx-neon': 'GX Neon', 'gx-magma': 'GX Magma',
+  'gx-royal': 'GX Royal', 'gx-teal': 'GX Teal', 'gx-gold': 'GX Gold', 'gx-ice': 'GX Ice',
 }
 
 export default function Sidebar() {
@@ -280,6 +284,23 @@ export function SettingsPanel() {
         </span>
         <span className="store-cta-arrow">→</span>
       </div>
+      <Section title="Режим браузера">
+        <div className="mode-list">
+          {MODES.map(m => (
+            <button
+              key={m.id}
+              className={`mode-card${settings.uiMode === m.id ? ' active' : ''}`}
+              onClick={() => setSettings(modeSettings(m.id, settings))}
+            >
+              <span className="mode-icon">{m.icon}</span>
+              <span className="mode-body">
+                <b>{m.name}</b>
+                <span className="mode-desc">{m.desc}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </Section>
       <Section title={t('lang')}>
         <StRow label={t('lang')}>
           <select value={settings.language} onChange={e => setLangAndSettings(e.target.value)}>
@@ -421,6 +442,12 @@ export function SettingsPanel() {
             <option value="trapezoid">{t('shape.trapezoid')}</option>
             <option value="yandex">{t('shape.yandex')}</option>
             <option value="wave">{t('shape.wave')}</option>
+            <option value="chrome">{t('shape.chrome')}</option>
+            <option value="squircle">{t('shape.squircle')}</option>
+            <option value="chevron">{t('shape.chevron')}</option>
+            <option value="bevel">{t('shape.bevel')}</option>
+            <option value="arrow">{t('shape.arrow')}</option>
+            <option value="notch">{t('shape.notch')}</option>
           </select>
         </StRow>
         <StRow label={t('tabBar.height')}>

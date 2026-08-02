@@ -12,7 +12,7 @@ export interface UIPreset {
   bg: string
   theme: ThemePreset
   customColors?: ThemeColors
-  tabShape: 'square' | 'rounded' | 'pill' | 'trapezoid' | 'yandex' | 'wave'
+  tabShape: 'square' | 'rounded' | 'pill' | 'trapezoid' | 'yandex' | 'wave' | 'chrome' | 'squircle' | 'chevron' | 'bevel' | 'arrow' | 'notch'
   fontFamily: string
   fontSize: number
   tabBarHeight: number

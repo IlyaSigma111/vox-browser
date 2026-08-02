@@ -30,12 +30,14 @@ function writeJson(filename, data) {
   fs.writeFileSync(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2), 'utf-8')
 }
 
+let lastGoodBounds = { width: 1400, height: 900 }
+
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 600,
-    minHeight: 400,
+    width: 340,
+    height: 260,
+    minWidth: 320,
+    minHeight: 240,
     frame: false,
     titleBarStyle: 'hidden',
     backgroundColor: '#1a1b26',
@@ -67,8 +69,21 @@ function createWindow() {
     console.error('[Vox] renderer crashed!')
   })
 
+  mainWindow.on('resize', () => {
+    if (mainWindow.isMaximized() || mainWindow.isFullScreen()) return
+    const b = mainWindow.getBounds()
+    if (b.width >= 800 && b.height >= 500) lastGoodBounds = b
+  })
+
   mainWindow.on('closed', () => { mainWindow = null })
 }
+
+ipcMain.on('win:picker-done', () => {
+  if (!mainWindow) return
+  mainWindow.setMinimumSize(600, 400)
+  mainWindow.setBounds(lastGoodBounds)
+  mainWindow.center()
+})
 
 function loadExtensions() {
   ensureDir(EXT_DIR)

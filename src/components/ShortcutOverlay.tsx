@@ -22,6 +22,7 @@ const shortcuts = [
     ['Ctrl+- / Ctrl+= / Ctrl+0', 'Zoom out / in / reset'],
   ]},
   { section: 'Features', items: [
+    ['Alt+P', 'Command palette'],
     ['Ctrl+Shift+O', 'Open the store'],
     ['Ctrl+Shift+A', 'Tab Exposé'],
     ['Ctrl+Shift+F', 'Grep full history'],

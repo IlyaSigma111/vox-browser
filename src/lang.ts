@@ -135,6 +135,12 @@ const strings: Record<Lang, Record<string, string>> = {
     'shape.trapezoid': 'Trapezoid',
     'shape.yandex': 'Yandex',
     'shape.wave': 'Wave',
+    'shape.chrome': 'Chrome',
+    'shape.squircle': 'Squircle',
+    'shape.chevron': 'Chevron',
+    'shape.bevel': 'Bevel',
+    'shape.arrow': 'Arrow',
+    'shape.notch': 'Notch',
 
     // Status bar
     'mode.normal': 'NORMAL',
@@ -258,6 +264,12 @@ const strings: Record<Lang, Record<string, string>> = {
     'shape.trapezoid': 'Трапеция',
     'shape.yandex': 'Яндекс',
     'shape.wave': 'Волна',
+    'shape.chrome': 'Chrome',
+    'shape.squircle': 'Скворикл',
+    'shape.chevron': 'Шеврон',
+    'shape.bevel': 'Фаска',
+    'shape.arrow': 'Стрелка',
+    'shape.notch': 'Вырез',
 
     'mode.normal': 'НОРМА',
     'mode.insert': 'ВСТАВКА',

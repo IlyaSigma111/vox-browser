@@ -111,7 +111,7 @@ export interface VimKeyBinding {
   description: string
 }
 
-export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'firefox-nova' | 'nova-light' | 'synthwave' | 'forest' | 'rose-pine' | 'everforest' | 'github-dark' | 'midnight' | 'outrun' | 'paper' | 'custom'
+export type ThemePreset = 'tokyo-night' | 'dracula' | 'monokai' | 'nord' | 'solarized' | 'ayu' | 'one-dark' | 'gruvbox' | 'catppuccin' | 'tokyo-day' | 'solarized-light' | 'nord-light' | 'github-light' | 'catppuccin-latte' | 'firefox-nova' | 'nova-light' | 'synthwave' | 'forest' | 'rose-pine' | 'everforest' | 'github-dark' | 'midnight' | 'outrun' | 'paper' | 'gx' | 'gx-neon' | 'gx-magma' | 'gx-royal' | 'gx-teal' | 'gx-gold' | 'gx-ice' | 'custom'
 
 export interface ThemeColors {
   bg: string
@@ -138,6 +138,8 @@ export interface Settings {
   darkReader: boolean
   theme: ThemePreset
   customColors: ThemeColors
+  gamingPrevTheme?: ThemePreset
+  debloatPrevTabPos?: 'top' | 'bottom'
   language: string
 
   fontFamily: string
@@ -147,7 +149,7 @@ export interface Settings {
   tabBarShowClose: boolean
   tabBarShowFavicon: boolean
   tabBarShowIndicator: boolean
-  tabShape: 'square' | 'rounded' | 'pill' | 'trapezoid' | 'yandex' | 'wave'
+  tabShape: 'square' | 'rounded' | 'pill' | 'trapezoid' | 'yandex' | 'wave' | 'chrome' | 'squircle' | 'chevron' | 'bevel' | 'arrow' | 'notch'
   tabBarPosition: 'top' | 'bottom'
 
   statusBarHeight: number
@@ -241,6 +243,10 @@ export interface Settings {
   roundui: boolean
   density: boolean
   glowui: boolean
+  dynamicisland: boolean
+  cursorglow: boolean
+  docklift: boolean
+  uiMode: 'full' | 'debloat' | 'gaming'
   ntpgrad: boolean
   ntpquote: boolean
   amoled: boolean

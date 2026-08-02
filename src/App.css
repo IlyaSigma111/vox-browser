@@ -499,6 +499,71 @@ body.vox-android .wv-native {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
+/* Chrome-style superellipse — rounded top, curved "neck" notches at the
+   content edge (classic Chrome/Edge tab). Mask keeps the curve silky. */
+.tab-bar[data-shape="chrome"] .tab {
+  --trad: 11px;
+  border-radius: var(--trad) var(--trad) 0 0;
+  border-right: none;
+  -webkit-mask-image:
+    radial-gradient(calc(var(--trad) * 2) at 0 var(--trad), transparent calc(99% - 1px), #000 99%),
+    radial-gradient(calc(var(--trad) * 2) at 100% var(--trad), transparent calc(99% - 1px), #000 99%),
+    linear-gradient(#000, #000);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: left bottom, right bottom, 0 0;
+  -webkit-mask-size: calc(var(--trad) * 2) calc(var(--trad) * 2), calc(var(--trad) * 2) calc(var(--trad) * 2), 100% 100%;
+  -webkit-mask-composite: intersect;
+  mask-image:
+    radial-gradient(calc(var(--trad) * 2) at 0 var(--trad), transparent calc(99% - 1px), #000 99%),
+    radial-gradient(calc(var(--trad) * 2) at 100% var(--trad), transparent calc(99% - 1px), #000 99%),
+    linear-gradient(#000, #000);
+  mask-repeat: no-repeat;
+  mask-position: left bottom, right bottom, 0 0;
+  mask-size: calc(var(--trad) * 2) calc(var(--trad) * 2), calc(var(--trad) * 2) calc(var(--trad) * 2), 100% 100%;
+  mask-composite: intersect;
+}
+
+/* Floating rounded chip — iOS squircle feel. */
+.tab-bar[data-shape="squircle"] .tab {
+  border-radius: 11px;
+  margin: 3px 2px;
+  border-right: none;
+}
+
+/* Chevron — points at the content edge. */
+.tab-bar[data-shape="chevron"] .tab {
+  border-radius: 0;
+  border-right: none;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), 50% 100%, 0 calc(100% - 8px));
+}
+.tab-bar[data-shape="chevron"] .tab.active {
+  z-index: 2;
+}
+
+/* Bevel — chamfered outer corners. */
+.tab-bar[data-shape="bevel"] .tab {
+  border-radius: 0;
+  border-right: none;
+  clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 5px, 100% 100%, 0 100%, 0 5px);
+}
+
+/* Arrowhead — pointed left/right edges. */
+.tab-bar[data-shape="arrow"] .tab {
+  border-radius: 0;
+  border-right: none;
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+}
+
+/* Notch — folder-style slot cut into the content edge. */
+.tab-bar[data-shape="notch"] .tab {
+  border-radius: 0;
+  border-right: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 57% 100%, 50% calc(100% - 10px), 43% 100%, 0 100%);
+}
+.tab-bar[data-shape="notch"] .tab.active {
+  z-index: 2;
+}
+
 .tab-bar[data-shape="square"] .tab {
   border-radius: 0;
 }
@@ -3248,3 +3313,654 @@ body:not(.zen-layout) .sidebar { border: var(--glass-border); box-shadow: inset 
   color: color-mix(in srgb, var(--fg-dim) 85%, var(--accent));
   opacity: .85;
 }
+
+/* ═══════════ v5 — Deep Glass Terminal redesign ═══════════
+   Elevates the floating-glass chrome into a definite, high-contrast
+   terminal-grade surface system: crisp separator edges, directional
+   elevation shadows, a mono data type, bottom-tab-correct geometry and a
+   shared interactive primitive language. Theme-adaptive via CSS vars. */
+
+:root {
+  --separator-strong: color-mix(in srgb, var(--fg-dim) 58%, transparent);
+  --elev-top: 0 1px 0 rgba(0,0,0,.35), 0 8px 22px rgba(0,0,0,.34);
+  --elev-bottom: 0 -1px 0 rgba(0,0,0,.35), 0 -8px 22px rgba(0,0,0,.34);
+  --elev-card: 0 2px 0 rgba(0,0,0,.22), 0 10px 28px rgba(0,0,0,.3);
+  --accent-ring: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* ── 1. Chrome shells — directional depth, defined edges ── */
+.chrome-top {
+  border-bottom: 1px solid var(--separator-strong);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 5%, transparent), var(--elev-top);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-light) 62%, var(--bg-dim)) 0%, var(--bg-dim) 82%);
+}
+.chrome-bottom {
+  border-top: 1px solid var(--separator-strong);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 5%, transparent), var(--elev-bottom);
+  background: linear-gradient(180deg, var(--bg-dim) 0%, color-mix(in srgb, var(--bg-dim) 86%, var(--bg-light)) 100%);
+}
+.chrome-top, .chrome-bottom { backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+
+/* Accent hairline where chrome meets content stays on the inner bar
+   (statusbar::before / tab-bar::after) — strengthen it so the seam reads. */
+.statusbar::before, .tab-bar::after { opacity: .5; }
+
+/* ── 2. Mono data type ── */
+.sb-url, .sb-count, .bt-url-text, .bt-title, .ntp-clock, .sb-clock,
+.find-count, .store-hotkey kbd, .tab-badge, .graph-node-url, .grep-item-url,
+.expose-url, .graph-count, .st-val, .expose-domain {
+  font-family: var(--font-mono);
+}
+
+/* ── 3. Bottom tab bar — geometry & accent at the content edge ── */
+.chrome-bottom .tab-bar[data-shape="rounded"] .tab {
+  border-radius: 0 0 calc(var(--radius) + 3px) calc(var(--radius) + 3px);
+}
+.chrome-bottom .tab-bar[data-shape="pill"] .tab {
+  border-radius: 0 0 999px 999px;
+}
+.chrome-bottom .tab-bar[data-shape="chrome"] .tab {
+  border-radius: 0 0 var(--trad) var(--trad);
+  -webkit-mask-position: left top, right top, 0 0;
+  mask-position: left top, right top, 0 0;
+}
+.chrome-bottom .tab-bar[data-shape="chevron"] .tab {
+  clip-path: polygon(0 8px, 50% 0, 100% 8px, 100% 100%, 0 100%);
+}
+.chrome-bottom .tab-bar[data-shape="bevel"] .tab {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 5px));
+}
+.chrome-bottom .tab-bar[data-shape="notch"] .tab {
+  clip-path: polygon(0 0, 43% 0, 50% 10px, 57% 0, 100% 0, 100% 100%, 0 100%);
+}
+.chrome-bottom .tab-bar .tab.active {
+  box-shadow: inset 0 2px 0 var(--accent), 0 -6px 18px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.chrome-bottom .tab-bar .tab.loading::before {
+  top: 0; bottom: auto;
+}
+/* Soft fade at the tab strip edges — tabs under overflow read as a surface. */
+.tab-bar {
+  mask-image: linear-gradient(90deg, transparent 0, #000 9px, #000 calc(100% - 26px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9px, #000 calc(100% - 26px), transparent 100%);
+}
+
+/* ── 4. Workspace pills — filled active state ── */
+.ws-btn.active, .sb-ws-btn.active, .zen-ws-btn.active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--fg);
+  box-shadow: var(--accent-ring);
+}
+
+/* ── 5. Status bar — defined mini address pill ── */
+.statusbar { background: color-mix(in srgb, var(--bg-dim) 80%, transparent); }
+.sb-url {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  margin: 3px 4px;
+  height: calc(var(--status-h) - 8px);
+  line-height: calc(var(--status-h) - 10px);
+  overflow: hidden;
+  color: var(--fg);
+}
+.sb-url:focus-within { border-color: var(--accent); box-shadow: var(--accent-ring); }
+.sb-url span { color: var(--fg-muted); }
+
+/* ── 6. NTP — refined clock glow & deeper search ── */
+.ntp-clock {
+  text-shadow: 0 0 46px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.ntp-search {
+  border: 1px solid var(--separator-strong);
+  box-shadow: var(--elev-card);
+  background: color-mix(in srgb, var(--bg-light) 88%, var(--bg));
+}
+.ntp-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--accent-ring), var(--elev-card);
+}
+.ntp-date { letter-spacing: 2px; text-transform: uppercase; font-size: 12px; }
+
+/* ── 7. Shared interactive primitives ── */
+button, input, select { caret-color: var(--accent); }
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 85%, transparent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+/* Cards & overlays share one elevation + radius language. */
+.store-card, .expose-card, .preset-card, .ext-row, .lens-row, .grep-inner,
+.graph-inner, .expose-inner, .palette, .ctx-menu, .find-bar, .toast, .warmup-toast {
+  box-shadow: var(--elev-card);
+}
+.palette, .ctx-menu, .grep-inner, .graph-inner, .expose-inner, .find-bar {
+  border-color: var(--separator-strong);
+}
+.palette { border-top: 2px solid var(--accent); }
+
+/* Menu rows — tighter vertical rhythm, defined hover. */
+.ctx-item, .palette-item { padding-top: 7px; padding-bottom: 7px; }
+.ctx-item:hover, .palette-item:hover { color: var(--fg); }
+
+/* ── 8. Sidebar — defined hover lift & accent rail ── */
+.sidebar { background: color-mix(in srgb, var(--bg-dim) 78%, transparent); }
+.sidebar-item:hover { transform: translateX(-2px); }
+.sidebar.sidebar-right .sidebar-item:hover { transform: translateX(2px); }
+.sidebar-section { color: color-mix(in srgb, var(--accent) 80%, var(--fg-dim)); }
+
+/* ── 9. Toggles — filled knobs, springy travel ── */
+.toggle { box-shadow: inset 0 1px 2px rgba(0,0,0,.3); }
+.toggle.on .toggle-knob { transform: translateX(18px) scale(1.05); }
+
+/* ── 10. Buttons — consistent active press + hover glow ── */
+.st-action-btn, .store-btn, .preset-apply-btn, .bp-btn, .onb-next, .warmup-toast button {
+  transition: all var(--speed) var(--ease-spring);
+}
+.st-action-btn:hover, .store-btn:hover, .preset-apply-btn:hover, .bp-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.secondary, .store-btn.remove, .preset-save-btn, .ntp-edit-btn, .floating-settings {
+  transition: all var(--speed) var(--ease-spring);
+}
+
+/* ── 11. Scrollbars — hairline rails on scroll containers ── */
+.settings-sections, .palette-results, .store-page, .expose-grid, .preset-grid,
+.grep-list, .graph-track { scrollbar-gutter: stable; }
+
+/* ═══════════ v6 — Aurora Deep ═══════════
+   Living-glass pushed to the limit: animated aurora across the whole chrome,
+   larger floating shells with neon edges, stronger glows on everything
+   interactive, and a colorful ambient canvas. Aurora layers animate with
+   transform-only keyframes (compositor-cheap) and stay calm on light themes
+   via multiply + low opacity — no washed-out surfaces. */
+
+:root {
+  --glass-bg: color-mix(in srgb, var(--bg-dim) 78%, transparent);
+  --glass-blur: blur(16px) saturate(180%);
+  --aurora-radius: calc(var(--radius-lg) + 6px);
+  --neon: 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent),
+          0 0 26px color-mix(in srgb, var(--accent) 22%, transparent),
+          0 0 60px color-mix(in srgb, var(--purple) 12%, transparent);
+  --neon-strong: 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+                 0 0 34px color-mix(in srgb, var(--accent) 34%, transparent),
+                 0 0 80px color-mix(in srgb, var(--purple) 18%, transparent);
+}
+
+/* ── 1. Living ambient — animated aurora canvas behind the glass ── */
+.browser::before {
+  background:
+    radial-gradient(52% 48% at 20% 4%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 68%),
+    radial-gradient(44% 44% at 88% 108%, color-mix(in srgb, var(--purple) 22%, transparent), transparent 68%),
+    radial-gradient(34% 34% at 70% -10%, color-mix(in srgb, var(--cyan) 15%, transparent), transparent 68%);
+  animation: vox-ambient-drift 46s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes vox-ambient-drift {
+  0%   { transform: translate(-1.5%, -1%) scale(1); }
+  50%  { transform: translate(1.5%, 1.2%) scale(1.06); }
+  100% { transform: translate(-1%, 1.6%) scale(1.02); }
+}
+
+/* Neon inner frame — the whole viewport reads as a glowing monitor. */
+.browser::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: calc(var(--aurora-radius) + 2px);
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 26px color-mix(in srgb, var(--accent) 7%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── 2. Bigger floating shells — chunky glass cards with neon edges ── */
+.chrome-top, .chrome-bottom {
+  margin: 0 12px;
+  border-radius: var(--aurora-radius);
+  background: color-mix(in srgb, var(--bg-dim) 74%, transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+  transition: box-shadow .6s ease, background .4s ease;
+}
+.chrome-top {
+  margin-top: 6px;
+  border-top-left-radius: var(--aurora-radius);
+  border-top-right-radius: var(--aurora-radius);
+  border-top: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-dim) 34%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 22%, transparent), var(--neon);
+}
+.chrome-bottom {
+  margin-bottom: 6px;
+  border-bottom-left-radius: var(--aurora-radius);
+  border-bottom-right-radius: var(--aurora-radius);
+  border-bottom: none;
+  border-top: 1px solid color-mix(in srgb, var(--fg-dim) 34%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 22%, transparent), var(--neon);
+}
+.chrome-top:hover, .chrome-bottom:hover { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 30%, transparent), var(--neon-strong); }
+
+/* ── 3. Floating sidebars — match the bigger glass cards ── */
+body:not(.zen-layout) .sidebar { margin: 7px 12px; }
+.sidebar { border-radius: var(--aurora-radius); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 8%, transparent), var(--neon); }
+.zen-sidebar { margin: 7px 0 7px 12px; border-radius: var(--aurora-radius); }
+
+/* ── 4. NTP aurora — living layer over the page (dim enough to stay dark) ── */
+.ntp::before {
+  content: '';
+  position: absolute;
+  inset: -22%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(54% 46% at 24% 18%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 66%),
+    radial-gradient(46% 42% at 80% 82%, color-mix(in srgb, var(--purple) 26%, transparent), transparent 66%),
+    radial-gradient(32% 32% at 62% 34%, color-mix(in srgb, var(--cyan) 17%, transparent), transparent 66%);
+  mix-blend-mode: screen;
+  opacity: .34;
+  animation: vox-aurora 44s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes vox-aurora {
+  0%   { transform: translate(-2.5%, -1.5%) scale(1); }
+  50%  { transform: translate(2%, 1.5%) scale(1.1); }
+  100% { transform: translate(-1%, 2.5%) scale(1.05); }
+}
+body.vox-light .ntp::before { mix-blend-mode: multiply; opacity: .16; }
+body.vox-light .browser::before { opacity: .5; }
+
+/* ── 5. NTP hero — glowing clock, neon search ── */
+.ntp-clock {
+  text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 34%, transparent), 0 0 70px color-mix(in srgb, var(--purple) 22%, transparent);
+}
+.ntp-greet { color: color-mix(in srgb, var(--accent) 70%, var(--fg)); }
+.ntp-search {
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  background: color-mix(in srgb, var(--bg-light) 86%, var(--bg));
+  box-shadow: 0 6px 30px rgba(0,0,0,.4), 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent), 0 0 26px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.ntp-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 34px color-mix(in srgb, var(--accent) 28%, transparent), 0 6px 30px rgba(0,0,0,.4);
+}
+.ntp-link { border-color: color-mix(in srgb, var(--accent) 26%, transparent); box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.ntp-link:hover { box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 26%, transparent); }
+
+/* ── 6. Neon interactive chrome ── */
+.tab.active {
+  box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 color-mix(in srgb, var(--accent) 60%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.chrome-top .tab-bar .tab.active { box-shadow: inset 0 -2px 0 var(--accent), inset 0 2px 0 color-mix(in srgb, var(--accent) 40%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 20%, transparent); }
+.ws-btn.active, .sb-ws-btn.active, .zen-ws-btn.active {
+  box-shadow: var(--neon);
+}
+.sb-btn:hover, .bt-btn:hover, .tc-arrow:hover, .zen-collapse-btn:hover {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.sb-url { border-color: color-mix(in srgb, var(--border) 80%, transparent); box-shadow: inset 0 1px 0 rgba(0,0,0,.25), 0 0 14px color-mix(in srgb, var(--accent) 8%, transparent); }
+.sb-url:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 20%, transparent); }
+.sidebar-item:hover { box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 14%, transparent); }
+.toggle.on { box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* ── 7. Neon overlays & menus ── */
+.palette, .ctx-menu, .find-bar, .hint-bar, .warmup-toast {
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: 0 12px 44px rgba(0,0,0,.5), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent), 0 0 30px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.palette { border-top: 2px solid var(--accent); }
+.toast { box-shadow: 0 8px 30px rgba(0,0,0,.45), 0 0 22px color-mix(in srgb, var(--accent) 16%, transparent); }
+.store-card:hover, .expose-card:hover, .preset-card:hover {
+  box-shadow: 0 10px 28px rgba(0,0,0,.4), 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.expose-card.active, .store-card.installed { box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent), 0 0 24px color-mix(in srgb, var(--green) 18%, transparent); }
+
+/* ── 8. Tab strip — aurora wash on the bar surface ── */
+.tab-bar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-light) 34%, var(--bg-dim)) 0%, color-mix(in srgb, var(--bg-dim) 96%, var(--bg-light)) 60%, var(--bg-dim) 100%);
+}
+.statusbar { background: color-mix(in srgb, var(--bg-dim) 70%, transparent); }
+.sidebar-header::after { opacity: .55; }
+
+/* ── 9. Light themes — calm down the neon ── */
+body.vox-light .chrome-top, body.vox-light .chrome-bottom {
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 16%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent), 0 4px 22px rgba(0,0,0,.12);
+}
+body.vox-light .tab.active, body.vox-light .palette, body.vox-light .ctx-menu { box-shadow: 0 6px 24px rgba(0,0,0,.12), 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* ═══════════ v7 — Store v2: compact glass storefront ═══════════
+   Tighter glass header with an enabled-progress bar, search + "enabled
+   only" filter in one row, grouped cards by category with icon tiles. */
+
+.store-header {
+  padding: 12px 24px 10px;
+  background: color-mix(in srgb, var(--bg-dim) 70%, transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.store-head-row { display: flex; align-items: center; justify-content: space-between; max-width: 1000px; margin: 0 auto; }
+.store-title { font-size: 20px; }
+.store-stats { display: flex; gap: 6px; }
+.store-subtitle { max-width: 1000px; margin: 5px auto 0; font-size: 11px; color: var(--fg-dim); display: flex; gap: 4px; }
+.store-subtitle b { color: var(--accent); font-weight: 700; }
+
+.store-progress { max-width: 1000px; margin: 9px auto 0; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--bg-light) 55%, transparent); overflow: hidden; }
+.store-progress-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: width .4s var(--ease-spring);
+}
+
+.store-controls { max-width: 1000px; margin: 10px auto 0; display: flex; gap: 8px; align-items: center; }
+.store-search { flex: 1; margin: 0; }
+.store-filter {
+  flex-shrink: 0; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg-light); color: var(--fg-dim); font-family: inherit;
+  font-size: 11px; font-weight: 600; padding: 8px 12px; cursor: pointer; white-space: nowrap;
+  transition: all var(--speed) ease;
+}
+.store-filter:hover { color: var(--fg); border-color: var(--fg-dim); }
+.store-filter.active {
+  border-color: color-mix(in srgb, var(--green) 55%, transparent);
+  color: var(--green);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--green) 28%, transparent);
+}
+.store-cats { margin-top: 10px; }
+
+.store-section { max-width: 1000px; margin: 0 auto; }
+.store-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: color-mix(in srgb, var(--accent) 78%, var(--fg-dim));
+  padding: 18px 28px 4px; display: flex; gap: 8px; align-items: center;
+}
+.store-section-title span { font-weight: 600; opacity: .5; font-size: 10px; }
+.store-section .store-grid { max-width: 100%; margin: 0; padding: 0 28px 4px; }
+
+.store-card {
+  position: relative;
+  padding: 13px 14px;
+  gap: 12px;
+}
+.store-card::before {
+  content: '';
+  position: absolute; inset: 0 0 auto; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 38%, transparent), transparent);
+  opacity: 0; transition: opacity var(--speed) ease;
+}
+.store-card:hover::before { opacity: 1; }
+.store-card-icon {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  background: color-mix(in srgb, var(--bg-light) 72%, var(--bg));
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 8%, transparent);
+  transition: all var(--speed) ease;
+}
+.store-card:hover .store-card-icon {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+.store-card.installed .store-card-icon {
+  border-color: color-mix(in srgb, var(--green) 45%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--green) 22%, transparent);
+}
+.store-card-cat {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--fg-muted); margin-bottom: 2px;
+}
+.store-card-name { font-size: 13px; font-weight: 700; }
+.store-card-desc { font-size: 11px; color: var(--fg-dim); line-height: 1.5; margin-top: 4px; }
+.store-btn { padding: 6px 12px; border-radius: 9px; font-size: 11px; }
+
+/* ═══════════ v8 — Dynamic Island + vibes ═══════════
+   A floating glass capsule top-center (iPhone-style) that shows the active
+   tab, live clock and load spinner, expanding on hover to reveal the URL.
+   Plus a cursor light that follows the mouse, and the macOS-dock-style
+   active-tab lift. */
+
+.dyn-island {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-dim) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 8px 30px rgba(0,0,0,.45), 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent), 0 0 22px color-mix(in srgb, var(--accent) 18%, transparent);
+  max-width: min(560px, calc(100vw - 60px));
+  cursor: default;
+}
+.dyn-island-main { display: flex; align-items: center; gap: 8px; padding: 0 8px; min-width: 0; }
+.dyn-icon { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; object-fit: contain; }
+.dyn-icon-fallback { display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 12px; }
+.dyn-title { font-size: 12px; font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+.dyn-sep { width: 1px; height: 14px; background: color-mix(in srgb, var(--fg-dim) 40%, transparent); flex-shrink: 0; }
+.dyn-time { font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim); white-space: nowrap; }
+.dyn-sec { color: var(--accent); font-size: 10px; }
+.dyn-loading {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: dyn-spin .8s linear infinite;
+}
+@keyframes dyn-spin { to { transform: rotate(360deg); } }
+
+.dyn-island-ext {
+  display: flex; align-items: center; gap: 6px;
+  max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width .35s var(--ease-spring), opacity .3s ease;
+}
+.dyn-island:hover .dyn-island-ext { max-width: 340px; opacity: 1; }
+.dyn-url { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+.dyn-url-plain { max-width: 260px; }
+.dyn-btn {
+  flex-shrink: 0; width: 24px; height: 24px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--bg-light); color: var(--fg); cursor: pointer; font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--speed) ease;
+}
+.dyn-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* Cursor light — a soft neon glow trails the pointer across the whole UI */
+body.vox-cursorglow::after {
+  content: '';
+  position: fixed;
+  left: 0; top: 0;
+  width: 460px; height: 460px;
+  transform: translate(calc(var(--cx, 0px) - 230px), calc(var(--cy, 0px) - 230px));
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 10%, transparent) 0%, color-mix(in srgb, var(--purple) 5%, transparent) 42%, transparent 66%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transition: transform .1s linear;
+}
+
+/* Active-tab dock lift — the current tab pops toward the content edge */
+body.vox-docklift .tab {
+  transition: background var(--speed), color var(--speed), transform .35s var(--ease-spring), box-shadow .35s ease;
+}
+body.vox-docklift .tab.active { transform: translateY(-3px); }
+body.vox-docklift .chrome-bottom .tab.active { transform: translateY(3px); }
+
+/* ═══════════ v9 — Browser modes (Full / Debloat / Gaming) ═══════════ */
+
+/* Mode picker cards in Settings */
+.mode-list { display: flex; flex-direction: column; gap: 6px; }
+.mode-card {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  padding: 9px 10px; border-radius: 11px; cursor: pointer;
+  background: color-mix(in srgb, var(--bg-light) 72%, var(--bg));
+  border: 1px solid var(--border);
+  color: var(--fg); font-family: inherit;
+  transition: all var(--speed) ease;
+}
+.mode-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  transform: translateX(2px);
+}
+.mode-card.active {
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-light));
+  box-shadow: var(--accent-ring);
+}
+.mode-icon { font-size: 18px; flex-shrink: 0; }
+.mode-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mode-body b { font-size: 12px; }
+.mode-desc { font-size: 10px; color: var(--fg-dim); line-height: 1.35; }
+
+/* Gaming mode — kill animation, blur and decorative layers for max FPS */
+body.vox-gaming *,
+body.vox-gaming *::before,
+body.vox-gaming *::after {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+  scroll-behavior: auto !important;
+}
+body.vox-gaming .chrome-top,
+body.vox-gaming .chrome-bottom,
+body.vox-gaming .sidebar,
+body.vox-gaming .zen-sidebar,
+body.vox-gaming .dyn-island,
+body.vox-gaming .palette,
+body.vox-gaming .ctx-menu,
+body.vox-gaming .toast,
+body.vox-gaming .find-bar,
+body.vox-gaming .ntp-search,
+body.vox-gaming .ntp-link {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.vox-gaming .browser::before,
+body.vox-gaming .browser::after,
+body.vox-gaming .ntp::before,
+body.vox-gaming .ntp::after {
+  display: none !important;
+}
+body.vox-gaming .dyn-island,
+body.vox-gaming .cursor-glow { display: none !important; }
+
+/* ═══════════ Debloat mode — flat default Firefox-like chrome ═══════════ */
+body.vox-debloat .browser { background: var(--bg); }
+body.vox-debloat .browser::before,
+body.vox-debloat .browser::after,
+body.vox-debloat .ntp::before,
+body.vox-debloat .ntp::after { display: none !important; }
+body.vox-debloat .chrome-top,
+body.vox-debloat .chrome-bottom {
+  margin: 0;
+  background: var(--bg-dim);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body.vox-debloat .chrome-top .tab-bar { border-top: none; }
+body.vox-debloat .tab-bar { background: var(--bg-dim); }
+body.vox-debloat .tab { border-radius: 0; }
+body.vox-debloat .tab.active {
+  background: var(--bg);
+  box-shadow: none;
+}
+body.vox-debloat .sidebar,
+body.vox-debloat .zen-sidebar {
+  margin: 0;
+  background: var(--bg-dim);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+body.vox-debloat .ntp,
+body.vox-debloat .ntp-gradient { background: var(--bg); }
+body.vox-debloat .ntp-clock { text-shadow: none; }
+body.vox-debloat .ntp-search,
+body.vox-debloat .ntp-link,
+body.vox-debloat .palette,
+body.vox-debloat .ctx-menu,
+body.vox-debloat .toast,
+body.vox-debloat .find-bar,
+body.vox-debloat .dyn-island {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body.vox-debloat .ntp-search { box-shadow: none; border: 1px solid var(--border); }
+body.vox-debloat .ntp-search:focus-within { box-shadow: none; }
+
+/* ═══════════ v10 — Start mode picker (every launch) ═══════════ */
+
+.mode-picker {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 8, 10, .72);
+  font-family: var(--font, inherit);
+  animation: mp-fade .18s ease both;
+}
+.mode-picker.leaving { opacity: 0; transition: opacity .15s ease; pointer-events: none; }
+
+.mp-window {
+  width: 320px;
+  background: #1c1c21;
+  border: 1px solid #34343b;
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .5);
+  overflow: hidden;
+  animation: mp-win-in .18s ease both;
+}
+.mp-win-title {
+  height: 34px; display: flex; align-items: center; padding: 0 14px;
+  font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, .65);
+  background: #232329; border-bottom: 1px solid #2e2e35;
+  user-select: none;
+}
+.mp-body { padding: 18px 16px 14px; }
+.mp-title { margin: 0; font-size: 14px; font-weight: 600; color: #fff; }
+
+.mp-buttons { display: flex; flex-direction: row; gap: 8px; margin-top: 14px; }
+.mp-btn {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 4px; border-radius: 8px; cursor: pointer;
+  background: #2a2a30; border: 1px solid #3b3b44;
+  color: #e8e8ea; font-family: inherit;
+  animation: mp-btn-in .2s ease both;
+  transition: background .12s ease, border-color .12s ease;
+}
+.mp-btn:hover { background: #32323a; border-color: #4a4a54; }
+.mp-btn.active { border-color: #6a6a78; background: #33333b; }
+.mp-btn.picked { opacity: .55; }
+.mp-icon { display: flex; }
+.mp-icon svg { width: 20px; height: 20px; color: rgba(255, 255, 255, .85); }
+.mp-name { font-size: 12px; font-weight: 600; }
+
+.mp-hint { margin: 12px 0 0; font-size: 10.5px; color: rgba(255, 255, 255, .32); text-align: center; }
+
+@keyframes mp-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mp-win-in {
+  from { opacity: 0; transform: scale(.97) translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes mp-btn-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-picker * { animation: none !important; transition: none !important; }
+}
+
+

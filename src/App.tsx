@@ -8,6 +8,7 @@ import WebContent from './components/WebContent'
 import Sidebar from './components/Sidebar'
 import ZenSidebar from './components/ZenSidebar'
 import CommandPalette from './components/CommandPalette'
+import DynamicIsland from './components/DynamicIsland'
 import HintOverlay from './components/HintOverlay'
 import ShortcutOverlay from './components/ShortcutOverlay'
 import FindBar from './components/FindBar'
@@ -18,6 +19,8 @@ import SessionGraph from './components/SessionGraph'
 import Onboarding from './components/Onboarding'
 import SettingsPage from './components/SettingsPage'
 import StorePage from './components/StorePage'
+import StartModePicker from './components/StartModePicker'
+import { FIREFOX_DARK, FIREFOX_LIGHT, modeSettings, type UiMode } from './modes'
 import { LATEST_FEATURE_VERSION } from './features'
 import { Icon } from './components/icons'
 import { isAndroid } from './android/shim'
@@ -95,6 +98,7 @@ export default function App() {
   const auroraColor = useStore(s => s.auroraColor)
   const [showFind, setShowFind] = useState(false)
   const [showWarmup, setShowWarmup] = useState(false)
+  const [picked, setPicked] = useState(false)
   const mainRef = useRef<HTMLDivElement>(null)
 
   // Android: keep native webview overlay aligned with `.main` and pass theme bg
@@ -189,10 +193,26 @@ export default function App() {
       ['vox-glowui', settings.glowui],
       ['vox-tabgrad', settings.tabgrad],
       ['vox-ntpgrad', settings.ntpgrad],
+      ['vox-docklift', settings.docklift],
+      ['vox-cursorglow', settings.cursorglow],
+      ['vox-gaming', settings.uiMode === 'gaming'],
+      ['vox-debloat', settings.uiMode === 'debloat'],
     ]
     for (const [cls, on] of map) document.body.classList.toggle(cls, !!on)
     return () => { for (const [cls] of map) document.body.classList.remove(cls) }
-  }, [settings.amoled, settings.roundui, settings.density, settings.glowui, settings.tabgrad, settings.ntpgrad])
+  }, [settings.amoled, settings.roundui, settings.density, settings.glowui, settings.tabgrad, settings.ntpgrad, settings.docklift, settings.cursorglow, settings.uiMode])
+
+  // Cursor glow — track the pointer so the light follows the mouse
+  useEffect(() => {
+    if (!settings.cursorglow) return
+    const root = document.documentElement
+    const h = (e: MouseEvent) => {
+      root.style.setProperty('--cx', e.clientX + 'px')
+      root.style.setProperty('--cy', e.clientY + 'px')
+    }
+    window.addEventListener('mousemove', h, { passive: true })
+    return () => window.removeEventListener('mousemove', h)
+  }, [settings.cursorglow])
 
   // Watch-timer toast (installs a "time tracker" on the active page once per session)
   useEffect(() => {
@@ -240,7 +260,12 @@ export default function App() {
   // Theme + layout CSS vars
   useEffect(() => {
     const colors = THEMES[settings.theme] || THEMES['tokyo-night']
-    const c = settings.theme === 'custom' ? settings.customColors : colors
+    let c = settings.theme === 'custom' ? settings.customColors : colors
+    if (settings.uiMode === 'debloat') {
+      const bgHex = (c.bg ?? '#1a1b26').replace('#', '')
+      const lum = 0.2126 * (parseInt(bgHex.slice(0, 2), 16) / 255) + 0.7152 * (parseInt(bgHex.slice(2, 4), 16) / 255) + 0.0722 * (parseInt(bgHex.slice(4, 6), 16) / 255)
+      c = lum > 0.55 ? FIREFOX_LIGHT : FIREFOX_DARK
+    }
     const auroraRgb = settings.aurora && auroraColor ? auroraColor.split(',').map(n => Math.max(0, Math.min(255, Number(n.trim()) || 0)) / 255) : null
     const auroraLum = auroraRgb ? 0.2126 * auroraRgb[0] + 0.7152 * auroraRgb[1] + 0.0722 * auroraRgb[2] : 1
     const accent = settings.aurora && auroraRgb && auroraLum < 0.55 ? `rgb(${auroraColor})` : c.accent
@@ -323,6 +348,14 @@ export default function App() {
       if (meta && !e.shiftKey && e.key === 'r') { e.preventDefault(); nav('reload') }
       if (e.altKey && !meta && e.key === 'ArrowLeft') { e.preventDefault(); nav('back') }
       if (e.altKey && !meta && e.key === 'ArrowRight') { e.preventDefault(); nav('forward') }
+
+      // Command palette (works outside vim mode too)
+      if (e.altKey && !meta && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault()
+        const st = useStore.getState()
+        st.setPalette(!st.showPalette)
+        return
+      }
 
       // Tabs
       if (meta && !e.shiftKey && e.key === 't') { e.preventDefault(); addTab() }
@@ -505,6 +538,19 @@ export default function App() {
   const statusPos = settings.statusBarPosition || 'bottom'
   const sidePos = settings.sidebarPosition || 'left'
 
+  if (!picked) {
+    return (
+      <StartModePicker
+        onPick={(mode: UiMode) => {
+          const st = useStore.getState()
+          st.setSettings(modeSettings(mode, st.settings))
+          ;(window as any).onyx?.pickerDone?.()
+          setPicked(true)
+        }}
+      />
+    )
+  }
+
   return (
     <div className={`browser${zen ? ' zen-layout' : ''}`}>
       <div className="chrome chrome-top">
@@ -558,6 +604,7 @@ export default function App() {
         </div>
       )}
       <CommandPalette />
+      {settings.dynamicisland && <DynamicIsland />}
       <FindBar show={showFind} onClose={() => setShowFind(false)} />
       <ShortcutOverlay />
       <TabExpose />

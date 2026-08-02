@@ -21,6 +21,8 @@ export type FeatureId =
   | 'refstrip' | 'ua' | 'webrtc' | 'cookiekill' | 'noautofill' | 'autodelete' | 'imagelite'
   | 'trackhide' | 'privateclick' | 'fingerprint' | 'historyoff' | 'trailoff' | 'forgetsite'
   | 'siteblock' | 'dnt' | 'cleanurl' | 'blockpop' | 'cacheclear' | 'cookieview'
+  // v1.5 — dynamic island + vibes
+  | 'dynamicisland' | 'cursorglow' | 'docklift'
 
 export interface StoreFeature {
   id: FeatureId
@@ -176,6 +178,10 @@ export const FEATURES: StoreFeature[] = [
   { id: 'blockpop', icon: '🪟', name: 'Блок всплывающих', desc: 'Запрещает страницам открывать новые окна через window.open.', cat: 'Приватность', size: '18 КБ', downloads: '2 144', key: 'blockpop' },
   { id: 'cacheclear', icon: '💨', name: 'Очистка кэша', desc: ':cache — очищает кэш одним движением. Для вёрстки без «жёстких» перезагрузок.', cat: 'Приватность', hotkey: ':cache', size: '16 КБ', downloads: '3 811', key: 'cacheclear' },
   { id: 'cookieview', icon: '🥠', name: 'Инспектор куки', desc: ':cookies — все куки текущего сайта списком. Изучай и удаляй.', cat: 'Приватность', hotkey: ':cookies', size: '40 КБ', downloads: '2 099', key: 'cookieview' },
+  // ─── Dynamic Island + vibes (v1.5) ─────────────
+  { id: 'dynamicisland', icon: '◯', name: 'Dynamic Island', desc: 'Стеклянная «капсула» сверху: активная вкладка, живые часы и прогресс загрузки. При наведении раскрывается.', cat: 'Оформление', hotkey: 'наведение', size: '44 КБ', downloads: '4 210', key: 'dynamicisland' },
+  { id: 'cursorglow', icon: '✨', name: 'Свечение курсора', desc: 'Мягкий неоновый свет следует за мышью по всему интерфейсу.', cat: 'Оформление', size: '14 КБ', downloads: '2 840', key: 'cursorglow' },
+  { id: 'docklift', icon: '↥', name: 'Всплытие вкладки', desc: 'Активная вкладка приподнимается и «причаливает» к панели, как дока MacOS.', cat: 'Оформление', size: '12 КБ', downloads: '1 990', key: 'docklift' },
 ]
 
 export function featureOn(settings: Settings, id: FeatureId): boolean {
